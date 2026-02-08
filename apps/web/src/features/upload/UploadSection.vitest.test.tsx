@@ -98,4 +98,28 @@ describe('UploadSection', () => {
 
     expect(await screen.findByText('Error: Invalid file')).toBeInTheDocument();
   });
+
+  it('resets the success state when a new file is selected', async () => {
+    mockedParseEnexFile.mockResolvedValueOnce({
+      importId: 'import-3',
+      noteCount: 1,
+      warnings: []
+    });
+
+    render(<UploadSectionHarness />);
+
+    const input = screen.getByLabelText('ENEX file');
+    await userEvent.upload(input, new File(['data'], 'notes.enex', { type: 'text/xml' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
+
+    expect(await screen.findByText('Upload complete.')).toBeInTheDocument();
+
+    await userEvent.upload(
+      input,
+      new File(['data'], 'notes-2.enex', { type: 'text/xml' })
+    );
+
+    expect(screen.queryByText('Upload complete.')).not.toBeInTheDocument();
+    expect(screen.getByText('Ready to upload.')).toBeInTheDocument();
+  });
 });

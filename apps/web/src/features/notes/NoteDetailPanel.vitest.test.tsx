@@ -79,6 +79,26 @@ describe('NoteDetailPanel', () => {
     expect(await screen.findByText('Error: Note not found.')).toBeInTheDocument();
   });
 
+  it('renders empty states for tags/resources and fallback timestamps', async () => {
+    mockedFetchNoteDetail.mockResolvedValueOnce({
+      id: 'note-3',
+      title: 'Empty Note',
+      tags: [],
+      contentHtml: '<p>No content</p>',
+      createdAt: null,
+      updatedAt: 'invalid-date',
+      resources: []
+    });
+
+    render(<NoteDetailPanel importId="import-1" noteId="note-3" />);
+
+    expect(await screen.findByRole('heading', { name: 'Empty Note' })).toBeInTheDocument();
+    expect(screen.getByText('No tags')).toBeInTheDocument();
+    expect(screen.getByText('No resources.')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.getByText('invalid-date')).toBeInTheDocument();
+  });
+
   it('shows an error when the request fails', async () => {
     mockedFetchNoteDetail.mockRejectedValueOnce(new Error('Network error'));
 
