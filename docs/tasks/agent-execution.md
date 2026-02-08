@@ -7,6 +7,20 @@
 - 1 エージェントは原則 1 タスク ID を担当する。
 - 1 PR で複数タスクを混在させない。
 
+## 2.1 ブランチ命名規約
+- 機能ブランチ名には担当タスク ID（例: `T-003`）を必ず含める。
+- ブランチ名は `codex/t-00x-<short-description>` 形式を推奨する。
+- 例:
+  - `codex/t-003-enex-upload-endpoint`
+  - `codex/t-009-note-list-search-ui`
+
+## 2.2 コミットメッセージ規約
+- コミットメッセージ先頭には担当タスク ID を必ず付ける。
+- 形式は `T-00x: <summary>` とする。
+- 例:
+  - `T-003: Add ENEX upload endpoint`
+  - `T-013: Update OpenAPI and README`
+
 ## 3. 入力テンプレート
 エージェントへ渡す指示は最低限以下を含める。
 - Task ID
