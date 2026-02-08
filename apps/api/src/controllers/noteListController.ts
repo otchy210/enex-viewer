@@ -1,44 +1,10 @@
 import type { Request, Response } from 'express';
 
+import { parseIntegerValue, parseSingleValue } from '../lib/httpQuery.js';
 import { listNotes } from '../services/noteListService.js';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
-
-const parseQueryValue = (value: Request['query'][string]) => {
-  if (value === undefined) {
-    return { ok: true, value: undefined };
-  }
-  if (typeof value === 'string') {
-    return { ok: true, value };
-  }
-  return { ok: false, value: undefined };
-};
-
-const parseInteger = (
-  value: string | undefined,
-  name: string,
-  options: { min: number; max?: number }
-): { ok: true; value: number } | { ok: false; message: string } => {
-  if (value === undefined) {
-    return { ok: true, value: options.min };
-  }
-  const requirement = options.min === 0 ? 'a non-negative integer' : 'a positive integer';
-  if (!/^\d+$/.test(value)) {
-    return { ok: false, message: `${name} must be ${requirement}.` };
-  }
-  const parsed = Number(value);
-  if (Number.isNaN(parsed)) {
-    return { ok: false, message: `${name} must be ${requirement}.` };
-  }
-  if (parsed < options.min) {
-    return { ok: false, message: `${name} must be at least ${options.min}.` };
-  }
-  if (options.max !== undefined && parsed > options.max) {
-    return { ok: false, message: `${name} must be at most ${options.max}.` };
-  }
-  return { ok: true, value: parsed };
-};
 
 export const noteListController = (req: Request, res: Response) => {
   const importId = req.params.importId;
@@ -49,31 +15,31 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const qResult = parseQueryValue(req.query.q);
+  const qResult = parseSingleValue(req.query.q, 'q must be a single string.');
   if (!qResult.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
-      message: 'q must be a single string.'
+      message: qResult.message
     });
   }
 
-  const limitResult = parseQueryValue(req.query.limit);
+  const limitResult = parseSingleValue(req.query.limit, 'limit must be a single value.');
   if (!limitResult.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
-      message: 'limit must be a single value.'
+      message: limitResult.message
     });
   }
 
-  const offsetResult = parseQueryValue(req.query.offset);
+  const offsetResult = parseSingleValue(req.query.offset, 'offset must be a single value.');
   if (!offsetResult.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
-      message: 'offset must be a single value.'
+      message: offsetResult.message
     });
   }
 
-  const parsedLimit = parseInteger(limitResult.value, 'limit', { min: 1, max: MAX_LIMIT });
+  const parsedLimit = parseIntegerValue(limitResult.value, 'limit', { min: 1, max: MAX_LIMIT });
   if (!parsedLimit.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
@@ -81,7 +47,7 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const parsedOffset = parseInteger(offsetResult.value, 'offset', { min: 0 });
+  const parsedOffset = parseIntegerValue(offsetResult.value, 'offset', { min: 0 });
   if (!parsedOffset.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',

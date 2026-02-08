@@ -216,6 +216,42 @@ describe('API integration', () => {
     });
   });
 
+  it('GET /api/imports/:importId/notes rejects array query params', async () => {
+    const app = createApp();
+    const payload = Buffer.from('<en-export></en-export>');
+    const parseResponse = await request(app)
+      .post('/api/enex/parse')
+      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+
+    const response = await request(app)
+      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .query({ limit: ['1', '2'] });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: 'INVALID_QUERY',
+      message: 'limit must be a single value.'
+    });
+  });
+
+  it('GET /api/imports/:importId/notes rejects non-integer query values', async () => {
+    const app = createApp();
+    const payload = Buffer.from('<en-export></en-export>');
+    const parseResponse = await request(app)
+      .post('/api/enex/parse')
+      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+
+    const response = await request(app)
+      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .query({ offset: '10abc' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: 'INVALID_QUERY',
+      message: 'offset must be a non-negative integer.'
+    });
+  });
+
   it('GET /api/imports/:importId/notes/:noteId returns note detail', async () => {
     const app = createApp();
     const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
