@@ -18,6 +18,9 @@
     "typecheck:web": "npm run typecheck -w apps/web",
     "test": "npm run test:api && npm run test:web",
     "test:api": "npm run test -w apps/api",
-    "test:web": "npm run test -w apps/web"
+    "test:web": "npm run test -w apps/web",
+    "test:coverage": "npm run test:coverage:api && npm run test:coverage:web",
+    "test:coverage:api": "npm run test:coverage -w apps/api",
+    "test:coverage:web": "npm run test:coverage -w apps/web"
   }
 }

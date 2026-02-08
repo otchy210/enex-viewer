@@ -5,6 +5,22 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     passWithNoTests: true,
-    include: ['src/**/*.vitest.{test,spec}.{ts,tsx}']
+    include: ['src/**/*.vitest.{test,spec}.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json-summary'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.vitest.test.{ts,tsx}',
+        'src/**/*.vitest.spec.{ts,tsx}',
+        'src/test/**'
+      ],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80
+      }
+    }
   }
 });

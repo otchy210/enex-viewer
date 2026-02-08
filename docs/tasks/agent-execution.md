@@ -25,6 +25,7 @@
 ## 4. 完了判定テンプレート
 - [ ] `npm run typecheck` が通る
 - [ ] 影響範囲のテストが通る
+- [ ] `npm run test:coverage`（または対象 workspace の coverage）が通り、閾値を満たす
 - [ ] ドキュメント更新が必要なら反映済み
 - [ ] 変更内容がタスク受け入れ条件を満たす
 - [ ] 最終段で人間による動作テスト（手動シナリオ）を実施・記録済み
@@ -43,6 +44,15 @@
 - 新規テストは既存基盤を使用する（API: Vitest + Supertest、Web: Vitest + Testing Library + jsdom）。
 - テスト追加時は、workspace の標準コマンドで実行可能にする（`npm run test -w apps/api`、`npm run test -w apps/web`）。
 - 新たなテストフレームワークは、明確な必要性と合意がない限り導入しない。
+
+## 5.3 テストカバレッジ運用ルール
+- 機能追加・仕様変更・リファクタ時は、必ずカバレッジを計測する。
+- 実行コマンド:
+  - 全体: `npm run test:coverage`
+  - API: `npm run test:coverage -w apps/api`
+  - Web: `npm run test:coverage -w apps/web`
+- カバレッジ閾値（global）は `lines/functions/branches/statements` すべて 80% 以上を維持する。
+- 閾値未達の場合は、実装変更と同じ PR で不足分のテストを追加してから完了とする。
 
 ## 6. タスク完了時のチェック更新
 - 各エージェントは、担当したワークパッケージファイル（`docs/tasks/work-packages/*.md`）内の対象タスクを、完了時に `[ ]` から `[x]` へ更新する。

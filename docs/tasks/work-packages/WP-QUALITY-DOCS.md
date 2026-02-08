@@ -18,6 +18,7 @@
 
 ## 完了条件
 - typecheck/build/test の主要コマンドが通過
+- `npm run test:coverage`（または対象 workspace の coverage）が通過し、閾値を満たす
 - `apps/web/src/api/enex.ts` の失敗時メッセージ整形（API message 優先 / `HTTP <status>` fallback）が直接テストで担保される
 - ドキュメントが実装と矛盾しない
 - 手動テスト主要シナリオ（アップロード、一覧、検索、詳細、エラー表示）が確認済み
