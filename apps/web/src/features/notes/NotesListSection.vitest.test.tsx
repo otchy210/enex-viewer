@@ -26,6 +26,23 @@ const createResponse = (overrides?: Partial<NoteListResponse>): NoteListResponse
   ...overrides
 });
 
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+};
+
+const createDeferred = <T,>(): Deferred<T> => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+};
+
 describe('NotesListSection', () => {
   it('renders a prompt when there is no import ID', () => {
     render(<NotesListSection importId={null} />);
@@ -77,5 +94,36 @@ describe('NotesListSection', () => {
     render(<NotesListSection importId="import-999" />);
 
     expect(await screen.findByText('Error: Network error')).toBeInTheDocument();
+  });
+
+  it('clears previous notes while refetching for a new import', async () => {
+    const deferred = createDeferred<NoteListResponse>();
+    mockedFetchNotesList
+      .mockResolvedValueOnce(createResponse())
+      .mockReturnValueOnce(deferred.promise);
+
+    const { rerender } = render(<NotesListSection importId="import-1" />);
+
+    expect(await screen.findByText('Sample Note')).toBeInTheDocument();
+
+    rerender(<NotesListSection importId="import-2" />);
+
+    expect(screen.queryByText('Sample Note')).not.toBeInTheDocument();
+    expect(screen.getByText('Loading notes...')).toBeInTheDocument();
+
+    deferred.resolve(createResponse({
+      notes: [
+        {
+          id: 'note-2',
+          title: 'Next Import Note',
+          excerpt: 'Fresh data',
+          tags: [],
+          createdAt: null,
+          updatedAt: null
+        }
+      ]
+    }));
+
+    expect(await screen.findByText('Next Import Note')).toBeInTheDocument();
   });
 });
