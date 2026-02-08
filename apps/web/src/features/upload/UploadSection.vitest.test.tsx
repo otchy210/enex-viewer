@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UploadSection } from './UploadSection';
 import { parseEnexFile, type ParseEnexResponse } from '../../api/enex';
+import { useEnexUpload } from '../../state/useEnexUpload';
 
 type Deferred<T> = {
   promise: Promise<T>;
@@ -28,6 +29,11 @@ vi.mock('../../api/enex', () => ({
 
 const mockedParseEnexFile = vi.mocked(parseEnexFile);
 
+const UploadSectionHarness = () => {
+  const upload = useEnexUpload();
+  return <UploadSection {...upload} />;
+};
+
 describe('UploadSection', () => {
   beforeEach(() => {
     mockedParseEnexFile.mockReset();
@@ -38,7 +44,7 @@ describe('UploadSection', () => {
   });
 
   it('shows the initial idle state', () => {
-    render(<UploadSection />);
+    render(<UploadSectionHarness />);
 
     expect(screen.getByText('Ready to upload.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Upload' })).toBeDisabled();
@@ -48,7 +54,7 @@ describe('UploadSection', () => {
     const deferred = createDeferred<ParseEnexResponse>();
     mockedParseEnexFile.mockReturnValueOnce(deferred.promise);
 
-    render(<UploadSection />);
+    render(<UploadSectionHarness />);
 
     const file = new File(['data'], 'notes.enex', { type: 'text/xml' });
     const input = screen.getByLabelText('ENEX file');
@@ -68,7 +74,7 @@ describe('UploadSection', () => {
       warnings: ['missing resource']
     });
 
-    render(<UploadSection />);
+    render(<UploadSectionHarness />);
 
     const file = new File(['data'], 'notes.enex', { type: 'text/xml' });
     await userEvent.upload(screen.getByLabelText('ENEX file'), file);
@@ -84,7 +90,7 @@ describe('UploadSection', () => {
   it('shows error details when upload fails', async () => {
     mockedParseEnexFile.mockRejectedValueOnce(new Error('Invalid file'));
 
-    render(<UploadSection />);
+    render(<UploadSectionHarness />);
 
     const file = new File(['data'], 'notes.enex', { type: 'text/xml' });
     await userEvent.upload(screen.getByLabelText('ENEX file'), file);

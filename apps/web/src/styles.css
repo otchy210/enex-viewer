@@ -29,3 +29,61 @@ h1 {
 .error {
   color: #b00020;
 }
+
+.notes-search {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes-search__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notes-search input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+}
+
+.notes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.notes-list__item {
+  padding: 12px;
+  border-radius: 12px;
+  background: #f6f8ff;
+  border: 1px solid #e0e6ff;
+}
+
+.notes-list__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.notes-list__header h3 {
+  margin: 0;
+}
+
+.notes-list__tags {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.notes-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
