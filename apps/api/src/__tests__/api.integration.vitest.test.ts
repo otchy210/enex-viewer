@@ -1,8 +1,9 @@
 import cors from 'cors';
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import { clearImports } from '../repositories/importRepository.js';
 import routes from '../routes/index.js';
 
 const createApp = () => {
@@ -26,6 +27,10 @@ const createApp = () => {
 };
 
 describe('API integration', () => {
+  beforeEach(() => {
+    clearImports();
+  });
+
   it('GET /health returns ok true', async () => {
     const app = createApp();
 
@@ -99,8 +104,107 @@ describe('API integration', () => {
 
     expect(response.status).toBe(422);
     expect(response.body).toEqual({
-      code: 'ENEX_PARSE_FAILED',
-      message: 'Failed to parse ENEX content.'
+      code: 'INVALID_ENEX',
+      message: 'Missing <en-export> root element.'
+    });
+  });
+
+  it('GET /api/imports/:importId/notes returns paginated notes', async () => {
+    const app = createApp();
+    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+      <en-export>
+        <note>
+          <title>First Note</title>
+          <content><![CDATA[<en-note>hello world</en-note>]]></content>
+          <created>20240101T000000Z</created>
+          <updated>20240102T000000Z</updated>
+          <tag>alpha</tag>
+        </note>
+        <note>
+          <title>Second Note</title>
+          <content><![CDATA[<en-note>another note</en-note>]]></content>
+          <created>20240103T000000Z</created>
+          <updated>20240104T000000Z</updated>
+          <tag>beta</tag>
+        </note>
+      </en-export>`);
+
+    const parseResponse = await request(app)
+      .post('/api/enex/parse')
+      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+
+    expect(parseResponse.status).toBe(200);
+
+    const listResponse = await request(app)
+      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .query({ limit: 1, offset: 1 });
+
+    expect(listResponse.status).toBe(200);
+    expect(listResponse.body.total).toBe(2);
+    expect(listResponse.body.notes).toHaveLength(1);
+    expect(listResponse.body.notes[0].title).toBe('First Note');
+  });
+
+  it('GET /api/imports/:importId/notes supports search query', async () => {
+    const app = createApp();
+    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+      <en-export>
+        <note>
+          <title>Kitchen Log</title>
+          <content><![CDATA[<en-note>coffee beans</en-note>]]></content>
+          <created>20240101T000000Z</created>
+          <updated>20240102T000000Z</updated>
+          <tag>coffee</tag>
+        </note>
+        <note>
+          <title>Travel Plan</title>
+          <content><![CDATA[<en-note>tokyo trip</en-note>]]></content>
+          <created>20240103T000000Z</created>
+          <updated>20240104T000000Z</updated>
+          <tag>travel</tag>
+        </note>
+      </en-export>`);
+
+    const parseResponse = await request(app)
+      .post('/api/enex/parse')
+      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+
+    const listResponse = await request(app)
+      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .query({ q: 'coffee' });
+
+    expect(listResponse.status).toBe(200);
+    expect(listResponse.body.total).toBe(1);
+    expect(listResponse.body.notes[0].title).toBe('Kitchen Log');
+  });
+
+  it('GET /api/imports/:importId/notes returns 404 for unknown import', async () => {
+    const app = createApp();
+
+    const response = await request(app).get('/api/imports/missing/notes');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      code: 'IMPORT_NOT_FOUND',
+      message: 'Import session not found.'
+    });
+  });
+
+  it('GET /api/imports/:importId/notes validates query params', async () => {
+    const app = createApp();
+    const payload = Buffer.from('<en-export></en-export>');
+    const parseResponse = await request(app)
+      .post('/api/enex/parse')
+      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+
+    const response = await request(app)
+      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .query({ limit: -1 });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: 'INVALID_QUERY',
+      message: 'limit must be a positive integer.'
     });
   });
 });

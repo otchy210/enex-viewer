@@ -67,10 +67,14 @@ export const enexParseController = async (
     return res.json(result);
   } catch (error) {
     if (error instanceof EnexParseError) {
-      return res.status(422).json({
+      const payload: { code: string; message: string; details?: unknown } = {
         code: error.code,
         message: error.message
-      });
+      };
+      if (error.details !== undefined) {
+        payload.details = error.details;
+      }
+      return res.status(422).json(payload);
     }
 
     return next(error);
