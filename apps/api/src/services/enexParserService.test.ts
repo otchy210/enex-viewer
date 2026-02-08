@@ -35,4 +35,24 @@ describe("parseEnex", () => {
       expect(result.error.code).toBe("INVALID_XML");
     }
   });
+
+  it("sanitizes note content", () => {
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Dangerous Note</title>
+        <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
+        <en-note><script>alert(1)</script><p>safe</p></en-note>]]></content>
+      </note>
+    </en-export>`;
+
+    const result = parseEnex(sample);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.notes[0]?.content).toContain("<p>safe</p>");
+      expect(result.notes[0]?.content).not.toContain("<script");
+    }
+  });
 });

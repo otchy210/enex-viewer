@@ -1,5 +1,7 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 
+import { sanitizeEnml } from "../lib/sanitizeEnml.js";
+
 export type EnexParseWarning = {
   noteTitle?: string;
   message: string;
@@ -163,7 +165,7 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
       createdAt: typeof note.created === "string" ? note.created : undefined,
       updatedAt: typeof note.updated === "string" ? note.updated : undefined,
       tags,
-      content,
+      content: sanitizeEnml(content),
       resources,
     });
   });
