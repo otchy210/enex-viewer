@@ -1,10 +1,24 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 
-import { useEnexUpload } from '../../state/useEnexUpload';
+import type { ParseEnexResponse } from '../../api/enex';
+import type { UploadStatus } from '../../state/useEnexUpload';
 
-export function UploadSection() {
+type UploadSectionProps = {
+  status: UploadStatus;
+  error: string | null;
+  result: ParseEnexResponse | null;
+  uploadFile: (file: File) => Promise<void>;
+  reset: () => void;
+};
+
+export function UploadSection({
+  status,
+  error,
+  result,
+  uploadFile,
+  reset
+}: UploadSectionProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { status, error, result, uploadFile, reset } = useEnexUpload();
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
