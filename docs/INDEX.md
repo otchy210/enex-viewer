@@ -15,6 +15,7 @@ ENEX Viewer 開発で参照する主要ドキュメントの入り口です。
 - エージェント実行ガイド: `docs/tasks/agent-execution.md`
 - 並列実行向けワークパッケージ: `docs/tasks/work-packages/`
 - テスト基盤移行タスク: `docs/tasks/test-modernization-tasks.md`
+- リファクタタスク: `docs/tasks/refactor-tasks.md`
 - 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
 
 ## 4. テスト運用
