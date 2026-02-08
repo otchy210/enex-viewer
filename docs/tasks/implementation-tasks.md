@@ -21,7 +21,7 @@
 | T-009 | Web | ノート一覧 UI 実装（検索含む） | T-002, T-004 | 検索条件で一覧更新される |
 | T-010 | Web | ノート詳細 UI 実装 | T-002, T-005 | 選択ノートを表示できる |
 | T-011 | Quality | API テスト整備（unit/integration） | T-003, T-004, T-005, T-006, T-007 | 主要正常系/異常系をカバー |
-| T-012 | Quality | Web テスト整備（unit） | T-008, T-009, T-010 | 主要 UI の表示と状態遷移をカバー |
+| T-012 | Quality | Web テスト整備（unit） | T-008, T-009, T-010 | 主要 UI の表示と状態遷移をカバーし、`apps/web/src/api/enex.ts` のエラー整形分岐（API message 優先 / `HTTP <status>` fallback）を直接テストする |
 | T-013 | Docs | OpenAPI 更新と README 更新 | T-003, T-004, T-005 | API 契約と使用手順が一致 |
 | T-014 | QA | 人間による動作テスト（手動シナリオ実施） | T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, T-011, T-012, T-013 | 手動テスト結果を記録し、主要シナリオが期待通りに動作する |
 | T-015 | Test-Migration | API 既存テストを Vitest へ移行（node:test/tsx 依存を削減） | T-006 | 既存 API テストが Vitest で動作する |
