@@ -41,6 +41,7 @@ export function useNotesList(
     const run = async () => {
       setLoading(true);
       setError(null);
+      setData(null);
 
       try {
         const response = await fetchNotesList(importId, {
