@@ -55,3 +55,13 @@ npm run typecheck:web
 - アーキテクチャの正本: `docs/architecture.md`
 - API 契約 (OpenAPI): `apps/api/openapi.yaml`
 - 環境変数テンプレート: `.env.example`
+
+## ENEX Viewer 開発ドキュメント
+
+- ドキュメント入口: `docs/INDEX.md`
+- 要件定義: `docs/product/requirements.md`
+- 仕様書: `docs/product/spec.md`
+- 詳細設計: `docs/design/system-design.md`
+- 実装タスク一覧: `docs/tasks/implementation-tasks.md`
+- エージェント実行ガイド: `docs/tasks/agent-execution.md`
+- 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`

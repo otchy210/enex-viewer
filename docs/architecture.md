@@ -1,33 +1,39 @@
 # Architecture
 
-## 概要
-このリポジトリは npm workspaces を使ったモノレポ構成です。
+## 1. 目的
+ENEX Viewer の機能実装におけるシステム境界、責務、主要データフローを定義する。
 
-- API: `apps/api`（Express + TypeScript）
-- Web: `apps/web`（React + Vite + TypeScript）
+## 2. コンテキスト
+- Web (`apps/web`): ユーザー操作、表示、検索 UI
+- API (`apps/api`): ENEX 解析、ノート取得 API、エラーハンドリング
 
-Web アプリは `/api/*` 経由で API を呼び出します。開発時は Vite のプロキシで `/api` を `http://localhost:3001` に転送します。
+## 3. コンテナ構成
+- Browser
+  - React + Vite の SPA
+- API Server
+  - Express + TypeScript
+  - ENEX パーサー、検索サービス、一時ストア
 
-## ディレクトリ構成
-- `apps/api`: REST API サーバー本体と API 契約（`openapi.yaml`）
-- `apps/web`: API を利用するブラウザクライアント
-- `docs`: プロジェクト全体の設計・運用ドキュメント
+## 4. 責務分離
+- Web は表示責務のみ。ENEX の解析ロジックは持たない。
+- API は XML 解析、モデル変換、検索を担当する。
+- API 契約の正本は `apps/api/openapi.yaml`。
 
-## 責務境界
-- API は業務ロジック、バリデーション、レスポンス整形を担当する。
-- Web は表示と UI 状態管理を担当する。
-- API に属する業務ロジックを Web 側で重複実装しない。
+## 5. 主要データフロー
+1. ユーザーが Web で ENEX ファイルを選択する。
+2. Web が `POST /api/enex/parse` にアップロードする。
+3. API が XML を解析し、`importId` とノート情報を一時保存する。
+4. Web が `GET /api/imports/:importId/notes` で一覧を取得する。
+5. Web が `GET /api/imports/:importId/notes/:noteId` で詳細を取得する。
 
-## データフロー
-1. ブラウザが Web UI から `/api/...` へリクエストする。
-2. ローカル開発では Vite の dev proxy が API に転送する。
-3. API がリクエストを処理し、JSON を返す。
-4. Web がレスポンスデータを描画する。
+## 6. 技術方針
+- TypeScript strict を維持する。
+- API は入力バリデーションを行う。
+- 本文描画は必ずサニタイズする。
+- 大規模 ENEX での性能課題に備え、解析処理をサービス層に分離する。
+- API 契約（OpenAPI）を先に固定し、Web はモックで先行実装可能とする。
 
-## 設定
-- Node バージョンは `.nvmrc`（Node 20）を使用する。
-- 必須環境変数は `.env.example` を参照する。
-
-## Contract-First の指針
-- API 変更は `apps/api/openapi.yaml` の更新から始める。
-- 実装とクライアント利用は契約定義に従う。
+## 7. 詳細設計への参照
+- 詳細設計: `docs/design/system-design.md`
+- 要件定義: `docs/product/requirements.md`
+- 仕様書: `docs/product/spec.md`
