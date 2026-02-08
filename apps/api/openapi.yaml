@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: Enex Viewer API
+  version: 0.1.0
+  description: enex-viewer のための REST API。
+servers:
+  - url: http://localhost:3001
+paths:
+  /health:
+    get:
+      summary: ヘルスチェック
+      operationId: getHealth
+      responses:
+        '200':
+          description: サービスが正常であることを示すレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/message:
+    get:
+      summary: サンプルメッセージの取得
+      operationId: getMessage
+      responses:
+        '200':
+          description: メッセージのレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+          example: true
+    MessageResponse:
+      type: object
+      required:
+        - message
+        - timestamp
+      properties:
+        message:
+          type: string
+          example: Hello from TypeScript REST API
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-02-08T00:00:00.000Z'

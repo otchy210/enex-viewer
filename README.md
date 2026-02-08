@@ -48,3 +48,10 @@ npm run typecheck
 npm run typecheck:api
 npm run typecheck:web
 ```
+
+## Agent/設計ドキュメント
+
+- Agent の実行ルール: `AGENTS.md`
+- アーキテクチャの正本: `docs/architecture.md`
+- API 契約 (OpenAPI): `apps/api/openapi.yaml`
+- 環境変数テンプレート: `.env.example`
