@@ -4,33 +4,35 @@
 - 各タスクは ID 単位で独立レビュー可能にする。
 - 依存関係を満たせば並列で着手する。
 - 受け入れ条件を満たしたら完了。
+- 進捗管理の正本は本ファイルの「完了」列とし、完了時に `[ ]` から `[x]` へ更新する。
+- チェック更新は実装変更と同じ PR に含める。
 - コミットメッセージ先頭は `T-00x: <summary>` 形式にする。
 
 ## 2. タスク一覧
 
-| ID | 種別 | タスク | 依存 | 受け入れ条件 |
-|---|---|---|---|---|
-| T-001 | Setup | API 層のディレクトリ分割（routes/controllers/services 等） | なし | ビルド通過、責務に沿った雛形がある |
-| T-002 | Setup | Web 層のディレクトリ分割（pages/features/api/state 等） | なし | ビルド通過、既存画面が崩れない |
-| T-003 | API | ENEX アップロード API `POST /api/enex/parse` 実装 | T-001 | サンプル ENEX を受け取り `importId` を返す |
-| T-004 | API | ノート一覧 API `GET /api/imports/:importId/notes` 実装 | T-001, T-003 | 検索・ページング付き一覧を返す |
-| T-005 | API | ノート詳細 API `GET /api/imports/:importId/notes/:noteId` 実装 | T-001, T-003 | 指定ノート詳細を返す |
-| T-006 | API | ENEX 解析サービス（XML->ドメイン変換）実装 | T-001 | 解析結果と警告を返せる |
-| T-007 | API | 本文サニタイズ処理実装 | T-001, T-006 | 危険なタグ/属性が除去される |
-| T-008 | Web | アップロード UI 実装 | T-002, T-003 | ENEX を送信し importId を保持できる |
-| T-009 | Web | ノート一覧 UI 実装（検索含む） | T-002, T-004 | 検索条件で一覧更新される |
-| T-010 | Web | ノート詳細 UI 実装 | T-002, T-005 | 選択ノートを表示できる |
-| T-011 | Quality | API テスト整備（unit/integration） | T-003, T-004, T-005, T-006, T-007 | 主要正常系/異常系をカバー |
-| T-012 | Quality | Web テスト整備（unit） | T-008, T-009, T-010 | 主要 UI の表示と状態遷移をカバーし、`apps/web/src/api/enex.ts` のエラー整形分岐（API message 優先 / `HTTP <status>` fallback）を直接テストする |
-| T-013 | Docs | OpenAPI 更新と README 更新 | T-003, T-004, T-005 | API 契約と使用手順が一致 |
-| T-014 | QA | 人間による動作テスト（手動シナリオ実施） | T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, T-011, T-012, T-013 | 手動テスト結果を記録し、主要シナリオが期待通りに動作する |
-| T-015 | Test-Migration | API 既存テストを Vitest へ移行（node:test/tsx 依存を削減） | T-006 | 既存 API テストが Vitest で動作する |
-| T-016 | Test-Migration | API エンドポイント統合テスト追加（Supertest） | T-003 | `/health` `/api/message` `/api/enex/parse` の主要正常系/異常系を検証 |
-| T-017 | Test-Migration | Web テスト基盤で既存 UI のテスト追加（Testing Library + jsdom） | T-002 | 既存画面の主要表示/状態遷移を検証 |
-| T-018 | Test-Migration | テスト運用ドキュメント更新（実行手順・命名規約・配置ルール） | T-015, T-016, T-017 | テスト実行と追加方針が文書化される |
-| T-019 | Refactor | API のクエリ/パラメータ解析ロジック共通化（厳密バリデーション） | T-004, T-005 | 共通関数化後も既存挙動とテストが維持される |
-| T-020 | Refactor | Web UI ユーティリティ共通化（API エラー整形/表示フォーマッタ/テスト補助） | T-008, T-010, T-017 | 共通化後も既存 UI 挙動とテストが維持される |
-| T-021 | Quality | テストカバレッジ引き上げ（閾値達成） | T-011, T-012 | `npm run test:coverage` が通り、global 閾値（80%）を満たす |
+| 完了 | ID | 種別 | タスク | 依存 | 受け入れ条件 |
+|---|---|---|---|---|---|
+| [x] | T-001 | Setup | API 層のディレクトリ分割（routes/controllers/services 等） | なし | ビルド通過、責務に沿った雛形がある |
+| [x] | T-002 | Setup | Web 層のディレクトリ分割（pages/features/api/state 等） | なし | ビルド通過、既存画面が崩れない |
+| [x] | T-003 | API | ENEX アップロード API `POST /api/enex/parse` 実装 | T-001 | サンプル ENEX を受け取り `importId` を返す |
+| [x] | T-004 | API | ノート一覧 API `GET /api/imports/:importId/notes` 実装 | T-001, T-003 | 検索・ページング付き一覧を返す |
+| [x] | T-005 | API | ノート詳細 API `GET /api/imports/:importId/notes/:noteId` 実装 | T-001, T-003 | 指定ノート詳細を返す |
+| [x] | T-006 | API | ENEX 解析サービス（XML->ドメイン変換）実装 | T-001 | 解析結果と警告を返せる |
+| [x] | T-007 | API | 本文サニタイズ処理実装 | T-001, T-006 | 危険なタグ/属性が除去される |
+| [x] | T-008 | Web | アップロード UI 実装 | T-002, T-003 | ENEX を送信し importId を保持できる |
+| [x] | T-009 | Web | ノート一覧 UI 実装（検索含む） | T-002, T-004 | 検索条件で一覧更新される |
+| [x] | T-010 | Web | ノート詳細 UI 実装 | T-002, T-005 | 選択ノートを表示できる |
+| [x] | T-011 | Quality | API テスト整備（unit/integration） | T-003, T-004, T-005, T-006, T-007 | 主要正常系/異常系をカバー |
+| [x] | T-012 | Quality | Web テスト整備（unit） | T-008, T-009, T-010 | 主要 UI の表示と状態遷移をカバーし、`apps/web/src/api/enex.ts` のエラー整形分岐（API message 優先 / `HTTP <status>` fallback）を直接テストする |
+| [ ] | T-013 | Docs | OpenAPI 更新と README 更新 | T-003, T-004, T-005 | API 契約と使用手順が一致 |
+| [ ] | T-014 | QA | 人間による動作テスト（手動シナリオ実施） | T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, T-011, T-012, T-013 | 手動テスト結果を記録し、主要シナリオが期待通りに動作する |
+| [x] | T-015 | Test-Migration | API 既存テストを Vitest へ移行（node:test/tsx 依存を削減） | T-006 | 既存 API テストが Vitest で動作する |
+| [x] | T-016 | Test-Migration | API エンドポイント統合テスト追加（Supertest） | T-003 | `/health` `/api/message` `/api/enex/parse` の主要正常系/異常系を検証 |
+| [x] | T-017 | Test-Migration | Web テスト基盤で既存 UI のテスト追加（Testing Library + jsdom） | T-002 | 既存画面の主要表示/状態遷移を検証 |
+| [x] | T-018 | Test-Migration | テスト運用ドキュメント更新（実行手順・命名規約・配置ルール） | T-015, T-016, T-017 | テスト実行と追加方針が文書化される |
+| [x] | T-019 | Refactor | API のクエリ/パラメータ解析ロジック共通化（厳密バリデーション） | T-004, T-005 | 共通関数化後も既存挙動とテストが維持される |
+| [ ] | T-020 | Refactor | Web UI ユーティリティ共通化（API エラー整形/表示フォーマッタ/テスト補助） | T-008, T-010, T-017 | 共通化後も既存 UI 挙動とテストが維持される |
+| [ ] | T-021 | Quality | テストカバレッジ引き上げ（閾値達成） | T-011, T-012 | `npm run test:coverage` が通り、global 閾値（80%）を満たす |
 
 ## 3. 並列化レーン
 - レーン A（API 基盤）: T-001, T-006, T-007

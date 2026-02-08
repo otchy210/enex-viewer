@@ -24,4 +24,4 @@
 - [ ] `npm run test` が通る
 - [ ] `npm run test:coverage` が通る
 - [ ] global 閾値（lines/functions/branches/statements 80%）を満たす
-- [ ] 対象ワークパッケージのチェックボックス更新済み
+- [ ] `docs/tasks/implementation-tasks.md` の該当タスクチェック更新済み

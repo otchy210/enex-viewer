@@ -34,4 +34,4 @@
 - [ ] `npm run test:api` が通る
 - [ ] `npm run test:web` が通る
 - [ ] `npm run test` が通る
-- [ ] 対象ワークパッケージのチェックボックス更新済み
+- [ ] `docs/tasks/implementation-tasks.md` の該当タスクチェック更新済み

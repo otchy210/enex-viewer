@@ -22,7 +22,7 @@
 - [ ] `npm run typecheck -w apps/api` が通る
 - [ ] `npm run test:api` が通る
 - [ ] 既存 endpoint の外部仕様（OpenAPI/レスポンス挙動）を壊していない
-- [ ] 対象ワークパッケージのチェックボックス更新済み
+- [ ] `docs/tasks/implementation-tasks.md` の該当タスクチェック更新済み
 
 ## 5. T-020 の範囲
 - 対象:
@@ -44,4 +44,4 @@
 - [ ] `npm run typecheck -w apps/web` が通る
 - [ ] `npm run test -w apps/web` が通る
 - [ ] UploadSection / NoteDetailPanel の外部挙動（表示文言/状態遷移/エラー表示）を維持
-- [ ] 対象ワークパッケージのチェックボックス更新済み
+- [ ] `docs/tasks/implementation-tasks.md` の該当タスクチェック更新済み
