@@ -52,7 +52,15 @@ describe('API integration', () => {
 
   it('POST /api/enex/parse accepts a valid ENEX upload', async () => {
     const app = createApp();
-    const payload = Buffer.from('<en-export></en-export>');
+    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Sample Note</title>
+        <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
+        <en-note>hello</en-note>]]></content>
+      </note>
+    </en-export>`);
 
     const response = await request(app)
       .post('/api/enex/parse')
@@ -61,7 +69,7 @@ describe('API integration', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       importId: expect.any(String),
-      noteCount: 0,
+      noteCount: 1,
       warnings: []
     });
   });
@@ -205,6 +213,96 @@ describe('API integration', () => {
     expect(response.body).toEqual({
       code: 'INVALID_QUERY',
       message: 'limit must be a positive integer.'
+    });
+  });
+
+  it('GET /api/imports/:importId/notes/:noteId returns note detail', async () => {
+    const app = createApp();
+    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <guid>note-123</guid>
+        <title>Sample Detail</title>
+        <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
+        <en-note>Detail Body</en-note>]]></content>
+        <created>20240101T000000Z</created>
+        <updated>20240102T000000Z</updated>
+        <tag>demo</tag>
+        <resource>
+          <data encoding="base64"><![CDATA[AAAA]]></data>
+          <mime>image/png</mime>
+          <resource-attributes>
+            <file-name>image.png</file-name>
+          </resource-attributes>
+        </resource>
+      </note>
+    </en-export>`);
+
+    const parseResponse = await request(app)
+      .post('/api/enex/parse')
+      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+
+    const detailResponse = await request(app).get(
+      `/api/imports/${parseResponse.body.importId}/notes/note-123`
+    );
+
+    expect(detailResponse.status).toBe(200);
+    expect(detailResponse.body).toEqual({
+      id: 'note-123',
+      title: 'Sample Detail',
+      createdAt: '20240101T000000Z',
+      updatedAt: '20240102T000000Z',
+      tags: ['demo'],
+      contentHtml: expect.stringContaining('Detail Body'),
+      resources: [
+        {
+          id: 'resource-1-1',
+          fileName: 'image.png',
+          mime: 'image/png',
+          size: 3
+        }
+      ]
+    });
+  });
+
+  it('GET /api/imports/:importId/notes/:noteId returns 404 for missing import', async () => {
+    const app = createApp();
+
+    const response = await request(app).get('/api/imports/missing-import/notes/note-123');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      code: 'IMPORT_NOT_FOUND',
+      message: 'Import session not found.'
+    });
+  });
+
+  it('GET /api/imports/:importId/notes/:noteId returns 404 for missing note', async () => {
+    const app = createApp();
+    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <guid>note-123</guid>
+        <title>Sample Detail</title>
+        <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
+        <en-note>Detail Body</en-note>]]></content>
+      </note>
+    </en-export>`);
+
+    const parseResponse = await request(app)
+      .post('/api/enex/parse')
+      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+
+    const response = await request(app).get(
+      `/api/imports/${parseResponse.body.importId}/notes/missing-note`
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      code: 'NOTE_NOT_FOUND',
+      message: 'Note not found.'
     });
   });
 });

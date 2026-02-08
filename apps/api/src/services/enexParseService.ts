@@ -1,6 +1,8 @@
 import { randomUUID } from 'crypto';
 
 import { saveImport } from '../repositories/importRepository.js';
+import type { ImportSession, NoteDetail } from '../models/note.js';
+import { saveImportSession } from '../repositories/importSessionRepository.js';
 import { parseEnex } from './enexParserService.js';
 
 export type EnexParseResult = {
@@ -28,15 +30,32 @@ const formatWarning = (warning: { noteTitle?: string; message: string }): string
 };
 
 export const parseEnexFile = (payload: { data: Buffer }): EnexParseResult => {
-  const result = parseEnex(payload.data);
-  if (!result.ok) {
-    throw new EnexParseError(result.error.code, result.error.message, result.error.details);
+  const parsed = parseEnex(payload.data);
+  if (!parsed.ok) {
+    throw new EnexParseError(parsed.error.code, parsed.error.message, parsed.error.details);
   }
 
+  const warnings = parsed.warnings.map(formatWarning);
   const importId = randomUUID();
+  const notes: NoteDetail[] = parsed.notes.map((note) => ({
+    id: note.id,
+    title: note.title,
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt,
+    tags: note.tags,
+    contentHtml: note.content,
+    resources: note.resources.map((resource) => ({
+      id: resource.id,
+      fileName: resource.fileName,
+      mime: resource.mime,
+      size: resource.size
+    }))
+  }));
+
+  // Keep T-004 note list endpoint working.
   saveImport(
     importId,
-    result.notes.map((note) => ({
+    parsed.notes.map((note) => ({
       id: note.id,
       title: note.title,
       createdAt: note.createdAt,
@@ -46,9 +65,19 @@ export const parseEnexFile = (payload: { data: Buffer }): EnexParseResult => {
     }))
   );
 
+  const session: ImportSession = {
+    id: importId,
+    createdAt: new Date().toISOString(),
+    noteCount: notes.length,
+    warnings,
+    notes
+  };
+
+  saveImportSession(session);
+
   return {
     importId,
-    noteCount: result.notes.length,
-    warnings: result.warnings.map(formatWarning)
+    noteCount: notes.length,
+    warnings
   };
 };

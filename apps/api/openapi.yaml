@@ -130,6 +130,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/imports/{importId}/notes/{noteId}:
+    get:
+      summary: ノート詳細の取得
+      operationId: getNoteDetail
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ノート詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteDetailResponse'
+        '404':
+          description: 対象が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 想定外エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     HealthResponse:
@@ -226,3 +260,52 @@ components:
           example: Invalid ENEX file type.
         details:
           nullable: true
+    ResourceMeta:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          example: resource-1-1
+        fileName:
+          type: string
+          example: attachment.pdf
+        mime:
+          type: string
+          example: application/pdf
+        size:
+          type: integer
+          example: 1024
+    NoteDetailResponse:
+      type: object
+      required:
+        - id
+        - title
+        - tags
+        - contentHtml
+        - resources
+      properties:
+        id:
+          type: string
+          example: note-1
+        title:
+          type: string
+          example: Sample Note
+        createdAt:
+          type: string
+          example: 20240101T000000Z
+        updatedAt:
+          type: string
+          example: 20240102T000000Z
+        tags:
+          type: array
+          items:
+            type: string
+        contentHtml:
+          type: string
+          example: '<en-note>hello</en-note>'
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceMeta'
