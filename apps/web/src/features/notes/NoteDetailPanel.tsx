@@ -13,7 +13,7 @@ type DetailState =
   | { status: 'error'; error: string }
   | { status: 'success'; note: NoteDetail };
 
-const formatTimestamp = (value?: string): string => {
+const formatTimestamp = (value?: string | null): string => {
   if (!value) {
     return '—';
   }
