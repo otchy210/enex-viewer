@@ -1,3 +1,5 @@
+import { XMLParser } from "fast-xml-parser";
+
 export type EnexParseWarning = {
   noteTitle?: string;
   message: string;
@@ -40,55 +42,62 @@ export type EnexParseFailure = {
 
 export type EnexParseResult = EnexParseSuccess | EnexParseFailure;
 
-const matchAll = (input: string, pattern: RegExp): string[] => {
-  const matches: string[] = [];
-  let match = pattern.exec(input);
-  while (match) {
-    matches.push(match[1] ?? "");
-    match = pattern.exec(input);
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "",
+  trimValues: false,
+  cdataPropName: "__cdata",
+});
+
+const toArray = <T>(value: T | T[] | undefined): T[] => {
+  if (!value) {
+    return [];
   }
-  return matches;
+  return Array.isArray(value) ? value : [value];
 };
 
-const extractTag = (input: string, tag: string): string => {
-  const pattern = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
-  const match = input.match(pattern);
-  if (!match) {
-    return "";
+const extractCdataString = (value: unknown): string => {
+  if (typeof value === "string") {
+    return value;
   }
-  return stripCdata(match[1]?.trim() ?? "");
+  if (typeof value === "object" && value !== null) {
+    const cdata = (value as { __cdata?: unknown }).__cdata;
+    if (typeof cdata === "string") {
+      return cdata;
+    }
+  }
+  return "";
 };
 
-const stripCdata = (value: string): string => {
-  const cdataMatch = value.match(/<!\[CDATA\[([\s\S]*?)\]\]>/i);
-  if (cdataMatch) {
-    return cdataMatch[1] ?? "";
-  }
-  return value;
-};
-
-const extractResourceSize = (data: string): number | undefined => {
-  if (!data) {
+const extractResourceSize = (data: unknown): number | undefined => {
+  const raw = extractCdataString(data);
+  if (!raw) {
     return undefined;
   }
-  return Math.floor((data.length * 3) / 4);
-};
-
-const countOccurrences = (input: string, needle: string): number => {
-  let count = 0;
-  let index = input.indexOf(needle);
-  while (index !== -1) {
-    count += 1;
-    index = input.indexOf(needle, index + needle.length);
-  }
-  return count;
+  return Math.floor((raw.length * 3) / 4);
 };
 
 export const parseEnex = (input: string | Buffer): EnexParseResult => {
   const warnings: EnexParseWarning[] = [];
   const xml = Buffer.isBuffer(input) ? input.toString("utf-8") : input;
 
-  if (!xml.includes("<en-export")) {
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = parser.parse(xml) as Record<string, unknown>;
+  } catch (error) {
+    return {
+      ok: false,
+      error: {
+        code: "INVALID_XML",
+        message: "Failed to parse XML.",
+        details: error,
+      },
+      warnings,
+    };
+  }
+
+  const root = parsed["en-export"] as Record<string, unknown> | undefined;
+  if (!root) {
     return {
       ok: false,
       error: {
@@ -99,34 +108,12 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
     };
   }
 
-  if (!xml.includes("</en-export>")) {
-    return {
-      ok: false,
-      error: {
-        code: "INVALID_XML",
-        message: "Missing closing </en-export> tag.",
-      },
-      warnings,
-    };
-  }
-
-  if (countOccurrences(xml, "<note") !== countOccurrences(xml, "</note>")) {
-    return {
-      ok: false,
-      error: {
-        code: "INVALID_XML",
-        message: "Mismatched <note> tags.",
-      },
-      warnings,
-    };
-  }
-
-  const noteBlocks = matchAll(xml, /<note[^>]*>([\s\S]*?)<\/note>/gi);
+  const notes = toArray(root.note as Record<string, unknown> | Record<string, unknown>[]);
   const parsedNotes: ParsedNote[] = [];
 
-  noteBlocks.forEach((note, noteIndex) => {
-    const title = extractTag(note, "title").trim();
-    const content = extractTag(note, "content");
+  notes.forEach((note, noteIndex) => {
+    const title = typeof note.title === "string" ? note.title.trim() : "";
+    const content = extractCdataString(note.content);
 
     if (!title || !content) {
       warnings.push({
@@ -136,30 +123,32 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
       return;
     }
 
-    const tags = matchAll(note, /<tag[^>]*>([\s\S]*?)<\/tag>/gi)
-      .map((tag) => stripCdata(tag).trim())
-      .filter(Boolean);
+    const tags = toArray(note.tag as string | string[]).filter(
+      (tag): tag is string => typeof tag === "string",
+    );
 
-    const resourceBlocks = matchAll(note, /<resource[^>]*>([\s\S]*?)<\/resource>/gi);
-    const resources = resourceBlocks.map((resource, resourceIndex) => {
-      const mime = extractTag(resource, "mime").trim() || undefined;
-      const attributes = extractTag(resource, "resource-attributes");
-      const fileName = extractTag(attributes, "file-name").trim() || undefined;
-      const data = extractTag(resource, "data");
+    const resources = toArray(note.resource as Record<string, unknown> | Record<string, unknown>[]).map(
+      (resource, resourceIndex) => {
+        const attributes = resource["resource-attributes"] as Record<string, unknown> | undefined;
+        const fileName =
+          typeof attributes?.["file-name"] === "string" ? attributes["file-name"] : undefined;
+        const mime = typeof resource.mime === "string" ? resource.mime : undefined;
+        const size = extractResourceSize(resource.data);
 
-      return {
-        id: `resource-${noteIndex + 1}-${resourceIndex + 1}`,
-        fileName,
-        mime,
-        size: extractResourceSize(data),
-      } satisfies ParsedResourceMeta;
-    });
+        return {
+          id: `resource-${noteIndex + 1}-${resourceIndex + 1}`,
+          fileName,
+          mime,
+          size,
+        } satisfies ParsedResourceMeta;
+      },
+    );
 
     parsedNotes.push({
-      id: extractTag(note, "guid").trim() || `note-${noteIndex + 1}`,
+      id: typeof note.guid === "string" ? note.guid : `note-${noteIndex + 1}`,
       title,
-      createdAt: extractTag(note, "created").trim() || undefined,
-      updatedAt: extractTag(note, "updated").trim() || undefined,
+      createdAt: typeof note.created === "string" ? note.created : undefined,
+      updatedAt: typeof note.updated === "string" ? note.updated : undefined,
       tags,
       content,
       resources,
