@@ -15,6 +15,9 @@
     "build:web": "npm run build -w apps/web",
     "typecheck": "npm run typecheck:api && npm run typecheck:web",
     "typecheck:api": "npm run typecheck -w apps/api",
-    "typecheck:web": "npm run typecheck -w apps/web"
+    "typecheck:web": "npm run typecheck -w apps/web",
+    "test": "npm run test:api && npm run test:web",
+    "test:api": "npm run test -w apps/api",
+    "test:web": "npm run test -w apps/web"
   }
 }
