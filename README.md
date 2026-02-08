@@ -64,4 +64,5 @@ npm run typecheck:web
 - 詳細設計: `docs/design/system-design.md`
 - 実装タスク一覧: `docs/tasks/implementation-tasks.md`
 - エージェント実行ガイド: `docs/tasks/agent-execution.md`
+- テスト基盤移行タスク: `docs/tasks/test-modernization-tasks.md`
 - 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
