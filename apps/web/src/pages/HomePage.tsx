@@ -1,4 +1,5 @@
 import { MessageSection } from '../components/MessageSection';
+import { UploadSection } from '../features/upload/UploadSection';
 import { useMessage } from '../state/useMessage';
 
 export function HomePage() {
@@ -7,6 +8,8 @@ export function HomePage() {
   return (
     <main className="container">
       <h1>TypeScript REST API + Web UI</h1>
+
+      <UploadSection />
 
       {loading && <p>Loading...</p>}
       {error && <p className="error">Error: {error}</p>}
