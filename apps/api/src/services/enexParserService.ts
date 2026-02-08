@@ -109,8 +109,8 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
     };
   }
 
-  const root = parsed["en-export"] as Record<string, unknown> | undefined;
-  if (!root) {
+  const rootValue = parsed["en-export"];
+  if (rootValue === undefined || rootValue === null) {
     return {
       ok: false,
       error: {
@@ -121,6 +121,7 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
     };
   }
 
+  const root = typeof rootValue === "object" ? (rootValue as Record<string, unknown>) : {};
   const notes = toArray(root.note as Record<string, unknown> | Record<string, unknown>[]);
   const parsedNotes: ParsedNote[] = [];
 

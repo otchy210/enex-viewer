@@ -75,6 +75,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/imports/{importId}/notes:
+    get:
+      summary: ノート一覧の取得
+      operationId: getImportNotes
+      parameters:
+        - in: path
+          name: importId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: q
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: ノート一覧と総件数
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteListResponse'
+        '400':
+          description: クエリパラメータ不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 参照対象のインポートが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 想定外エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     HealthResponse:
@@ -115,6 +170,48 @@ components:
           type: array
           items:
             type: string
+    NoteSummary:
+      type: object
+      required:
+        - id
+        - title
+        - tags
+        - excerpt
+      properties:
+        id:
+          type: string
+          example: note-1
+        title:
+          type: string
+          example: Sample Note
+        createdAt:
+          type: string
+          nullable: true
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          nullable: true
+          example: '2024-01-02T00:00:00Z'
+        tags:
+          type: array
+          items:
+            type: string
+        excerpt:
+          type: string
+          example: hello world...
+    NoteListResponse:
+      type: object
+      required:
+        - total
+        - notes
+      properties:
+        total:
+          type: integer
+          example: 2
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteSummary'
     ErrorResponse:
       type: object
       required:
