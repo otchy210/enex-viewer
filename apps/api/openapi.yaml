@@ -28,6 +28,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+  /api/enex/parse:
+    post:
+      summary: ENEX ファイルのアップロードと解析
+      operationId: postEnexParse
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: ENEX 解析結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnexParseResponse'
+        '400':
+          description: ファイル形式不正、必須パラメータ不備
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ファイルサイズ超過
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: ENEX 解析失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 想定外エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     HealthResponse:
@@ -51,3 +98,34 @@ components:
           type: string
           format: date-time
           example: '2026-02-08T00:00:00.000Z'
+    EnexParseResponse:
+      type: object
+      required:
+        - importId
+        - noteCount
+        - warnings
+      properties:
+        importId:
+          type: string
+          example: 7bfa5e83-8a9c-49ec-ae4f-7a7cd5ad2f5f
+        noteCount:
+          type: integer
+          example: 0
+        warnings:
+          type: array
+          items:
+            type: string
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: INVALID_FILE_TYPE
+        message:
+          type: string
+          example: Invalid ENEX file type.
+        details:
+          nullable: true
