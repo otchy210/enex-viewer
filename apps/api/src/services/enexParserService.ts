@@ -1,4 +1,4 @@
-import { XMLParser } from "fast-xml-parser";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 
 export type EnexParseWarning = {
   noteTitle?: string;
@@ -80,6 +80,19 @@ const extractResourceSize = (data: unknown): number | undefined => {
 export const parseEnex = (input: string | Buffer): EnexParseResult => {
   const warnings: EnexParseWarning[] = [];
   const xml = Buffer.isBuffer(input) ? input.toString("utf-8") : input;
+
+  const validation = XMLValidator.validate(xml);
+  if (validation !== true) {
+    return {
+      ok: false,
+      error: {
+        code: "INVALID_XML",
+        message: "Failed to parse XML.",
+        details: validation,
+      },
+      warnings,
+    };
+  }
 
   let parsed: Record<string, unknown>;
   try {
