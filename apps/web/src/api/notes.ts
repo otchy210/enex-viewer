@@ -20,9 +20,26 @@ export type NoteListQuery = {
   offset?: number;
 };
 
+export type NoteResource = {
+  id: string;
+  fileName?: string;
+  mime?: string;
+  size?: number;
+};
+
+export type NoteDetail = {
+  id: string;
+  title: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  tags: string[];
+  contentHtml: string;
+  resources: NoteResource[];
+};
+
 export async function fetchNotesList(
   importId: string,
-  { q, limit, offset }: NoteListQuery
+  { q, limit, offset }: NoteListQuery = {}
 ): Promise<NoteListResponse> {
   const params = new URLSearchParams();
   if (q) {
@@ -46,4 +63,14 @@ export async function fetchNotesList(
   }
 
   return (await res.json()) as NoteListResponse;
+}
+
+export async function fetchNoteDetail(importId: string, noteId: string): Promise<NoteDetail> {
+  const res = await fetch(`/api/imports/${importId}/notes/${noteId}`);
+
+  if (!res.ok) {
+    throw new Error(await buildErrorMessage(res));
+  }
+
+  return (await res.json()) as NoteDetail;
 }

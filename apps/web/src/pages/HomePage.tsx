@@ -1,4 +1,5 @@
 import { MessageSection } from '../components/MessageSection';
+import { NoteBrowser } from '../features/notes/NoteBrowser';
 import { NotesListSection } from '../features/notes/NotesListSection';
 import { UploadSection } from '../features/upload/UploadSection';
 import { useEnexUpload } from '../state/useEnexUpload';
@@ -15,6 +16,7 @@ export function HomePage() {
 
       <UploadSection {...upload} />
       <NotesListSection importId={importId} />
+      {importId && <NoteBrowser importId={importId} />}
 
       {loading && <p>Loading...</p>}
       {error && <p className="error">Error: {error}</p>}
