@@ -1,6 +1,5 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
-import { parseMultipartSingleFile, MultipartParseError } from '../lib/multipart.js';
 import { parseEnexFile, EnexParseError } from '../services/enexParseService.js';
 
 const isLikelyEnex = (fileName?: string, contentType?: string) => {
@@ -15,7 +14,23 @@ const isLikelyEnex = (fileName?: string, contentType?: string) => {
   return false;
 };
 
-export const enexParseController = (req: Request, res: Response) => {
+const buildHeaders = (headers: Request['headers']) => {
+  const result = new Headers();
+  Object.entries(headers).forEach(([key, value]) => {
+    if (typeof value === 'string') {
+      result.set(key, value);
+    } else if (Array.isArray(value)) {
+      result.set(key, value.join(', '));
+    }
+  });
+  return result;
+};
+
+export const enexParseController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     if (!Buffer.isBuffer(req.body)) {
       return res.status(400).json({
@@ -24,24 +39,33 @@ export const enexParseController = (req: Request, res: Response) => {
       });
     }
 
-    const file = parseMultipartSingleFile(req.body, req.headers['content-type']);
-    if (!isLikelyEnex(file.fileName, file.contentType)) {
+    const request = new Request('http://localhost/api/enex/parse', {
+      method: 'POST',
+      headers: buildHeaders(req.headers),
+      body: req.body
+    });
+    const formData = await request.formData();
+    const file = formData.get('file');
+    if (!file || typeof file === 'string') {
+      return res.status(400).json({
+        code: 'MISSING_FILE',
+        message: 'file is required.'
+      });
+    }
+
+    const fileName = 'name' in file ? file.name : undefined;
+    const contentType = 'type' in file ? file.type : undefined;
+    if (!isLikelyEnex(fileName, contentType)) {
       return res.status(400).json({
         code: 'INVALID_FILE_TYPE',
         message: 'Invalid ENEX file type.'
       });
     }
 
-    const result = parseEnexFile(file);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const result = parseEnexFile({ data: buffer });
     return res.json(result);
   } catch (error) {
-    if (error instanceof MultipartParseError) {
-      return res.status(400).json({
-        code: error.code,
-        message: error.message
-      });
-    }
-
     if (error instanceof EnexParseError) {
       return res.status(422).json({
         code: error.code,
@@ -49,6 +73,6 @@ export const enexParseController = (req: Request, res: Response) => {
       });
     }
 
-    throw error;
+    return next(error);
   }
 };
