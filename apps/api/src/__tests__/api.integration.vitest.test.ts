@@ -1,30 +1,8 @@
-import cors from 'cors';
-import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { clearImports } from '../repositories/importRepository.js';
-import routes from '../routes/index.js';
-
-const createApp = () => {
-  const app = express();
-  app.use(cors());
-  app.use(express.json());
-  app.use(routes);
-  app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error(error);
-    if (res.headersSent) {
-      return;
-    }
-
-    res.status(500).json({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Unexpected error.'
-    });
-  });
-
-  return app;
-};
+import { buildEnexPayload, createTestApp, uploadEnex } from './testHelpers.js';
 
 describe('API integration', () => {
   beforeEach(() => {
@@ -32,7 +10,7 @@ describe('API integration', () => {
   });
 
   it('GET /health returns ok true', async () => {
-    const app = createApp();
+    const app = createTestApp();
 
     const response = await request(app).get('/health');
 
@@ -41,7 +19,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/message returns message payload', async () => {
-    const app = createApp();
+    const app = createTestApp();
 
     const response = await request(app).get('/api/message');
 
@@ -51,20 +29,17 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse accepts a valid ENEX upload', async () => {
-    const app = createApp();
-    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
-    <en-export>
+    const app = createTestApp();
+    const payload = buildEnexPayload(`
       <note>
         <title>Sample Note</title>
         <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
         <en-note>hello</en-note>]]></content>
       </note>
-    </en-export>`);
+    `);
 
-    const response = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const response = await uploadEnex(app, payload);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -75,7 +50,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse rejects missing file uploads', async () => {
-    const app = createApp();
+    const app = createTestApp();
 
     const response = await request(app).post('/api/enex/parse').field('note', 'missing-file');
 
@@ -87,7 +62,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse rejects non-ENEX files', async () => {
-    const app = createApp();
+    const app = createTestApp();
 
     const response = await request(app)
       .post('/api/enex/parse')
@@ -101,14 +76,12 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse reports parse failures', async () => {
-    const app = createApp();
+    const app = createTestApp();
 
-    const response = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', Buffer.from('<note></note>'), {
-        filename: 'invalid.enex',
-        contentType: 'application/xml'
-      });
+    const response = await uploadEnex(app, Buffer.from('<note></note>'), {
+      filename: 'invalid.enex',
+      contentType: 'application/xml'
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toEqual({
@@ -118,9 +91,8 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes returns paginated notes', async () => {
-    const app = createApp();
-    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
-      <en-export>
+    const app = createTestApp();
+    const payload = buildEnexPayload(`
         <note>
           <title>First Note</title>
           <content><![CDATA[<en-note>hello world</en-note>]]></content>
@@ -135,11 +107,9 @@ describe('API integration', () => {
           <updated>20240104T000000Z</updated>
           <tag>beta</tag>
         </note>
-      </en-export>`);
+      `);
 
-    const parseResponse = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const parseResponse = await uploadEnex(app, payload);
 
     expect(parseResponse.status).toBe(200);
 
@@ -154,9 +124,8 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes supports search query', async () => {
-    const app = createApp();
-    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
-      <en-export>
+    const app = createTestApp();
+    const payload = buildEnexPayload(`
         <note>
           <title>Kitchen Log</title>
           <content><![CDATA[<en-note>coffee beans</en-note>]]></content>
@@ -171,11 +140,9 @@ describe('API integration', () => {
           <updated>20240104T000000Z</updated>
           <tag>travel</tag>
         </note>
-      </en-export>`);
+      `);
 
-    const parseResponse = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const parseResponse = await uploadEnex(app, payload);
 
     const listResponse = await request(app)
       .get(`/api/imports/${parseResponse.body.importId}/notes`)
@@ -187,7 +154,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes returns 404 for unknown import', async () => {
-    const app = createApp();
+    const app = createTestApp();
 
     const response = await request(app).get('/api/imports/missing/notes');
 
@@ -199,11 +166,9 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes validates query params', async () => {
-    const app = createApp();
-    const payload = Buffer.from('<en-export></en-export>');
-    const parseResponse = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const app = createTestApp();
+    const payload = buildEnexPayload('');
+    const parseResponse = await uploadEnex(app, payload);
 
     const response = await request(app)
       .get(`/api/imports/${parseResponse.body.importId}/notes`)
@@ -217,11 +182,9 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes rejects array query params', async () => {
-    const app = createApp();
-    const payload = Buffer.from('<en-export></en-export>');
-    const parseResponse = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const app = createTestApp();
+    const payload = buildEnexPayload('');
+    const parseResponse = await uploadEnex(app, payload);
 
     const response = await request(app)
       .get(`/api/imports/${parseResponse.body.importId}/notes`)
@@ -235,11 +198,9 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes rejects non-integer query values', async () => {
-    const app = createApp();
-    const payload = Buffer.from('<en-export></en-export>');
-    const parseResponse = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const app = createTestApp();
+    const payload = buildEnexPayload('');
+    const parseResponse = await uploadEnex(app, payload);
 
     const response = await request(app)
       .get(`/api/imports/${parseResponse.body.importId}/notes`)
@@ -253,9 +214,8 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes/:noteId returns note detail', async () => {
-    const app = createApp();
-    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
-    <en-export>
+    const app = createTestApp();
+    const payload = buildEnexPayload(`
       <note>
         <guid>note-123</guid>
         <title>Sample Detail</title>
@@ -273,11 +233,9 @@ describe('API integration', () => {
           </resource-attributes>
         </resource>
       </note>
-    </en-export>`);
+    `);
 
-    const parseResponse = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const parseResponse = await uploadEnex(app, payload);
 
     const detailResponse = await request(app).get(
       `/api/imports/${parseResponse.body.importId}/notes/note-123`
@@ -303,7 +261,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes/:noteId returns 404 for missing import', async () => {
-    const app = createApp();
+    const app = createTestApp();
 
     const response = await request(app).get('/api/imports/missing-import/notes/note-123');
 
@@ -315,9 +273,8 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes/:noteId returns 404 for missing note', async () => {
-    const app = createApp();
-    const payload = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
-    <en-export>
+    const app = createTestApp();
+    const payload = buildEnexPayload(`
       <note>
         <guid>note-123</guid>
         <title>Sample Detail</title>
@@ -325,11 +282,9 @@ describe('API integration', () => {
         <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
         <en-note>Detail Body</en-note>]]></content>
       </note>
-    </en-export>`);
+    `);
 
-    const parseResponse = await request(app)
-      .post('/api/enex/parse')
-      .attach('file', payload, { filename: 'sample.enex', contentType: 'application/xml' });
+    const parseResponse = await uploadEnex(app, payload);
 
     const response = await request(app).get(
       `/api/imports/${parseResponse.body.importId}/notes/missing-note`
@@ -339,6 +294,81 @@ describe('API integration', () => {
     expect(response.body).toEqual({
       code: 'NOTE_NOT_FOUND',
       message: 'Note not found.'
+    });
+  });
+
+  it('POST /api/enex/parse rejects non-multipart requests', async () => {
+    const app = createTestApp();
+
+    const response = await request(app).post('/api/enex/parse').send({ file: 'nope' });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: 'INVALID_MULTIPART',
+      message: 'Request body must be multipart/form-data.'
+    });
+  });
+
+  it('POST /api/enex/parse reports invalid XML', async () => {
+    const app = createTestApp();
+
+    const response = await uploadEnex(app, Buffer.from('<en-export><note></en-export>'));
+
+    expect(response.status).toBe(422);
+    expect(response.body.code).toBe('INVALID_XML');
+    expect(response.body.message).toBe('Failed to parse XML.');
+    expect(response.body.details).toBeDefined();
+  });
+
+  it('POST /api/enex/parse returns warnings for skipped notes', async () => {
+    const app = createTestApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <title>Incomplete Note</title>
+      </note>
+      <note>
+        <title>Complete Note</title>
+        <content><![CDATA[<en-note>ok</en-note>]]></content>
+      </note>
+    `);
+
+    const response = await uploadEnex(app, payload);
+
+    expect(response.status).toBe(200);
+    expect(response.body.noteCount).toBe(1);
+    expect(response.body.warnings).toHaveLength(1);
+    expect(response.body.warnings[0]).toContain('Incomplete Note');
+  });
+
+  it('GET /api/imports/:importId/notes rejects array search params', async () => {
+    const app = createTestApp();
+    const payload = buildEnexPayload('');
+    const parseResponse = await uploadEnex(app, payload);
+
+    const response = await request(app)
+      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .query({ q: ['one', 'two'] });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: 'INVALID_QUERY',
+      message: 'q must be a single string.'
+    });
+  });
+
+  it('GET /api/imports/:importId/notes rejects limit over max', async () => {
+    const app = createTestApp();
+    const payload = buildEnexPayload('');
+    const parseResponse = await uploadEnex(app, payload);
+
+    const response = await request(app)
+      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .query({ limit: 200 });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: 'INVALID_QUERY',
+      message: 'limit must be at most 100.'
     });
   });
 });

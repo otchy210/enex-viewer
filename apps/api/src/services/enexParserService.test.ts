@@ -55,4 +55,58 @@ describe("parseEnex", () => {
       expect(result.notes[0]?.content).not.toContain("<script");
     }
   });
+
+  it("skips notes missing title or content and returns warnings", () => {
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Incomplete</title>
+      </note>
+      <note>
+        <title>Complete</title>
+        <content><![CDATA[<en-note>ok</en-note>]]></content>
+      </note>
+    </en-export>`;
+
+    const result = parseEnex(sample);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.notes).toHaveLength(1);
+      expect(result.notes[0]?.title).toBe("Complete");
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]?.noteTitle).toBe("Incomplete");
+    }
+  });
+
+  it("extracts resource metadata and size", () => {
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Resource Note</title>
+        <content><![CDATA[<en-note>asset</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[AAAA]]></data>
+          <mime>image/png</mime>
+          <resource-attributes>
+            <file-name>image.png</file-name>
+          </resource-attributes>
+        </resource>
+      </note>
+    </en-export>`;
+
+    const result = parseEnex(sample);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.notes[0]?.resources).toEqual([
+        {
+          id: "resource-1-1",
+          fileName: "image.png",
+          mime: "image/png",
+          size: 3,
+        },
+      ]);
+    }
+  });
 });
