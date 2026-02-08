@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-  max-width: 720px;
+  max-width: 1080px;
   margin: 10vh auto;
   padding: 24px;
   border-radius: 16px;
@@ -86,4 +86,148 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.note-browser {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(360px, 2fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #dbe3f3;
+  background: #f8fafc;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.note-list-item {
+  text-align: left;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+}
+
+.note-list-item:hover,
+.note-list-item.is-selected {
+  border-color: #7aa2f7;
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.2);
+}
+
+.note-list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.note-list-title {
+  font-weight: 600;
+}
+
+.note-list-date {
+  font-size: 0.85rem;
+  color: #5b677a;
+}
+
+.note-list-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.note-list-excerpt {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.note-detail {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #dbe3f3;
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.note-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.note-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e0ecff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+}
+
+.note-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.note-meta dt {
+  font-size: 0.75rem;
+  color: #5b677a;
+}
+
+.note-meta dd {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.note-resources {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.note-resource-meta {
+  margin-left: 8px;
+  font-size: 0.75rem;
+  color: #5b677a;
+}
+
+.note-content {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  line-height: 1.6;
+}
+
+.note-empty {
+  margin: 0;
+  color: #5b677a;
+  font-size: 0.85rem;
 }

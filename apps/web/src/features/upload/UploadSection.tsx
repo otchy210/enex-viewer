@@ -62,9 +62,7 @@ export function UploadSection({
             Import ID: <strong>{result.importId}</strong>
           </p>
           <p>Notes detected: {result.noteCount}</p>
-          {result.warnings.length > 0 && (
-            <p>Warnings: {result.warnings.length}</p>
-          )}
+          {result.warnings.length > 0 && <p>Warnings: {result.warnings.length}</p>}
         </div>
       )}
       {status === 'error' && error && <p className="error">Error: {error}</p>}
