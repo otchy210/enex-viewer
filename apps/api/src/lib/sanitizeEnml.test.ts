@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+// NOTE: NodeNext ESM requires .js extension for runtime module resolution.
 import { sanitizeEnml } from "./sanitizeEnml.js";
 
 describe("sanitizeEnml", () => {

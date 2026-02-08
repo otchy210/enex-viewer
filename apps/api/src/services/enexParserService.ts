@@ -1,5 +1,6 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 
+// NOTE: NodeNext ESM requires .js extension for runtime module resolution.
 import { sanitizeEnml } from "../lib/sanitizeEnml.js";
 
 export type EnexParseWarning = {
