@@ -11,11 +11,10 @@ ENEX Viewer 開発で参照する主要ドキュメントの入り口です。
 - 詳細設計: `docs/design/system-design.md`
 
 ## 3. 実装計画
+- タスクドキュメント入口: `docs/tasks/README.md`
 - 実装タスク一覧: `docs/tasks/implementation-tasks.md`
 - エージェント実行ガイド: `docs/tasks/agent-execution.md`
-- 並列実行向けワークパッケージ: `docs/tasks/work-packages/`
-- テスト基盤移行タスク: `docs/tasks/test-modernization-tasks.md`
-- リファクタタスク: `docs/tasks/refactor-tasks.md`
+- ワークストリーム定義: `docs/tasks/workstreams.md`
 - 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
 
 ## 4. テスト運用

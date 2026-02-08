@@ -62,9 +62,9 @@ npm run typecheck:web
 - 要件定義: `docs/product/requirements.md`
 - 仕様書: `docs/product/spec.md`
 - 詳細設計: `docs/design/system-design.md`
+- タスクドキュメント入口: `docs/tasks/README.md`
 - 実装タスク一覧: `docs/tasks/implementation-tasks.md`
 - エージェント実行ガイド: `docs/tasks/agent-execution.md`
-- テスト基盤移行タスク: `docs/tasks/test-modernization-tasks.md`
-- リファクタタスク: `docs/tasks/refactor-tasks.md`
+- ワークストリーム定義: `docs/tasks/workstreams.md`
 - テスト運用ガイドライン: `docs/testing/test-guidelines.md`
 - 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
