@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NotesListSection } from './NotesListSection';
 import { fetchNotesList, type NoteListResponse } from '../../api/notes';
+import { createDeferred } from '../../test-utils/deferred';
 
 vi.mock('../../api/notes', () => ({
   fetchNotesList: vi.fn()
@@ -25,23 +26,6 @@ const createResponse = (overrides?: Partial<NoteListResponse>): NoteListResponse
   ],
   ...overrides
 });
-
-type Deferred<T> = {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason?: unknown) => void;
-};
-
-const createDeferred = <T,>(): Deferred<T> => {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
-};
 
 describe('NotesListSection', () => {
   afterEach(() => {

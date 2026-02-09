@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { fetchNoteDetail, type NoteDetail } from '../../api/notes';
+import { formatResourceLabel, formatTimestamp } from './formatters';
 
 type NoteDetailPanelProps = {
   importId: string;
@@ -12,27 +13,6 @@ type DetailState =
   | { status: 'loading' }
   | { status: 'error'; error: string }
   | { status: 'success'; note: NoteDetail };
-
-const formatTimestamp = (value?: string | null): string => {
-  if (!value) {
-    return '—';
-  }
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) {
-    return value;
-  }
-  return new Date(parsed).toLocaleString();
-};
-
-const formatResourceLabel = (resource: NoteDetail['resources'][number]): string => {
-  if (resource.fileName) {
-    return resource.fileName;
-  }
-  if (resource.mime) {
-    return resource.mime;
-  }
-  return resource.id;
-};
 
 const NoteContent = ({ html }: { html: string }) => {
   const safeMarkup = useMemo(() => ({ __html: html }), [html]);
