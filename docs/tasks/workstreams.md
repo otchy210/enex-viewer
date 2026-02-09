@@ -82,6 +82,7 @@
 - 受け入れ観点:
   - `npm run typecheck -w apps/api` が通る
   - `npm run test -w apps/api` が通る
+  - リファクタ後に既存 API テストを実行し、リグレッションがない
   - 既存の HTTP ステータス/レスポンス形式/OpenAPI 契約を壊さない
 
 ## レーン I: Web リファクタ拡張（T-029〜T-031）
@@ -95,6 +96,7 @@
 - 受け入れ観点:
   - `npm run typecheck -w apps/web` が通る
   - `npm run test -w apps/web` が通る
+  - リファクタ後に既存 Web テストを実行し、リグレッションがない
   - 既存の UI 文言/状態遷移/HTTP 挙動を壊さない
 
 ## 未完了タスクの補足（スコープ明確化）
