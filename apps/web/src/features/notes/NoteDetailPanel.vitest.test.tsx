@@ -90,4 +90,21 @@ describe('NoteDetailPanel', () => {
 
     expect(await screen.findByText('Error: Network error')).toBeInTheDocument();
   });
+
+  it('does not update state after unmount when the request fails', async () => {
+    const deferred = createDeferred<NoteDetail>();
+    mockedFetchNoteDetail.mockReturnValueOnce(deferred.promise);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { unmount } = render(<NoteDetailPanel importId="import-1" noteId="note-4" />);
+
+    unmount();
+
+    deferred.reject(new Error('Late failure'));
+
+    await expect(deferred.promise).rejects.toThrow('Late failure');
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
+  });
 });
