@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NoteBrowser } from './NoteBrowser';
 import { fetchNotesList, type NoteListResponse } from '../../api/notes';
@@ -20,6 +20,10 @@ const mockedFetchNotesList = vi.mocked(fetchNotesList);
 describe('NoteBrowser', () => {
   beforeEach(() => {
     mockedFetchNotesList.mockReset();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('shows a loading state while fetching', () => {
@@ -86,6 +90,48 @@ describe('NoteBrowser', () => {
 
     expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-1');
     expect(screen.getByRole('button', { name: /First note/ })).toHaveClass('is-selected');
+  });
+
+  it('clears the selected note when the import id changes', async () => {
+    mockedFetchNotesList
+      .mockResolvedValueOnce({
+        total: 1,
+        notes: [
+          {
+            id: 'note-1',
+            title: 'First note',
+            createdAt: '2024-01-01T00:00:00Z',
+            tags: ['alpha'],
+            excerpt: 'Excerpt one'
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        total: 1,
+        notes: [
+          {
+            id: 'note-2',
+            title: 'Second note',
+            createdAt: '2024-02-01T00:00:00Z',
+            tags: [],
+            excerpt: 'Excerpt two'
+          }
+        ]
+      });
+
+    const { rerender } = render(<NoteBrowser importId="import-6" />);
+
+    await screen.findByText('First note');
+    fireEvent.click(screen.getByRole('button', { name: /First note/ }));
+    expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-1');
+
+    rerender(<NoteBrowser importId="import-7" />);
+
+    await screen.findByText('Second note');
+    expect(screen.getByTestId('detail-panel')).toHaveTextContent('none');
+    expect(screen.getByRole('button', { name: /Second note/ })).not.toHaveClass(
+      'is-selected'
+    );
   });
 
   it('does not update state after unmount when the request fails', async () => {

@@ -30,4 +30,23 @@ describe('main entrypoint', () => {
     expect(createRootMock).toHaveBeenCalledWith(document.getElementById('root'));
     expect(renderMock).toHaveBeenCalledTimes(1);
   });
+
+  it('throws when the root element is missing', async () => {
+    document.body.innerHTML = '';
+
+    const createRootMock = vi.fn();
+
+    vi.doMock('react-dom/client', () => ({
+      default: {
+        createRoot: createRootMock
+      }
+    }));
+
+    vi.doMock('./App', () => ({
+      App: () => <div data-testid="app">App</div>
+    }));
+
+    await expect(import('./main')).rejects.toThrow();
+    expect(createRootMock).toHaveBeenCalledWith(null);
+  });
 });
