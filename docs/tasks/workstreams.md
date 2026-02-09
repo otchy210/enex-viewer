@@ -84,6 +84,19 @@
   - `npm run test -w apps/api` が通る
   - 既存の HTTP ステータス/レスポンス形式/OpenAPI 契約を壊さない
 
+## レーン I: Web リファクタ拡張（T-029〜T-031）
+- 目的: Web の再利用性と責務分離を高め、表示/通信/state 管理の重複を減らす。
+- 主成果物:
+  - `NoteBrowser` と `useNotesList` の重複取得ロジック整理
+  - 日時フォーマッタの共通化
+  - API クライアントのエラー処理統一（`ensureOk` ベース）
+  - 非同期 state 管理パターンの整理
+  - `NoteContent` など表示責務の分離
+- 受け入れ観点:
+  - `npm run typecheck -w apps/web` が通る
+  - `npm run test -w apps/web` が通る
+  - 既存の UI 文言/状態遷移/HTTP 挙動を壊さない
+
 ## 未完了タスクの補足（スコープ明確化）
 - T-020:
   - `apps/web/src/api/enex.ts` と `apps/web/src/api/notes.ts` のエラー整形ロジックは共通化候補。
@@ -102,6 +115,15 @@
 - T-024:
   - controller での multipart 解析を分離し、テスト可能性と可読性を改善する。
   - Base64 サイズ推定を厳密化し、リソース `size` の信頼性を高める。
+- T-029:
+  - `NoteBrowser` と `useNotesList` の一覧取得重複を解消する。
+  - ノート一覧/詳細での日時表示フォーマットを共通化する。
+- T-030:
+  - `message.ts` を含む API クライアントのエラー処理を `ensureOk` に統一する。
+  - 失敗時メッセージの表示挙動を既存仕様の範囲で揃える。
+- T-031:
+  - `useMessage`/`useEnexUpload`/`useNotesList` の async state パターンの実装ゆれを縮小する。
+  - `NoteDetailPanel` 内の `NoteContent` を責務分離し、テストしやすい構成にする。
 
 ## 横断ルール
 - 契約先行 + モック: API 契約固定後、Web はモックで先行実装可。

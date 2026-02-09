@@ -36,6 +36,9 @@
 | [ ] | T-022 | H | Refactor | API アプリ基盤整理（`createApp` 抽出・エラーレスポンス helper 共通化・テスト初期化統一） | T-001, T-011, T-016 | 本番/テストの app 初期化が共通化され、エラー応答生成の重複が削減され、テスト前初期化で順序依存が発生しない |
 | [ ] | T-023 | H | Refactor | API データアクセス/入力解析整理（保存モデル一本化・query/path 解析責務分離） | T-003, T-004, T-005, T-006, T-019 | import データ二重管理が解消され、入力解析 API が用途別に整理され、一覧/詳細 API の既存挙動が維持される |
 | [ ] | T-024 | H | Refactor | ENEX アップロード/解析境界整理（multipart middleware 分離・resource size 算出厳密化） | T-003, T-006 | `enexParseController` の multipart 解析責務が分離され、resource size 算出が厳密化され、既存の HTTP 挙動を維持する |
+| [ ] | T-029 | I | Refactor | Web ノート表示責務整理（`NoteBrowser`/`useNotesList` の重複解消・日時フォーマッタ統一） | T-009, T-010, T-020 | ノート一覧取得ロジックの重複が解消され、日時表示フォーマットが共通化され、既存 UI 挙動を維持する |
+| [ ] | T-030 | I | Refactor | Web API クライアント統一（`message.ts` を含むエラー処理の `ensureOk` 統一） | T-008, T-009, T-010, T-020 | API クライアントのエラー処理が共通化され、失敗時メッセージ挙動と既存テストが維持される |
+| [ ] | T-031 | I | Refactor | Web 非同期 state/コンポーネント整理（共通 async パターン + `NoteContent` 分離） | T-008, T-009, T-010, T-020 | state 管理の実装ゆれが減り、`dangerouslySetInnerHTML` 表示責務が分離され、既存 UI とテストが維持される |
 
 ## 3. 並列化レーン
 - レーン A（API 基盤）: T-001, T-006, T-007
@@ -46,6 +49,7 @@
 - レーン F（テスト基盤移行）: T-015, T-016, T-017, T-018
 - レーン G（リファクタ）: T-019, T-020
 - レーン H（API リファクタ拡張）: T-022, T-023, T-024
+- レーン I（Web リファクタ拡張）: T-029, T-030, T-031
 
 ## 4. レーン間の依存関係
 - A -> C
@@ -56,6 +60,7 @@
 - A, B, C, D -> F（対象機能がある範囲で並列）
 - C（T-004/T-005）, D（T-008）-> G
 - A, C, F -> H（API 実装/テスト基盤を前提に段階実施）
+- D, F, G -> I（Web 機能/テスト基盤/既存リファクタを前提に段階実施）
 
 ## 5. 依存切り離し方針（契約先行 + モック）
 - API と Web を並列化する場合、先に `apps/api/openapi.yaml` と `docs/product/spec.md` の API 契約を固定する。
