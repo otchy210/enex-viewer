@@ -69,6 +69,21 @@
   - 型チェック/テストが通る
   - 外部仕様（UI 文言、API 契約、HTTP 挙動）を壊さない
 
+## レーン H: API リファクタ拡張（T-022〜T-024）
+- 目的: API の構造品質・再利用性・テスト安定性を高める。
+- 主成果物:
+  - `createApp` 抽出による本番/テストの初期化共通化
+  - import データ保存モデルの一本化
+  - multipart 解析の middleware 分離
+  - query/path 解析ユーティリティの責務分離
+  - エラーレスポンス生成 helper の共通化
+  - ENEX リソースサイズ算出ロジックの厳密化
+  - 統合テストのストア初期化強化
+- 受け入れ観点:
+  - `npm run typecheck -w apps/api` が通る
+  - `npm run test -w apps/api` が通る
+  - 既存の HTTP ステータス/レスポンス形式/OpenAPI 契約を壊さない
+
 ## 未完了タスクの補足（スコープ明確化）
 - T-020:
   - `apps/web/src/api/enex.ts` と `apps/web/src/api/notes.ts` のエラー整形ロジックは共通化候補。
@@ -77,6 +92,16 @@
 - T-021:
   - 低カバレッジ領域を `npm run test:coverage` で特定し、原則テスト追加で閾値達成する。
   - 実装修正が必要な場合は最小変更に限定し、理由を PR 説明に記載する。
+- T-022:
+  - `index.ts` とテストヘルパーの app 初期化重複を解消し、初期化ロジックのドリフトを防ぐ。
+  - controller 内の `{ code, message }` リテラル重複を helper 化してメンテ性を上げる。
+  - API 統合テストで必要ストア初期化を統一し、順序依存を防ぐ。
+- T-023:
+  - `importRepository` / `importSessionRepository` の二重保存を解消し、整合性リスクを下げる。
+  - path param と query param の解析 API を用途別に整理し、曖昧な関数を減らす。
+- T-024:
+  - controller での multipart 解析を分離し、テスト可能性と可読性を改善する。
+  - Base64 サイズ推定を厳密化し、リソース `size` の信頼性を高める。
 
 ## 横断ルール
 - 契約先行 + モック: API 契約固定後、Web はモックで先行実装可。
