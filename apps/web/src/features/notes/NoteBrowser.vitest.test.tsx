@@ -87,4 +87,21 @@ describe('NoteBrowser', () => {
     expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-1');
     expect(screen.getByRole('button', { name: /First note/ })).toHaveClass('is-selected');
   });
+
+  it('does not update state after unmount when the request fails', async () => {
+    const deferred = createDeferred<NoteListResponse>();
+    mockedFetchNotesList.mockReturnValueOnce(deferred.promise);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { unmount } = render(<NoteBrowser importId="import-5" />);
+
+    unmount();
+
+    deferred.reject(new Error('Late failure'));
+
+    await expect(deferred.promise).rejects.toThrow('Late failure');
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
+  });
 });

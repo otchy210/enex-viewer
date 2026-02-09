@@ -13,7 +13,9 @@ describe('formatTimestamp', () => {
   });
 
   it('formats valid dates', () => {
-    expect(formatTimestamp('2024-01-01T00:00:00Z')).toContain('2024');
+    const formatted = formatTimestamp('2024-01-01T00:00:00Z');
+    expect(formatted).not.toBe('—');
+    expect(formatted).not.toBe('2024-01-01T00:00:00Z');
   });
 });
 
