@@ -1,4 +1,4 @@
-import { buildErrorMessage } from './error';
+import { ensureOk } from './error';
 
 export type NoteSummary = {
   id: string;
@@ -58,19 +58,13 @@ export async function fetchNotesList(
     : `/api/imports/${importId}/notes`;
 
   const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(await buildErrorMessage(res));
-  }
-
+  await ensureOk(res);
   return (await res.json()) as NoteListResponse;
 }
 
 export async function fetchNoteDetail(importId: string, noteId: string): Promise<NoteDetail> {
   const res = await fetch(`/api/imports/${importId}/notes/${noteId}`);
 
-  if (!res.ok) {
-    throw new Error(await buildErrorMessage(res));
-  }
-
+  await ensureOk(res);
   return (await res.json()) as NoteDetail;
 }

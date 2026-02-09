@@ -1,4 +1,4 @@
-import { buildErrorMessage } from './error';
+import { ensureOk } from './error';
 
 export type ParseEnexResponse = {
   importId: string;
@@ -15,9 +15,6 @@ export async function parseEnexFile(file: File): Promise<ParseEnexResponse> {
     body: formData
   });
 
-  if (!res.ok) {
-    throw new Error(await buildErrorMessage(res));
-  }
-
+  await ensureOk(res);
   return (await res.json()) as ParseEnexResponse;
 }

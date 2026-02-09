@@ -3,23 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HomePage } from './HomePage';
 import { fetchMessage, type ApiResponse } from '../api/message';
-
-type Deferred<T> = {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason?: unknown) => void;
-};
-
-const createDeferred = <T,>(): Deferred<T> => {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
-};
+import { createDeferred } from '../test-utils/deferred';
 
 vi.mock('../api/message', () => ({
   fetchMessage: vi.fn()

@@ -14,3 +14,10 @@ export const buildErrorMessage = async (res: Response): Promise<string> => {
 
   return `HTTP ${res.status}`;
 };
+
+export const ensureOk = async (res: Response): Promise<Response> => {
+  if (!res.ok) {
+    throw new Error(await buildErrorMessage(res));
+  }
+  return res;
+};
