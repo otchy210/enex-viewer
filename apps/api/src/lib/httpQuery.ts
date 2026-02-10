@@ -2,21 +2,11 @@ import type { ParsedQs } from 'qs';
 
 type QueryValue = string | ParsedQs | Array<string | ParsedQs> | undefined;
 
-export const parseQueryValue = (value: QueryValue): string | undefined => {
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    return undefined;
-  }
-  return undefined;
-};
-
 export type SingleValueResult =
   | { ok: true; value: string | undefined }
   | { ok: false; message: string };
 
-export const parseSingleValue = (
+export const parseSingleQueryValue = (
   value: QueryValue,
   message: string
 ): SingleValueResult => {
@@ -33,7 +23,7 @@ export type IntegerParseResult =
   | { ok: true; value: number }
   | { ok: false; message: string };
 
-export const parseIntegerValue = (
+export const parseQueryIntegerValue = (
   value: string | undefined,
   name: string,
   options: { min: number; max?: number }

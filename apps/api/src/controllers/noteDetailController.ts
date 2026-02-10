@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
 
-import { parseQueryValue } from '../lib/httpQuery.js';
+import { parsePathParam } from '../lib/httpPath.js';
 import { fetchNoteDetail } from '../services/noteDetailService.js';
 
 export const noteDetailController = (req: Request, res: Response) => {
-  const importId = parseQueryValue(req.params.importId) ?? '';
-  const noteId = parseQueryValue(req.params.noteId) ?? '';
+  const importId = parsePathParam(req.params.importId) ?? '';
+  const noteId = parsePathParam(req.params.noteId) ?? '';
   const result = fetchNoteDetail(importId, noteId);
 
   if (!result.ok) {
