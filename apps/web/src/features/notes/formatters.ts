@@ -1,14 +1,36 @@
 import type { NoteDetail } from '../../api/notes';
 
-export const formatTimestamp = (value?: string | null): string => {
+const parseTimestamp = (value?: string | null): Date | string | null => {
   if (!value) {
-    return '—';
+    return null;
   }
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) {
     return value;
   }
-  return new Date(parsed).toLocaleString();
+  return new Date(parsed);
+};
+
+export const formatTimestamp = (value?: string | null): string => {
+  const parsed = parseTimestamp(value);
+  if (!parsed) {
+    return '—';
+  }
+  if (typeof parsed === 'string') {
+    return parsed;
+  }
+  return parsed.toLocaleString();
+};
+
+export const formatSummaryTimestamp = (value?: string | null): string => {
+  const parsed = parseTimestamp(value);
+  if (!parsed) {
+    return '—';
+  }
+  if (typeof parsed === 'string') {
+    return parsed;
+  }
+  return parsed.toLocaleDateString();
 };
 
 export const formatResourceLabel = (resource: NoteDetail['resources'][number]): string => {
