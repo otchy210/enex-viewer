@@ -1,12 +1,11 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { clearImports } from '../repositories/importRepository.js';
-import { buildEnexPayload, createTestApp, uploadEnex } from './testHelpers.js';
+import { buildEnexPayload, createTestApp, initializeApiTestState, uploadEnex } from './testHelpers.js';
 
 describe('API integration', () => {
   beforeEach(() => {
-    clearImports();
+    initializeApiTestState();
   });
 
   it('GET /health returns ok true', async () => {
