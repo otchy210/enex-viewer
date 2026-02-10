@@ -1,16 +1,16 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { clearImports } from '../repositories/importRepository.js';
-import { buildEnexPayload, createTestApp, uploadEnex } from './testHelpers.js';
+import { createApp } from '../app.js';
+import { buildEnexPayload, initializeApiTestState, uploadEnex } from './testHelpers.js';
 
 describe('API integration', () => {
   beforeEach(() => {
-    clearImports();
+    initializeApiTestState();
   });
 
   it('GET /health returns ok true', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await request(app).get('/health');
 
@@ -19,7 +19,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/message returns message payload', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await request(app).get('/api/message');
 
@@ -29,7 +29,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse accepts a valid ENEX upload', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload(`
       <note>
         <title>Sample Note</title>
@@ -50,7 +50,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse rejects missing file uploads', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await request(app).post('/api/enex/parse').field('note', 'missing-file');
 
@@ -62,7 +62,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse rejects non-ENEX files', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await request(app)
       .post('/api/enex/parse')
@@ -76,7 +76,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse reports parse failures', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await uploadEnex(app, Buffer.from('<note></note>'), {
       filename: 'invalid.enex',
@@ -91,7 +91,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes returns paginated notes', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload(`
         <note>
           <title>First Note</title>
@@ -124,7 +124,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes supports search query', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload(`
         <note>
           <title>Kitchen Log</title>
@@ -154,7 +154,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes returns 404 for unknown import', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await request(app).get('/api/imports/missing/notes');
 
@@ -166,7 +166,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes validates query params', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
@@ -182,7 +182,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes rejects array query params', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
@@ -198,7 +198,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes rejects non-integer query values', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
@@ -214,7 +214,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes/:noteId returns note detail', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload(`
       <note>
         <guid>note-123</guid>
@@ -261,7 +261,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes/:noteId returns 404 for missing import', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await request(app).get('/api/imports/missing-import/notes/note-123');
 
@@ -273,7 +273,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes/:noteId returns 404 for missing note', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload(`
       <note>
         <guid>note-123</guid>
@@ -298,7 +298,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse rejects non-multipart requests', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await request(app).post('/api/enex/parse').send({ file: 'nope' });
 
@@ -310,7 +310,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse reports invalid XML', async () => {
-    const app = createTestApp();
+    const app = createApp();
 
     const response = await uploadEnex(app, Buffer.from('<en-export><note></en-export>'));
 
@@ -321,7 +321,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/enex/parse returns warnings for skipped notes', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload(`
       <note>
         <title>Incomplete Note</title>
@@ -341,7 +341,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes rejects array search params', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
@@ -357,7 +357,7 @@ describe('API integration', () => {
   });
 
   it('GET /api/imports/:importId/notes rejects limit over max', async () => {
-    const app = createTestApp();
+    const app = createApp();
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
