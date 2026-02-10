@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { parseEnexFile, type ParseEnexResponse } from '../api/enex';
+import { getAsyncErrorMessage } from './asyncState';
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -31,8 +32,7 @@ export function useEnexUpload(): EnexUploadHook {
       setResult(response);
       setStatus('success');
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Unknown error';
-      setError(message);
+      setError(getAsyncErrorMessage(e));
       setStatus('error');
     }
   }, []);

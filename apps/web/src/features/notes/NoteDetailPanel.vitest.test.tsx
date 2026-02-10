@@ -53,6 +53,7 @@ describe('NoteDetailPanel', () => {
     expect(screen.getByRole('heading', { name: 'Resources', level: 4 })).toBeInTheDocument();
     expect(screen.getByText('image.png')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Content', level: 4 })).toBeInTheDocument();
+    expect(document.querySelector('.note-content')).toHaveTextContent('Content');
   });
 
   it('shows an error when the note is missing', async () => {
