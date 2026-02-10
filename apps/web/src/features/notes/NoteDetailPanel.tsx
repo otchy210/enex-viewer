@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { fetchNoteDetail, type NoteDetail } from '../../api/notes';
+import { getAsyncErrorMessage } from '../../state/asyncState';
 import { formatResourceLabel, formatTimestamp } from './formatters';
+import { NoteContent } from './NoteContent';
 
 type NoteDetailPanelProps = {
   importId: string;
@@ -13,11 +15,6 @@ type DetailState =
   | { status: 'loading' }
   | { status: 'error'; error: string }
   | { status: 'success'; note: NoteDetail };
-
-const NoteContent = ({ html }: { html: string }) => {
-  const safeMarkup = useMemo(() => ({ __html: html }), [html]);
-  return <div className="note-content" dangerouslySetInnerHTML={safeMarkup} />;
-};
 
 export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
   const [state, setState] = useState<DetailState>({ status: 'idle' });
@@ -41,8 +38,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
         if (!active) {
           return;
         }
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        setState({ status: 'error', error: message });
+        setState({ status: 'error', error: getAsyncErrorMessage(error) });
       });
 
     return () => {

@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchNotesList, type NoteListResponse } from '../api/notes';
+import {
+  createAsyncErrorState,
+  createAsyncIdleState,
+  createAsyncLoadingState,
+  createAsyncSuccessState,
+  type AsyncDataState
+} from './asyncState';
 
-type NotesListState = {
-  data: NoteListResponse | null;
-  error: string | null;
-  loading: boolean;
+type NotesListState = AsyncDataState<NoteListResponse> & {
   reload: () => void;
 };
 
@@ -19,9 +23,9 @@ export function useNotesList(
   importId: string | null,
   { query, limit, offset }: NotesListOptions
 ): NotesListState {
-  const [data, setData] = useState<NoteListResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [state, setState] = useState<AsyncDataState<NoteListResponse>>(() =>
+    createAsyncIdleState()
+  );
   const [reloadKey, setReloadKey] = useState(0);
 
   const reload = useCallback(() => {
@@ -30,18 +34,14 @@ export function useNotesList(
 
   useEffect(() => {
     if (!importId) {
-      setData(null);
-      setError(null);
-      setLoading(false);
+      setState(createAsyncIdleState());
       return;
     }
 
     let cancelled = false;
 
     const run = async () => {
-      setLoading(true);
-      setError(null);
-      setData(null);
+      setState(createAsyncLoadingState());
 
       try {
         const response = await fetchNotesList(importId, {
@@ -50,16 +50,11 @@ export function useNotesList(
           offset
         });
         if (!cancelled) {
-          setData(response);
+          setState(createAsyncSuccessState(response));
         }
       } catch (e) {
         if (!cancelled) {
-          const message = e instanceof Error ? e.message : 'Unknown error';
-          setError(message);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
+          setState(createAsyncErrorState(e));
         }
       }
     };
@@ -71,5 +66,5 @@ export function useNotesList(
     };
   }, [importId, query, limit, offset, reloadKey]);
 
-  return { data, error, loading, reload };
+  return { ...state, reload };
 }

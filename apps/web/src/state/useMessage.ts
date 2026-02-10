@@ -1,33 +1,30 @@
 import { useEffect, useState } from 'react';
 
 import { fetchMessage, type ApiResponse } from '../api/message';
+import {
+  createAsyncErrorState,
+  createAsyncIdleState,
+  createAsyncSuccessState,
+  type AsyncDataState
+} from './asyncState';
 
-type MessageState = {
-  data: ApiResponse | null;
-  error: string | null;
-  loading: boolean;
-};
+type MessageState = AsyncDataState<ApiResponse>;
 
 export function useMessage(): MessageState {
-  const [data, setData] = useState<ApiResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<MessageState>(() => createAsyncIdleState(true));
 
   useEffect(() => {
     const run = async () => {
       try {
         const response = await fetchMessage();
-        setData(response);
+        setState(createAsyncSuccessState(response));
       } catch (e) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        setError(message);
-      } finally {
-        setLoading(false);
+        setState(createAsyncErrorState(e));
       }
     };
 
     run();
   }, []);
 
-  return { data, error, loading };
+  return state;
 }
