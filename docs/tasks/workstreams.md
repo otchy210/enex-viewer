@@ -99,6 +99,21 @@
   - リファクタ後に既存 Web テストを実行し、リグレッションがない
   - 既存の UI 文言/状態遷移/HTTP 挙動を壊さない
 
+## レーン J: 横断リファクタ最適化（T-032）
+- 目的: API/Web を横断して、重複ロジックの削減・共通化・実行効率改善をまとめて実施する。
+- 主成果物:
+  - ノート一覧の二重取得解消（UI 構成の整理または state 共有）
+  - 一覧検索/整形の前計算による API 側処理コスト低減
+  - import データ変換の重複削減（不要な全件 map/コピー削減）
+  - resource size 算出と multipart 処理の効率改善
+  - 非同期 state 実装の最終統一（実装ゆれの削減）
+- 受け入れ観点:
+  - `npm run typecheck -w apps/api` が通る
+  - `npm run typecheck -w apps/web` が通る
+  - `npm run test -w apps/api` が通る
+  - `npm run test -w apps/web` が通る
+  - 既存の API 契約/UI 挙動を壊さない
+
 ## 未完了タスクの補足（スコープ明確化）
 - T-020:
   - `apps/web/src/api/enex.ts` と `apps/web/src/api/notes.ts` のエラー整形ロジックは共通化候補。
@@ -126,6 +141,12 @@
 - T-031:
   - `useMessage`/`useEnexUpload`/`useNotesList` の async state パターンの実装ゆれを縮小する。
   - `NoteDetailPanel` 内の `NoteContent` を責務分離し、テストしやすい構成にする。
+- T-032:
+  - `HomePage` で同時表示しているノート一覧 UI の二重取得を解消する。
+  - API の一覧処理で繰り返し計算している検索キー/抜粋/ソートキーを前計算または再利用する。
+  - repository/service 間の重複変換を削減し、不要な全件コピーを減らす。
+  - resource size 算出と multipart 解析のメモリ効率を改善する。
+  - Web の非同期 state パターンを最終統一し、同等実装の重複を減らす。
 
 ## 横断ルール
 - 契約先行 + モック: API 契約固定後、Web はモックで先行実装可。
