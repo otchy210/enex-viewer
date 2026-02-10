@@ -21,7 +21,16 @@ describe('fetchMessage', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/message');
   });
 
-  it('throws when the response is not ok', async () => {
+  it('prefers the API error message when available', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'Server unavailable' }), { status: 503 })
+    );
+    globalThis.fetch = fetchMock;
+
+    await expect(fetchMessage()).rejects.toThrow('Server unavailable');
+  });
+
+  it('falls back to HTTP status when the error payload is unreadable', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(new Response('nope', { status: 500 }));
     globalThis.fetch = fetchMock;
 

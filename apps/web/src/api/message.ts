@@ -1,3 +1,5 @@
+import { ensureOk } from './error';
+
 export type ApiResponse = {
   message: string;
   timestamp: string;
@@ -5,9 +7,7 @@ export type ApiResponse = {
 
 export async function fetchMessage(): Promise<ApiResponse> {
   const res = await fetch('/api/message');
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
+  await ensureOk(res);
 
   return (await res.json()) as ApiResponse;
 }
