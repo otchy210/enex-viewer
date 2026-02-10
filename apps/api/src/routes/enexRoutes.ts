@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 
 import { enexParseController } from '../controllers/enexParseController.js';
+import { parseEnexMultipart } from '../middleware/enexMultipartMiddleware.js';
 
 const router = Router();
 const maxFileSizeBytes = 10 * 1024 * 1024;
@@ -8,6 +9,7 @@ const maxFileSizeBytes = 10 * 1024 * 1024;
 router.post(
   '/api/enex/parse',
   express.raw({ type: 'multipart/form-data', limit: maxFileSizeBytes }),
+  parseEnexMultipart,
   enexParseController
 );
 

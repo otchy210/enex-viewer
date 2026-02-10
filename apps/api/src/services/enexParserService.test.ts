@@ -79,6 +79,47 @@ describe("parseEnex", () => {
     }
   });
 
+
+  it("extracts resource size from whitespace-padded base64", () => {
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Whitespace Resource</title>
+        <content><![CDATA[<en-note>asset</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[AA
+AA]]></data>
+        </resource>
+      </note>
+    </en-export>`;
+
+    const result = parseEnex(sample);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.notes[0]?.resources[0]?.size).toBe(3);
+    }
+  });
+
+  it("returns undefined size for non-base64 resource data", () => {
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Invalid Resource</title>
+        <content><![CDATA[<en-note>asset</en-note>]]></content>
+        <resource>
+          <data encoding="utf8"><![CDATA[plain-text]]></data>
+        </resource>
+      </note>
+    </en-export>`;
+
+    const result = parseEnex(sample);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.notes[0]?.resources[0]?.size).toBeUndefined();
+    }
+  });
   it("extracts resource metadata and size", () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
