@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import { useNotesList } from '../../state/useNotesList';
+import { formatSummaryTimestamp } from './formatters';
 
 type NotesListSectionProps = {
   importId: string | null;
@@ -103,7 +104,7 @@ export function NotesListSection({ importId }: NotesListSectionProps) {
                       <h3>{note.title}</h3>
                       <small>
                         Updated:{' '}
-                        {note.updatedAt || note.createdAt || 'Not available'}
+                        {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
                       </small>
                     </header>
                     <p>{note.excerpt}</p>
