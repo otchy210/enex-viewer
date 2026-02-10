@@ -1,7 +1,6 @@
 import type express from 'express';
 import request from 'supertest';
 
-import { createApp } from '../app.js';
 import { clearImports } from '../repositories/importRepository.js';
 import { clearImportSessions } from '../repositories/importSessionRepository.js';
 
@@ -9,8 +8,6 @@ type UploadOptions = {
   filename?: string;
   contentType?: string;
 };
-
-export const createTestApp = () => createApp();
 
 export const initializeApiTestState = (): void => {
   clearImports();
