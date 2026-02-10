@@ -21,4 +21,14 @@ export type ImportSession = {
   noteCount: number;
   warnings: string[];
   notes: NoteDetail[];
+  noteListIndex: {
+    noteId: string;
+    title: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tags: string[];
+    searchText: string;
+    excerpt: string;
+    sortKey: number;
+  }[];
 };

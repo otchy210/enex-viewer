@@ -1,7 +1,13 @@
 import { useCallback, useState } from 'react';
 
 import { parseEnexFile, type ParseEnexResponse } from '../api/enex';
-import { getAsyncErrorMessage } from './asyncState';
+import {
+  createAsyncErrorState,
+  createAsyncIdleState,
+  createAsyncLoadingState,
+  createAsyncSuccessState,
+  type AsyncDataState
+} from './asyncState';
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -18,30 +24,47 @@ type EnexUploadActions = {
 
 type EnexUploadHook = EnexUploadState & EnexUploadActions;
 
+const toUploadStatus = (state: AsyncDataState<ParseEnexResponse>): UploadStatus => {
+  if (state.loading) {
+    return 'uploading';
+  }
+
+  if (state.error) {
+    return 'error';
+  }
+
+  if (state.data) {
+    return 'success';
+  }
+
+  return 'idle';
+};
+
 export function useEnexUpload(): EnexUploadHook {
-  const [status, setStatus] = useState<UploadStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ParseEnexResponse | null>(null);
+  const [state, setState] = useState<AsyncDataState<ParseEnexResponse>>(() =>
+    createAsyncIdleState()
+  );
 
   const uploadFile = useCallback(async (file: File) => {
-    setStatus('uploading');
-    setError(null);
+    setState(createAsyncLoadingState());
 
     try {
       const response = await parseEnexFile(file);
-      setResult(response);
-      setStatus('success');
-    } catch (e) {
-      setError(getAsyncErrorMessage(e));
-      setStatus('error');
+      setState(createAsyncSuccessState(response));
+    } catch (error) {
+      setState(createAsyncErrorState(error));
     }
   }, []);
 
   const reset = useCallback(() => {
-    setStatus('idle');
-    setError(null);
-    setResult(null);
+    setState(createAsyncIdleState());
   }, []);
 
-  return { status, error, result, uploadFile, reset };
+  return {
+    status: toUploadStatus(state),
+    error: state.error,
+    result: state.data,
+    uploadFile,
+    reset
+  };
 }

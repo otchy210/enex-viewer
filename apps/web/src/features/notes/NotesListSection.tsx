@@ -1,31 +1,37 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useMemo, type FormEvent } from 'react';
 
-import { useNotesList } from '../../state/useNotesList';
+import type { NoteListResponse } from '../../api/notes';
 import { formatSummaryTimestamp } from './formatters';
 
 type NotesListSectionProps = {
   importId: string | null;
+  searchInput: string;
+  query: string;
+  offset: number;
+  loading: boolean;
+  error: string | null;
+  data: NoteListResponse | null;
+  onSearchInputChange: (value: string) => void;
+  onSearchSubmit: () => void;
+  onClear: () => void;
+  onOffsetChange: (nextOffset: number) => void;
 };
 
 const PAGE_LIMIT = 20;
 
-export function NotesListSection({ importId }: NotesListSectionProps) {
-  const [searchInput, setSearchInput] = useState('');
-  const [query, setQuery] = useState('');
-  const [offset, setOffset] = useState(0);
-
-  const { data, error, loading, reload } = useNotesList(importId, {
-    query,
-    limit: PAGE_LIMIT,
-    offset
-  });
-
-  useEffect(() => {
-    setSearchInput('');
-    setQuery('');
-    setOffset(0);
-  }, [importId]);
-
+export function NotesListSection({
+  importId,
+  searchInput,
+  query,
+  offset,
+  loading,
+  error,
+  data,
+  onSearchInputChange,
+  onSearchSubmit,
+  onClear,
+  onOffsetChange
+}: NotesListSectionProps) {
   const total = data?.total ?? 0;
   const hasNotes = (data?.notes.length ?? 0) > 0;
   const startIndex = total === 0 ? 0 : offset + 1;
@@ -52,15 +58,7 @@ export function NotesListSection({ importId }: NotesListSectionProps) {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setOffset(0);
-    setQuery(searchInput.trim());
-  };
-
-  const handleClear = () => {
-    setSearchInput('');
-    setQuery('');
-    setOffset(0);
-    reload();
+    onSearchSubmit();
   };
 
   return (
@@ -78,16 +76,12 @@ export function NotesListSection({ importId }: NotesListSectionProps) {
                 type="search"
                 placeholder="Search title or content"
                 value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
+                onChange={(event) => onSearchInputChange(event.target.value)}
               />
               <button type="submit" disabled={loading}>
                 Search
               </button>
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={loading && !query && !searchInput}
-              >
+              <button type="button" onClick={onClear} disabled={loading && !query && !searchInput}>
                 Clear
               </button>
             </div>
@@ -102,15 +96,11 @@ export function NotesListSection({ importId }: NotesListSectionProps) {
                   <article>
                     <header className="notes-list__header">
                       <h3>{note.title}</h3>
-                      <small>
-                        Updated:{' '}
-                        {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
-                      </small>
+                      <small>Updated: {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}</small>
                     </header>
                     <p>{note.excerpt}</p>
                     <div className="notes-list__tags">
-                      <strong>Tags:</strong>{' '}
-                      {note.tags.length > 0 ? note.tags.join(', ') : 'None'}
+                      <strong>Tags:</strong> {note.tags.length > 0 ? note.tags.join(', ') : 'None'}
                     </div>
                   </article>
                 </li>
@@ -122,7 +112,7 @@ export function NotesListSection({ importId }: NotesListSectionProps) {
             <div className="notes-pagination">
               <button
                 type="button"
-                onClick={() => setOffset((prev) => Math.max(prev - PAGE_LIMIT, 0))}
+                onClick={() => onOffsetChange(Math.max(offset - PAGE_LIMIT, 0))}
                 disabled={!canGoPrev || loading}
               >
                 Previous
@@ -132,7 +122,7 @@ export function NotesListSection({ importId }: NotesListSectionProps) {
               </span>
               <button
                 type="button"
-                onClick={() => setOffset((prev) => prev + PAGE_LIMIT)}
+                onClick={() => onOffsetChange(offset + PAGE_LIMIT)}
                 disabled={!canGoNext || loading}
               >
                 Next
@@ -144,3 +134,5 @@ export function NotesListSection({ importId }: NotesListSectionProps) {
     </section>
   );
 }
+
+export const NOTES_PAGE_LIMIT = PAGE_LIMIT;

@@ -12,16 +12,13 @@ const isLikelyEnex = (fileName?: string, contentType?: string) => {
   return false;
 };
 
-const buildHeaders = (headers: Request['headers']) => {
-  const result = new Headers();
-  Object.entries(headers).forEach(([key, value]) => {
-    if (typeof value === 'string') {
-      result.set(key, value);
-    } else if (Array.isArray(value)) {
-      result.set(key, value.join(', '));
-    }
-  });
-  return result;
+const extractMultipartContentType = (headers: Request['headers']): string | null => {
+  const headerValue = headers['content-type'];
+  if (typeof headerValue !== 'string') {
+    return null;
+  }
+
+  return headerValue.toLowerCase().includes('multipart/form-data') ? headerValue : null;
 };
 
 export const parseEnexMultipart = async (req: Request, res: Response, next: NextFunction) => {
@@ -33,11 +30,20 @@ export const parseEnexMultipart = async (req: Request, res: Response, next: Next
       });
     }
 
+    const contentType = extractMultipartContentType(req.headers);
+    if (!contentType) {
+      return res.status(400).json({
+        code: 'INVALID_MULTIPART',
+        message: 'Request body must be multipart/form-data.'
+      });
+    }
+
     const request = new Request('http://localhost/api/enex/parse', {
       method: 'POST',
-      headers: buildHeaders(req.headers),
+      headers: { 'content-type': contentType },
       body: req.body
     });
+
     const formData = await request.formData();
     const file = formData.get('file');
     if (!file || typeof file === 'string') {
@@ -48,8 +54,8 @@ export const parseEnexMultipart = async (req: Request, res: Response, next: Next
     }
 
     const fileName = 'name' in file ? file.name : undefined;
-    const contentType = 'type' in file ? file.type : undefined;
-    if (!isLikelyEnex(fileName, contentType)) {
+    const fileContentType = 'type' in file ? file.type : undefined;
+    if (!isLikelyEnex(fileName, fileContentType)) {
       return res.status(400).json({
         code: 'INVALID_FILE_TYPE',
         message: 'Invalid ENEX file type.'

@@ -73,7 +73,7 @@ const extractCdataString = (value: unknown): string => {
 };
 
 const decodeBase64Size = (raw: string): number | undefined => {
-  const normalized = raw.replace(/\s+/g, "");
+  const normalized = raw.replace(/\s+/g, '');
   if (!normalized) {
     return undefined;
   }
@@ -83,7 +83,8 @@ const decodeBase64Size = (raw: string): number | undefined => {
     return undefined;
   }
 
-  return Buffer.from(normalized, "base64").length;
+  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
+  return (normalized.length / 4) * 3 - padding;
 };
 
 const extractResourceSize = (data: unknown): number | undefined => {

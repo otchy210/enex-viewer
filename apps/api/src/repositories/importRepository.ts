@@ -1,4 +1,5 @@
 import type { ImportSession } from '../models/note.js';
+import { buildNoteListIndex } from '../services/noteListIndex.js';
 import { clearImportSessions, getImportSession, saveImportSession } from './importSessionRepository.js';
 
 export type StoredNote = {
@@ -16,19 +17,31 @@ type StoredImport = {
 };
 
 export const saveImport = (importId: string, notes: StoredNote[]): void => {
+  const sessionNotes = notes.map((note) => ({
+    id: note.id,
+    title: note.title,
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt,
+    tags: note.tags,
+    contentHtml: note.content,
+    resources: []
+  }));
+
   const session: ImportSession = {
     id: importId,
     createdAt: new Date().toISOString(),
     noteCount: notes.length,
     warnings: [],
-    notes: notes.map((note) => ({
-      id: note.id,
-      title: note.title,
-      createdAt: note.createdAt,
-      updatedAt: note.updatedAt,
-      tags: note.tags,
-      contentHtml: note.content,
-      resources: []
+    notes: sessionNotes,
+    noteListIndex: buildNoteListIndex(sessionNotes).map((entry) => ({
+      noteId: entry.note.id,
+      title: entry.note.title,
+      createdAt: entry.note.createdAt,
+      updatedAt: entry.note.updatedAt,
+      tags: entry.note.tags,
+      searchText: entry.searchText,
+      excerpt: entry.excerpt,
+      sortKey: entry.sortKey
     }))
   };
 

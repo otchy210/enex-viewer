@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react';
 
-import { useNotesList } from '../../state/useNotesList';
+import type { NoteListResponse } from '../../api/notes';
 import { NoteDetailPanel } from './NoteDetailPanel';
 import { formatSummaryTimestamp } from './formatters';
 
 type NoteBrowserProps = {
   importId: string;
+  loading: boolean;
+  error: string | null;
+  data: NoteListResponse | null;
 };
 
-export function NoteBrowser({ importId }: NoteBrowserProps) {
+export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps) {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-  const { data, error, loading } = useNotesList(importId, {
-    query: '',
-    limit: 50,
-    offset: 0
-  });
 
   useEffect(() => {
     setSelectedNoteId(null);
@@ -38,9 +36,7 @@ export function NoteBrowser({ importId }: NoteBrowserProps) {
               <button
                 key={note.id}
                 type="button"
-                className={`note-list-item${
-                  selectedNoteId === note.id ? ' is-selected' : ''
-                }`}
+                className={`note-list-item${selectedNoteId === note.id ? ' is-selected' : ''}`}
                 onClick={() => setSelectedNoteId(note.id)}
               >
                 <div className="note-list-header">
