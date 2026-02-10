@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatResourceLabel, formatTimestamp } from './formatters';
+import {
+  formatResourceLabel,
+  formatSummaryTimestamp,
+  formatTimestamp
+} from './formatters';
 
 describe('formatTimestamp', () => {
   it('returns placeholder for empty values', () => {
@@ -30,5 +34,22 @@ describe('formatResourceLabel', () => {
 
   it('falls back to id', () => {
     expect(formatResourceLabel({ id: 'resource-3' })).toBe('resource-3');
+  });
+});
+
+describe('formatSummaryTimestamp', () => {
+  it('returns placeholder for empty values', () => {
+    expect(formatSummaryTimestamp()).toBe('—');
+    expect(formatSummaryTimestamp(null)).toBe('—');
+  });
+
+  it('returns the raw value for invalid dates', () => {
+    expect(formatSummaryTimestamp('not-a-date')).toBe('not-a-date');
+  });
+
+  it('formats valid dates', () => {
+    const formatted = formatSummaryTimestamp('2024-01-01T00:00:00Z');
+    expect(formatted).not.toBe('—');
+    expect(formatted).not.toBe('2024-01-01T00:00:00Z');
   });
 });
