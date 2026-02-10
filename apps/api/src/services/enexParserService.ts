@@ -72,12 +72,36 @@ const extractCdataString = (value: unknown): string => {
   return "";
 };
 
-const extractResourceSize = (data: unknown): number | undefined => {
-  const raw = extractCdataString(data);
-  if (!raw) {
+const decodeBase64Size = (raw: string): number | undefined => {
+  const normalized = raw.replace(/\s+/g, "");
+  if (!normalized) {
     return undefined;
   }
-  return Math.floor((raw.length * 3) / 4);
+
+  const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+  if (!base64Pattern.test(normalized)) {
+    return undefined;
+  }
+
+  return Buffer.from(normalized, "base64").length;
+};
+
+const extractResourceSize = (data: unknown): number | undefined => {
+  if (typeof data === "string") {
+    return decodeBase64Size(data);
+  }
+
+  if (typeof data !== "object" || data === null) {
+    return undefined;
+  }
+
+  const encodedData = data as { __cdata?: unknown; encoding?: unknown };
+  const encoding = typeof encodedData.encoding === "string" ? encodedData.encoding.toLowerCase() : undefined;
+  if (encoding && encoding !== "base64") {
+    return undefined;
+  }
+
+  return decodeBase64Size(extractCdataString(data));
 };
 
 export const parseEnex = (input: string | Buffer): EnexParseResult => {
