@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import { parseIntegerValue, parseSingleValue } from '../lib/httpQuery.js';
+import { parseQueryIntegerValue, parseSingleQueryValue } from '../lib/httpQuery.js';
 import { listNotes } from '../services/noteListService.js';
 
 const DEFAULT_LIMIT = 50;
@@ -15,7 +15,7 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const qResult = parseSingleValue(req.query.q, 'q must be a single string.');
+  const qResult = parseSingleQueryValue(req.query.q, 'q must be a single string.');
   if (!qResult.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
@@ -23,7 +23,7 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const limitResult = parseSingleValue(req.query.limit, 'limit must be a single value.');
+  const limitResult = parseSingleQueryValue(req.query.limit, 'limit must be a single value.');
   if (!limitResult.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
@@ -31,7 +31,7 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const offsetResult = parseSingleValue(req.query.offset, 'offset must be a single value.');
+  const offsetResult = parseSingleQueryValue(req.query.offset, 'offset must be a single value.');
   if (!offsetResult.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
@@ -39,7 +39,7 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const parsedLimit = parseIntegerValue(limitResult.value, 'limit', { min: 1, max: MAX_LIMIT });
+  const parsedLimit = parseQueryIntegerValue(limitResult.value, 'limit', { min: 1, max: MAX_LIMIT });
   if (!parsedLimit.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',
@@ -47,7 +47,7 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const parsedOffset = parseIntegerValue(offsetResult.value, 'offset', { min: 0 });
+  const parsedOffset = parseQueryIntegerValue(offsetResult.value, 'offset', { min: 0 });
   if (!parsedOffset.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',

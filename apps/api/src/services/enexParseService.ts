@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 
-import { saveImport } from '../repositories/importRepository.js';
 import type { ImportSession, NoteDetail } from '../models/note.js';
 import { saveImportSession } from '../repositories/importSessionRepository.js';
 import { parseEnex } from './enexParserService.js';
@@ -51,19 +50,6 @@ export const parseEnexFile = (payload: { data: Buffer }): EnexParseResult => {
       size: resource.size
     }))
   }));
-
-  // Keep T-004 note list endpoint working.
-  saveImport(
-    importId,
-    parsed.notes.map((note) => ({
-      id: note.id,
-      title: note.title,
-      createdAt: note.createdAt,
-      updatedAt: note.updatedAt,
-      tags: note.tags,
-      content: note.content
-    }))
-  );
 
   const session: ImportSession = {
     id: importId,
