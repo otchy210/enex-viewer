@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { parseEnex } from "./enexParserService.js";
+import { describe, expect, it } from 'vitest';
+import { parseEnex } from './enexParserService.js';
 
-describe("parseEnex", () => {
-  it("returns notes from valid ENEX", () => {
+describe('parseEnex', () => {
+  it('returns notes from valid ENEX', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
       <note>
@@ -21,22 +21,22 @@ describe("parseEnex", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.notes).toHaveLength(1);
-      expect(result.notes[0]?.title).toBe("Sample Note");
-      expect(result.notes[0]?.tags[0]).toBe("demo");
+      expect(result.notes[0]?.title).toBe('Sample Note');
+      expect(result.notes[0]?.tags[0]).toBe('demo');
       expect(result.warnings).toHaveLength(0);
     }
   });
 
-  it("returns error for invalid XML", () => {
-    const result = parseEnex("<en-export><note></en-export>");
+  it('returns error for invalid XML', () => {
+    const result = parseEnex('<en-export><note></en-export>');
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.code).toBe("INVALID_XML");
+      expect(result.error.code).toBe('INVALID_XML');
     }
   });
 
-  it("sanitizes note content", () => {
+  it('sanitizes note content', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
       <note>
@@ -51,12 +51,12 @@ describe("parseEnex", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.notes[0]?.content).toContain("<p>safe</p>");
-      expect(result.notes[0]?.content).not.toContain("<script");
+      expect(result.notes[0]?.content).toContain('<p>safe</p>');
+      expect(result.notes[0]?.content).not.toContain('<script');
     }
   });
 
-  it("skips notes missing title or content and returns warnings", () => {
+  it('skips notes missing title or content and returns warnings', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
       <note>
@@ -73,14 +73,13 @@ describe("parseEnex", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.notes).toHaveLength(1);
-      expect(result.notes[0]?.title).toBe("Complete");
+      expect(result.notes[0]?.title).toBe('Complete');
       expect(result.warnings).toHaveLength(1);
-      expect(result.warnings[0]?.noteTitle).toBe("Incomplete");
+      expect(result.warnings[0]?.noteTitle).toBe('Incomplete');
     }
   });
 
-
-  it("extracts resource size from whitespace-padded base64", () => {
+  it('extracts resource size from whitespace-padded base64', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
       <note>
@@ -101,7 +100,7 @@ AA]]></data>
     }
   });
 
-  it("returns undefined size for non-base64 resource data", () => {
+  it('returns undefined size for non-base64 resource data', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
       <note>
@@ -120,7 +119,7 @@ AA]]></data>
       expect(result.notes[0]?.resources[0]?.size).toBeUndefined();
     }
   });
-  it("extracts resource metadata and size", () => {
+  it('extracts resource metadata and size', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
       <note>
@@ -142,11 +141,11 @@ AA]]></data>
     if (result.ok) {
       expect(result.notes[0]?.resources).toEqual([
         {
-          id: "resource-1-1",
-          fileName: "image.png",
-          mime: "image/png",
-          size: 3,
-        },
+          id: 'resource-1-1',
+          fileName: 'image.png',
+          mime: 'image/png',
+          size: 3
+        }
       ]);
     }
   });

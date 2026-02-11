@@ -1,6 +1,7 @@
 # 実装タスク一覧（MVP）
 
 ## 1. 進め方
+
 - 各タスクは ID 単位で独立レビュー可能にする。
 - 依存関係を満たせば並列で着手する。
 - 受け入れ条件を満たしたら完了とする。
@@ -11,38 +12,39 @@
 
 ## 2. タスク一覧（進捗の正本）
 
-| 完了 | ID | レーン | 種別 | タスク | 依存 | 受け入れ条件 |
-|---|---|---|---|---|---|---|
-| [x] | T-001 | A | Setup | API 層のディレクトリ分割（routes/controllers/services 等） | なし | ビルド通過、責務に沿った雛形がある |
-| [x] | T-002 | B | Setup | Web 層のディレクトリ分割（pages/features/api/state 等） | なし | ビルド通過、既存画面が崩れない |
-| [x] | T-003 | C | API | ENEX アップロード API `POST /api/enex/parse` 実装 | T-001 | サンプル ENEX を受け取り `importId` を返す |
-| [x] | T-004 | C | API | ノート一覧 API `GET /api/imports/:importId/notes` 実装 | T-001, T-003 | 検索・ページング付き一覧を返す |
-| [x] | T-005 | C | API | ノート詳細 API `GET /api/imports/:importId/notes/:noteId` 実装 | T-001, T-003 | 指定ノート詳細を返す |
-| [x] | T-006 | A | API | ENEX 解析サービス（XML->ドメイン変換）実装 | T-001 | 解析結果と警告を返せる |
-| [x] | T-007 | A | API | 本文サニタイズ処理実装 | T-001, T-006 | 危険なタグ/属性が除去される |
-| [x] | T-008 | D | Web | アップロード UI 実装 | T-002, T-003 | ENEX を送信し importId を保持できる |
-| [x] | T-009 | D | Web | ノート一覧 UI 実装（検索含む） | T-002, T-004 | 検索条件で一覧更新される |
-| [x] | T-010 | D | Web | ノート詳細 UI 実装 | T-002, T-005 | 選択ノートを表示できる |
-| [x] | T-011 | E | Quality | API テスト整備（unit/integration） | T-003, T-004, T-005, T-006, T-007 | 主要正常系/異常系をカバー |
-| [x] | T-012 | E | Quality | Web テスト整備（unit） | T-008, T-009, T-010 | 主要 UI の表示と状態遷移をカバーし、`apps/web/src/api/enex.ts` のエラー整形分岐を直接テストする |
-| [x] | T-013 | E | Docs | OpenAPI 更新と README 更新 | T-003, T-004, T-005 | API 契約と使用手順が一致 |
-| [ ] | T-014 | E | QA | 人間による動作テスト（手動シナリオ実施） | T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, T-011, T-012, T-013 | 手動テスト結果を記録し、主要シナリオが期待通りに動作する |
-| [x] | T-015 | F | Test-Migration | API 既存テストを Vitest へ移行（node:test/tsx 依存を削減） | T-006 | 既存 API テストが Vitest で動作する |
-| [x] | T-016 | F | Test-Migration | API エンドポイント統合テスト追加（Supertest） | T-003 | `/health` `/api/message` `/api/enex/parse` の主要正常系/異常系を検証 |
-| [x] | T-017 | F | Test-Migration | Web テスト基盤で既存 UI のテスト追加（Testing Library + jsdom） | T-002 | 既存画面の主要表示/状態遷移を検証 |
-| [x] | T-018 | F | Test-Migration | テスト運用ドキュメント更新（実行手順・命名規約・配置ルール） | T-015, T-016, T-017 | テスト実行と追加方針が文書化される |
-| [x] | T-019 | G | Refactor | API のクエリ/パラメータ解析ロジック共通化（厳密バリデーション） | T-004, T-005 | 共通関数化後も既存挙動とテストが維持される |
-| [x] | T-020 | G | Refactor | Web UI ユーティリティ共通化（API エラー整形/表示フォーマッタ/テスト補助） | T-008, T-010, T-017 | 共通化後も既存 UI 挙動とテストが維持される |
-| [x] | T-021 | E | Quality | テストカバレッジ引き上げ（閾値達成） | T-011, T-012 | `npm run test:coverage` が通り、global 閾値（80%）を満たす |
-| [x] | T-022 | H | Refactor | API アプリ基盤整理（`createApp` 抽出・エラーレスポンス helper 共通化・テスト初期化統一） | T-001, T-011, T-016 | 本番/テストの app 初期化が共通化され、エラー応答生成の重複が削減され、テスト前初期化で順序依存が発生しない |
-| [x] | T-023 | H | Refactor | API データアクセス/入力解析整理（保存モデル一本化・query/path 解析責務分離） | T-003, T-004, T-005, T-006, T-019 | import データ二重管理が解消され、入力解析 API が用途別に整理され、一覧/詳細 API の既存挙動が維持される |
-| [x] | T-024 | H | Refactor | ENEX アップロード/解析境界整理（multipart middleware 分離・resource size 算出厳密化） | T-003, T-006 | `enexParseController` の multipart 解析責務が分離され、resource size 算出が厳密化され、既存の HTTP 挙動を維持する |
-| [x] | T-029 | I | Refactor | Web ノート表示責務整理（`NoteBrowser`/`useNotesList` の重複解消・日時フォーマッタ統一） | T-009, T-010, T-020 | ノート一覧取得ロジックの重複が解消され、日時表示フォーマットが共通化され、既存 UI 挙動を維持する |
-| [x] | T-030 | I | Refactor | Web API クライアント統一（`message.ts` を含むエラー処理の `ensureOk` 統一） | T-008, T-009, T-010, T-020 | API クライアントのエラー処理が共通化され、失敗時メッセージ挙動と既存テストが維持される |
-| [x] | T-031 | I | Refactor | Web 非同期 state/コンポーネント整理（共通 async パターン + `NoteContent` 分離） | T-008, T-009, T-010, T-020 | state 管理の実装ゆれが減り、`dangerouslySetInnerHTML` 表示責務が分離され、既存 UI とテストが維持される |
-| [x] | T-032 | J | Refactor | 横断リファクタ（重複解消・共通化・パフォーマンス改善） | T-024, T-031 | ノート一覧の二重取得解消、一覧検索/整形コスト低減、データ変換重複の削減、resource size 算出と multipart 処理の効率改善、非同期 state 実装の統一を行い、既存仕様とテストを維持する |
+| 完了 | ID    | レーン | 種別           | タスク                                                                                   | 依存                                                                                      | 受け入れ条件                                                                                                                                                                      |
+| ---- | ----- | ------ | -------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [x]  | T-001 | A      | Setup          | API 層のディレクトリ分割（routes/controllers/services 等）                               | なし                                                                                      | ビルド通過、責務に沿った雛形がある                                                                                                                                                |
+| [x]  | T-002 | B      | Setup          | Web 層のディレクトリ分割（pages/features/api/state 等）                                  | なし                                                                                      | ビルド通過、既存画面が崩れない                                                                                                                                                    |
+| [x]  | T-003 | C      | API            | ENEX アップロード API `POST /api/enex/parse` 実装                                        | T-001                                                                                     | サンプル ENEX を受け取り `importId` を返す                                                                                                                                        |
+| [x]  | T-004 | C      | API            | ノート一覧 API `GET /api/imports/:importId/notes` 実装                                   | T-001, T-003                                                                              | 検索・ページング付き一覧を返す                                                                                                                                                    |
+| [x]  | T-005 | C      | API            | ノート詳細 API `GET /api/imports/:importId/notes/:noteId` 実装                           | T-001, T-003                                                                              | 指定ノート詳細を返す                                                                                                                                                              |
+| [x]  | T-006 | A      | API            | ENEX 解析サービス（XML->ドメイン変換）実装                                               | T-001                                                                                     | 解析結果と警告を返せる                                                                                                                                                            |
+| [x]  | T-007 | A      | API            | 本文サニタイズ処理実装                                                                   | T-001, T-006                                                                              | 危険なタグ/属性が除去される                                                                                                                                                       |
+| [x]  | T-008 | D      | Web            | アップロード UI 実装                                                                     | T-002, T-003                                                                              | ENEX を送信し importId を保持できる                                                                                                                                               |
+| [x]  | T-009 | D      | Web            | ノート一覧 UI 実装（検索含む）                                                           | T-002, T-004                                                                              | 検索条件で一覧更新される                                                                                                                                                          |
+| [x]  | T-010 | D      | Web            | ノート詳細 UI 実装                                                                       | T-002, T-005                                                                              | 選択ノートを表示できる                                                                                                                                                            |
+| [x]  | T-011 | E      | Quality        | API テスト整備（unit/integration）                                                       | T-003, T-004, T-005, T-006, T-007                                                         | 主要正常系/異常系をカバー                                                                                                                                                         |
+| [x]  | T-012 | E      | Quality        | Web テスト整備（unit）                                                                   | T-008, T-009, T-010                                                                       | 主要 UI の表示と状態遷移をカバーし、`apps/web/src/api/enex.ts` のエラー整形分岐を直接テストする                                                                                   |
+| [x]  | T-013 | E      | Docs           | OpenAPI 更新と README 更新                                                               | T-003, T-004, T-005                                                                       | API 契約と使用手順が一致                                                                                                                                                          |
+| [ ]  | T-014 | E      | QA             | 人間による動作テスト（手動シナリオ実施）                                                 | T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, T-011, T-012, T-013 | 手動テスト結果を記録し、主要シナリオが期待通りに動作する                                                                                                                          |
+| [x]  | T-015 | F      | Test-Migration | API 既存テストを Vitest へ移行（node:test/tsx 依存を削減）                               | T-006                                                                                     | 既存 API テストが Vitest で動作する                                                                                                                                               |
+| [x]  | T-016 | F      | Test-Migration | API エンドポイント統合テスト追加（Supertest）                                            | T-003                                                                                     | `/health` `/api/message` `/api/enex/parse` の主要正常系/異常系を検証                                                                                                              |
+| [x]  | T-017 | F      | Test-Migration | Web テスト基盤で既存 UI のテスト追加（Testing Library + jsdom）                          | T-002                                                                                     | 既存画面の主要表示/状態遷移を検証                                                                                                                                                 |
+| [x]  | T-018 | F      | Test-Migration | テスト運用ドキュメント更新（実行手順・命名規約・配置ルール）                             | T-015, T-016, T-017                                                                       | テスト実行と追加方針が文書化される                                                                                                                                                |
+| [x]  | T-019 | G      | Refactor       | API のクエリ/パラメータ解析ロジック共通化（厳密バリデーション）                          | T-004, T-005                                                                              | 共通関数化後も既存挙動とテストが維持される                                                                                                                                        |
+| [x]  | T-020 | G      | Refactor       | Web UI ユーティリティ共通化（API エラー整形/表示フォーマッタ/テスト補助）                | T-008, T-010, T-017                                                                       | 共通化後も既存 UI 挙動とテストが維持される                                                                                                                                        |
+| [x]  | T-021 | E      | Quality        | テストカバレッジ引き上げ（閾値達成）                                                     | T-011, T-012                                                                              | `npm run test:coverage` が通り、global 閾値（80%）を満たす                                                                                                                        |
+| [x]  | T-022 | H      | Refactor       | API アプリ基盤整理（`createApp` 抽出・エラーレスポンス helper 共通化・テスト初期化統一） | T-001, T-011, T-016                                                                       | 本番/テストの app 初期化が共通化され、エラー応答生成の重複が削減され、テスト前初期化で順序依存が発生しない                                                                        |
+| [x]  | T-023 | H      | Refactor       | API データアクセス/入力解析整理（保存モデル一本化・query/path 解析責務分離）             | T-003, T-004, T-005, T-006, T-019                                                         | import データ二重管理が解消され、入力解析 API が用途別に整理され、一覧/詳細 API の既存挙動が維持される                                                                            |
+| [x]  | T-024 | H      | Refactor       | ENEX アップロード/解析境界整理（multipart middleware 分離・resource size 算出厳密化）    | T-003, T-006                                                                              | `enexParseController` の multipart 解析責務が分離され、resource size 算出が厳密化され、既存の HTTP 挙動を維持する                                                                 |
+| [x]  | T-029 | I      | Refactor       | Web ノート表示責務整理（`NoteBrowser`/`useNotesList` の重複解消・日時フォーマッタ統一）  | T-009, T-010, T-020                                                                       | ノート一覧取得ロジックの重複が解消され、日時表示フォーマットが共通化され、既存 UI 挙動を維持する                                                                                  |
+| [x]  | T-030 | I      | Refactor       | Web API クライアント統一（`message.ts` を含むエラー処理の `ensureOk` 統一）              | T-008, T-009, T-010, T-020                                                                | API クライアントのエラー処理が共通化され、失敗時メッセージ挙動と既存テストが維持される                                                                                            |
+| [x]  | T-031 | I      | Refactor       | Web 非同期 state/コンポーネント整理（共通 async パターン + `NoteContent` 分離）          | T-008, T-009, T-010, T-020                                                                | state 管理の実装ゆれが減り、`dangerouslySetInnerHTML` 表示責務が分離され、既存 UI とテストが維持される                                                                            |
+| [x]  | T-032 | J      | Refactor       | 横断リファクタ（重複解消・共通化・パフォーマンス改善）                                   | T-024, T-031                                                                              | ノート一覧の二重取得解消、一覧検索/整形コスト低減、データ変換重複の削減、resource size 算出と multipart 処理の効率改善、非同期 state 実装の統一を行い、既存仕様とテストを維持する |
 
 ## 3. 並列化レーン
+
 - レーン A（API 基盤）: T-001, T-006, T-007
 - レーン B（Web 基盤）: T-002
 - レーン C（API エンドポイント）: T-003, T-004, T-005
@@ -55,6 +57,7 @@
 - レーン J（横断リファクタ最適化）: T-032
 
 ## 4. レーン間の依存関係
+
 - A -> C
 - B -> D
 - C -> D（通常）
@@ -67,11 +70,13 @@
 - H, I -> J（API/Web の基盤リファクタ完了後に横断最適化を実施）
 
 ## 5. 依存切り離し方針（契約先行 + モック）
+
 - API と Web を並列化する場合、先に `apps/api/openapi.yaml` と `docs/product/spec.md` の API 契約を固定する。
 - Web は契約準拠のモックで T-008/T-009/T-010 を先行実装してよい。
 - API 実装完了後に実 API へ差し替え、型定義とエラーフォーマットの一致を確認する。
 
 ## 6. 関連ドキュメント
+
 - 実行ルール: `docs/tasks/agent-execution.md`
 - レーン別の詳細方針: `docs/tasks/workstreams.md`
 - 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`

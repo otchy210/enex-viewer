@@ -16,9 +16,9 @@ describe('parseEnexFile', () => {
       noteCount: 2,
       warnings: []
     };
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify(responseBody), { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(responseBody), { status: 200 }));
     globalThis.fetch = fetchMock;
 
     const file = new File(['data'], 'notes.enex', { type: 'text/xml' });
@@ -36,9 +36,11 @@ describe('parseEnexFile', () => {
   });
 
   it('prefers the API error message when available', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({ message: 'Invalid ENEX' }), { status: 400 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: 'Invalid ENEX' }), { status: 400 })
+      );
     globalThis.fetch = fetchMock;
 
     const file = new File(['data'], 'notes.enex', { type: 'text/xml' });
@@ -47,9 +49,7 @@ describe('parseEnexFile', () => {
   });
 
   it('falls back to the HTTP status when the error payload is unreadable', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response('not-json', { status: 500 })
-    );
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response('not-json', { status: 500 }));
     globalThis.fetch = fetchMock;
 
     const file = new File(['data'], 'notes.enex', { type: 'text/xml' });

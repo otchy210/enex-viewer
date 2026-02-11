@@ -10,11 +10,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'json-summary'],
       include: ['src/**/*.{ts,tsx}'],
-      exclude: [
-        'src/**/*.vitest.test.{ts,tsx}',
-        'src/**/*.vitest.spec.{ts,tsx}',
-        'src/test/**'
-      ],
+      exclude: ['src/**/*.vitest.test.{ts,tsx}', 'src/**/*.vitest.spec.{ts,tsx}', 'src/test/**'],
       thresholds: {
         lines: 80,
         functions: 80,

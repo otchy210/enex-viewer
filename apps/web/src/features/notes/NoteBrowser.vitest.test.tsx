@@ -23,7 +23,14 @@ describe('NoteBrowser', () => {
     rerender(<NoteBrowser importId="import-1" loading={false} error="Network error" data={null} />);
     expect(screen.getByText('Error: Network error')).toBeInTheDocument();
 
-    rerender(<NoteBrowser importId="import-1" loading={false} error={null} data={{ total: 0, notes: [] }} />);
+    rerender(
+      <NoteBrowser
+        importId="import-1"
+        loading={false}
+        error={null}
+        data={{ total: 0, notes: [] }}
+      />
+    );
     expect(screen.getByText('No notes found for this import.')).toBeInTheDocument();
   });
 
@@ -67,7 +74,6 @@ describe('NoteBrowser', () => {
     expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-1');
     expect(screen.getByRole('button', { name: /First note/ })).toHaveClass('is-selected');
   });
-
 
   it('clears the selected note when list data changes and selected note is missing', () => {
     const { rerender } = render(

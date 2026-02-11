@@ -12,9 +12,9 @@ describe('notes api', () => {
 
   it('fetches the notes list with query params', async () => {
     const payload = { total: 1, notes: [] };
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify(payload), { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), { status: 200 }));
     globalThis.fetch = fetchMock;
 
     await expect(
@@ -28,9 +28,9 @@ describe('notes api', () => {
 
   it('fetches the notes list without query params', async () => {
     const payload = { total: 0, notes: [] };
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify(payload), { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), { status: 200 }));
     globalThis.fetch = fetchMock;
 
     await expect(fetchNotesList('import-2')).resolves.toEqual(payload);
@@ -38,9 +38,11 @@ describe('notes api', () => {
   });
 
   it('throws when the notes list request fails', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({ message: 'Bad request' }), { status: 400 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: 'Bad request' }), { status: 400 })
+      );
     globalThis.fetch = fetchMock;
 
     await expect(fetchNotesList('import-3')).rejects.toThrow('Bad request');
@@ -54,9 +56,9 @@ describe('notes api', () => {
       contentHtml: '<p>Content</p>',
       resources: []
     };
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify(payload), { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), { status: 200 }));
     globalThis.fetch = fetchMock;
 
     await expect(fetchNoteDetail('import-1', 'note-1')).resolves.toEqual(payload);
@@ -64,9 +66,7 @@ describe('notes api', () => {
   });
 
   it('throws when the note detail request fails', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response('not-json', { status: 500 })
-    );
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response('not-json', { status: 500 }));
     globalThis.fetch = fetchMock;
 
     await expect(fetchNoteDetail('import-1', 'note-2')).rejects.toThrow('HTTP 500');

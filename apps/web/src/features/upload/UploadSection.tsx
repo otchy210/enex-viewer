@@ -11,13 +11,7 @@ type UploadSectionProps = {
   reset: () => void;
 };
 
-export function UploadSection({
-  status,
-  error,
-  result,
-  uploadFile,
-  reset
-}: UploadSectionProps) {
+export function UploadSection({ status, error, result, uploadFile, reset }: UploadSectionProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {

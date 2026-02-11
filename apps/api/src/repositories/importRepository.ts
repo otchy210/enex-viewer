@@ -1,6 +1,10 @@
 import type { ImportSession } from '../models/note.js';
 import { buildNoteListIndex } from '../services/noteListIndex.js';
-import { clearImportSessions, getImportSession, saveImportSession } from './importSessionRepository.js';
+import {
+  clearImportSessions,
+  getImportSession,
+  saveImportSession
+} from './importSessionRepository.js';
 
 export type StoredNote = {
   id: string;

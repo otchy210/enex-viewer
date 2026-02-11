@@ -12,9 +12,9 @@ describe('fetchMessage', () => {
 
   it('returns the message payload', async () => {
     const payload = { message: 'Hello', timestamp: '2024-01-01T00:00:00Z' };
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify(payload), { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), { status: 200 }));
     globalThis.fetch = fetchMock;
 
     await expect(fetchMessage()).resolves.toEqual(payload);
@@ -22,9 +22,11 @@ describe('fetchMessage', () => {
   });
 
   it('prefers the API error message when available', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({ message: 'Server unavailable' }), { status: 503 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: 'Server unavailable' }), { status: 503 })
+      );
     globalThis.fetch = fetchMock;
 
     await expect(fetchMessage()).rejects.toThrow('Server unavailable');

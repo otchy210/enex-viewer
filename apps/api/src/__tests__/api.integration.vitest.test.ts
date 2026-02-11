@@ -66,7 +66,10 @@ describe('API integration', () => {
 
     const response = await request(app)
       .post('/api/enex/parse')
-      .attach('file', Buffer.from('not-enex'), { filename: 'sample.txt', contentType: 'text/plain' });
+      .attach('file', Buffer.from('not-enex'), {
+        filename: 'sample.txt',
+        contentType: 'text/plain'
+      });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({

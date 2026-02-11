@@ -1,1 +1,1 @@
-declare module "sanitize-html";
+declare module 'sanitize-html';

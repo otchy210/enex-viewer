@@ -98,10 +98,7 @@ describe('UploadSection', () => {
 
     expect(await screen.findByText('Upload complete.')).toBeInTheDocument();
 
-    await userEvent.upload(
-      input,
-      new File(['data'], 'notes-2.enex', { type: 'text/xml' })
-    );
+    await userEvent.upload(input, new File(['data'], 'notes-2.enex', { type: 'text/xml' }));
 
     expect(screen.queryByText('Upload complete.')).not.toBeInTheDocument();
     expect(screen.getByText('Ready to upload.')).toBeInTheDocument();
@@ -118,10 +115,7 @@ describe('UploadSection', () => {
 
     expect(await screen.findByText('Error: Invalid file')).toBeInTheDocument();
 
-    await userEvent.upload(
-      input,
-      new File(['data'], 'notes-2.enex', { type: 'text/xml' })
-    );
+    await userEvent.upload(input, new File(['data'], 'notes-2.enex', { type: 'text/xml' }));
 
     expect(screen.queryByText('Error: Invalid file')).not.toBeInTheDocument();
     expect(screen.getByText('Ready to upload.')).toBeInTheDocument();

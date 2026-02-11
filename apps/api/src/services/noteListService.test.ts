@@ -46,10 +46,7 @@ describe('listNotes', () => {
         createdAt: '20240101T000000Z',
         updatedAt: '20240102T000000Z',
         tags: [],
-        content:
-          '<en-note><p>' +
-          'A'.repeat(140) +
-          '</p><p>extra</p></en-note>'
+        content: '<en-note><p>' + 'A'.repeat(140) + '</p><p>extra</p></en-note>'
       }
     ]);
 

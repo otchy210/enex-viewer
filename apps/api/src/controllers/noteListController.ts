@@ -39,7 +39,10 @@ export const noteListController = (req: Request, res: Response) => {
     });
   }
 
-  const parsedLimit = parseQueryIntegerValue(limitResult.value, 'limit', { min: 1, max: MAX_LIMIT });
+  const parsedLimit = parseQueryIntegerValue(limitResult.value, 'limit', {
+    min: 1,
+    max: MAX_LIMIT
+  });
   if (!parsedLimit.ok) {
     return res.status(400).json({
       code: 'INVALID_QUERY',

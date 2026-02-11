@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
 // NOTE: NodeNext ESM requires .js extension for runtime module resolution.
-import { sanitizeEnml } from "./sanitizeEnml.js";
+import { sanitizeEnml } from './sanitizeEnml.js';
 
-describe("sanitizeEnml", () => {
-  it("removes dangerous tags and attributes while keeping allowed elements", () => {
+describe('sanitizeEnml', () => {
+  it('removes dangerous tags and attributes while keeping allowed elements', () => {
     const raw = `<?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
       <en-note>
@@ -17,11 +17,11 @@ describe("sanitizeEnml", () => {
 
     const sanitized = sanitizeEnml(raw);
 
-    expect(sanitized).not.toContain("<script");
-    expect(sanitized).not.toContain("onerror");
-    expect(sanitized).not.toContain("javascript:");
-    expect(sanitized).toContain("<img");
-    expect(sanitized).toContain("<a href=\"https://example.com\"");
-    expect(sanitized).toContain("<en-media");
+    expect(sanitized).not.toContain('<script');
+    expect(sanitized).not.toContain('onerror');
+    expect(sanitized).not.toContain('javascript:');
+    expect(sanitized).toContain('<img');
+    expect(sanitized).toContain('<a href="https://example.com"');
+    expect(sanitized).toContain('<en-media');
   });
 });

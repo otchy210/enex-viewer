@@ -2,11 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { parseEnexFile, EnexParseError } from '../services/enexParseService.js';
 
-export const enexParseController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const enexParseController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const fileBuffer = res.locals.enexFileBuffer;
     if (!Buffer.isBuffer(fileBuffer)) {

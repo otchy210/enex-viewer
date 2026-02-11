@@ -1,54 +1,66 @@
 # ENEX Viewer 仕様書
 
 ## 1. ユースケース
+
 - UC-001: ENEX をアップロードしてノート一覧を確認する。
 - UC-002: ノート詳細を開いて本文とメタデータを閲覧する。
 - UC-003: 検索語でノートを絞り込む。
 - UC-004: 解析エラーを確認し、再アップロードする。
 
 ## 2. 画面仕様（MVP）
+
 ### 2.1 アップロード
+
 - 単一 ENEX ファイルを受け付ける。
 - 解析中/成功/失敗の状態を表示する。
 
 ### 2.2 ノート一覧
+
 - 表示: タイトル、日時、タグ、抜粋、件数情報
 - 検索: タイトル/本文/タグの部分一致
 - ページング: `limit`, `offset` ベース
 
 ### 2.3 ノート詳細
+
 - 表示: タイトル、日時、タグ、本文、添付リソース情報
 - 本文: サニタイズ済み HTML を描画する
 
 ## 3. API 仕様（MVP）
+
 API 契約の正本は `apps/api/openapi.yaml` とする。
 
 ### 3.1 `POST /api/enex/parse`
+
 - 入力: `multipart/form-data`（`file` 必須）
 - 成功レスポンス: `{ importId, noteCount, warnings[] }`
 - 想定エラー: `400`, `413`, `422`, `500`
 
 ### 3.2 `GET /api/imports/:importId/notes`
+
 - 入力: `importId`（path）, `q`, `limit`, `offset`（query）
 - 成功レスポンス: `{ total, notes[] }`
 - 想定エラー: `400`, `404`, `500`
 
 ### 3.3 `GET /api/imports/:importId/notes/:noteId`
+
 - 入力: `importId`, `noteId`（path）
 - 成功レスポンス: ノート詳細
 - 想定エラー: `404`, `500`
 
 ## 4. エラーハンドリング仕様
+
 - API エラー形式は OpenAPI の `ErrorResponse` に従う。
 - 基本形式: `{ code: string, message: string, details?: unknown }`
 - Web は `message` を優先表示し、取得できない場合は `HTTP <status>` を表示する。
 
 ## 5. データ保持方針（MVP）
+
 - 初期版はインメモリ保持。
 - プロセス再起動でデータは消える。
 - 永続化層へ差し替え可能な構造を維持する。
 
 ## 6. 並列実装のための契約・モック方針
+
 - API 実装より先に OpenAPI 契約を固定する。
 - Web は契約準拠のモックレスポンスで先行実装してよい。
 - 結合時に以下の互換性を確認する。

@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  formatResourceLabel,
-  formatSummaryTimestamp,
-  formatTimestamp
-} from './formatters';
+import { formatResourceLabel, formatSummaryTimestamp, formatTimestamp } from './formatters';
 
 describe('formatTimestamp', () => {
   it('returns placeholder for empty values', () => {

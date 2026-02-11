@@ -9,7 +9,11 @@ export type NoteListIndexEntry = {
 
 const EVERNOTE_TIMESTAMP_PATTERN = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/;
 
-const stripMarkup = (value: string): string => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const stripMarkup = (value: string): string =>
+  value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 export const buildNoteExcerpt = (contentHtml: string, maxLength = 120): string => {
   const plain = stripMarkup(contentHtml);

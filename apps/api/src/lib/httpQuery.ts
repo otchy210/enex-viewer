@@ -6,10 +6,7 @@ export type SingleValueResult =
   | { ok: true; value: string | undefined }
   | { ok: false; message: string };
 
-export const parseSingleQueryValue = (
-  value: QueryValue,
-  message: string
-): SingleValueResult => {
+export const parseSingleQueryValue = (value: QueryValue, message: string): SingleValueResult => {
   if (value === undefined) {
     return { ok: true, value: undefined };
   }
@@ -19,9 +16,7 @@ export const parseSingleQueryValue = (
   return { ok: false, message };
 };
 
-export type IntegerParseResult =
-  | { ok: true; value: number }
-  | { ok: false; message: string };
+export type IntegerParseResult = { ok: true; value: number } | { ok: false; message: string };
 
 export const parseQueryIntegerValue = (
   value: string | undefined,

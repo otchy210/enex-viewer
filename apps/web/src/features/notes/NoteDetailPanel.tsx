@@ -124,9 +124,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
                 {resource.size !== undefined && (
                   <span className="note-resource-meta">{resource.size} bytes</span>
                 )}
-                {resource.mime && (
-                  <span className="note-resource-meta">{resource.mime}</span>
-                )}
+                {resource.mime && <span className="note-resource-meta">{resource.mime}</span>}
               </li>
             ))}
           </ul>

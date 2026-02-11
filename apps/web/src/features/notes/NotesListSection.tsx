@@ -96,7 +96,9 @@ export function NotesListSection({
                   <article>
                     <header className="notes-list__header">
                       <h3>{note.title}</h3>
-                      <small>Updated: {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}</small>
+                      <small>
+                        Updated: {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
+                      </small>
                     </header>
                     <p>{note.excerpt}</p>
                     <div className="notes-list__tags">

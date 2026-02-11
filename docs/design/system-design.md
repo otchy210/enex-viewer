@@ -1,9 +1,11 @@
 # ENEX Viewer 詳細設計
 
 ## 1. 目的
+
 実装時に必要なモジュール分割、主要モデル、処理方針を定義する。
 
 ## 2. API 内部構成
+
 `apps/api/src` を以下の責務で分割する。
 
 - `routes/`: HTTP ルーティング
@@ -14,6 +16,7 @@
 - `lib/`: サニタイズ、クエリ解析、ID/日時変換など共通処理
 
 ## 3. Web 内部構成
+
 `apps/web/src` を以下の責務で分割する。
 
 - `pages/`: 画面単位コンポーネント
@@ -24,33 +27,39 @@
 - `test/` または `test-utils/`: テスト共通設定/補助
 
 ## 4. 主要ドメインモデル
+
 - `ImportSession`: `id`, `createdAt`, `noteCount`, `warnings[]`
 - `NoteSummary`: `id`, `title`, `createdAt`, `updatedAt`, `tags[]`, `excerpt`
 - `NoteDetail`: `id`, `title`, `createdAt`, `updatedAt`, `tags[]`, `contentHtml`, `resources[]`
 - `ResourceMeta`: `id`, `fileName`, `mime`, `size`
 
 ## 5. ENEX 解析方針
+
 - 枯れた XML パーサを利用してノート単位へ変換する。
 - Evernote `content`（ENML）を表示用 HTML に変換し、サニタイズする。
 - 解析不能ノートは `warnings[]` へ蓄積し、処理全体は可能な範囲で継続する。
 
 ## 6. 検索・一覧方針
+
 - MVP はインメモリの部分一致検索を採用する。
 - 正規化ルール（大小文字、前後空白）を共通化する。
 - 将来差し替えを見据え、検索実装をサービス層に閉じ込める。
 
 ## 7. エラー処理方針
+
 - API のエラー形式は OpenAPI 契約（`ErrorResponse`）に従う。
 - Web 側は API の `message` を優先表示し、取得不能時は `HTTP <status>` へフォールバックする。
 - 想定外エラーはログへ残し、UI には安全なメッセージを返す。
 
 ## 8. テスト設計方針
+
 - API unit: パーサ、変換、検索、入力解析
 - API integration: エンドポイントの正常系/異常系
 - Web unit: 主要コンポーネント描画、状態遷移、エラー表示
 - カバレッジ: global 80%（lines/functions/branches/statements）を維持
 
 ## 9. 並列開発ルール（契約先行 + モック）
+
 - API 実装前に `apps/api/openapi.yaml` を固定する。
 - Web の `api/` 層は実 API とモックを差し替え可能に設計する。
 - 結合時に HTTP ステータス、JSON 型、エラーフォーマットの互換を確認する。

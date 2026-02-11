@@ -10,14 +10,16 @@ export const createApp = (): express.Express => {
   app.use(cors());
   app.use(express.json());
   app.use(routes);
-  app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error(error);
-    if (res.headersSent) {
-      return;
-    }
+  app.use(
+    (error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      console.error(error);
+      if (res.headersSent) {
+        return;
+      }
 
-    sendApiErrorResponse(res, 500, 'INTERNAL_SERVER_ERROR', 'Unexpected error.');
-  });
+      sendApiErrorResponse(res, 500, 'INTERNAL_SERVER_ERROR', 'Unexpected error.');
+    }
+  );
 
   return app;
 };
