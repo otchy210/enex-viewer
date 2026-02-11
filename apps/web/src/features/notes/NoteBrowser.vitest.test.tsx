@@ -68,6 +68,60 @@ describe('NoteBrowser', () => {
     expect(screen.getByRole('button', { name: /First note/ })).toHaveClass('is-selected');
   });
 
+
+  it('clears the selected note when list data changes and selected note is missing', () => {
+    const { rerender } = render(
+      <NoteBrowser
+        importId="import-8"
+        loading={false}
+        error={null}
+        data={{
+          total: 2,
+          notes: [
+            {
+              id: 'note-1',
+              title: 'First note',
+              createdAt: '2024-01-01T00:00:00Z',
+              tags: ['alpha'],
+              excerpt: 'Excerpt one'
+            },
+            {
+              id: 'note-2',
+              title: 'Second note',
+              createdAt: '2024-01-02T00:00:00Z',
+              tags: [],
+              excerpt: 'Excerpt two'
+            }
+          ]
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /First note/ }));
+    expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-1');
+
+    rerender(
+      <NoteBrowser
+        importId="import-8"
+        loading={false}
+        error={null}
+        data={{
+          total: 1,
+          notes: [
+            {
+              id: 'note-2',
+              title: 'Second note',
+              createdAt: '2024-01-02T00:00:00Z',
+              tags: [],
+              excerpt: 'Excerpt two'
+            }
+          ]
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('detail-panel')).toHaveTextContent('none');
+  });
   it('clears the selected note when the import id changes', () => {
     const { rerender } = render(
       <NoteBrowser

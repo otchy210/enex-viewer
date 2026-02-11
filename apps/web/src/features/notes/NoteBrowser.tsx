@@ -18,6 +18,17 @@ export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps
     setSelectedNoteId(null);
   }, [importId]);
 
+  useEffect(() => {
+    if (!selectedNoteId || !data) {
+      return;
+    }
+
+    const existsInCurrentList = data.notes.some((note) => note.id === selectedNoteId);
+    if (!existsInCurrentList) {
+      setSelectedNoteId(null);
+    }
+  }, [data, selectedNoteId]);
+
   return (
     <section>
       <h2>Notes</h2>
