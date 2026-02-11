@@ -47,6 +47,6 @@ describe('main entrypoint', () => {
     }));
 
     await expect(import('./main')).rejects.toThrow();
-    expect(createRootMock).toHaveBeenCalledWith(null);
+    expect(createRootMock).not.toHaveBeenCalled();
   });
 });

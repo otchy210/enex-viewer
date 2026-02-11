@@ -5,11 +5,12 @@ import { App } from './App';
 import './styles.css';
 
 const rootElement = document.getElementById('root');
-const root = ReactDOM.createRoot(rootElement as Element);
 
 if (rootElement == null) {
   throw new Error('Root element not found');
 }
+
+const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
