@@ -12,6 +12,7 @@ export const createApp = (): express.Express => {
   app.use(routes);
   app.use(
     (error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      void _next;
       console.error(error);
       if (res.headersSent) {
         return;
