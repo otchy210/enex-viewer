@@ -1,11 +1,11 @@
 import type { NoteDetail } from '../models/note.js';
 
-export type NoteListIndexEntry = {
+export interface NoteListIndexEntry {
   note: NoteDetail;
   searchText: string;
   excerpt: string;
   sortKey: number;
-};
+}
 
 const EVERNOTE_TIMESTAMP_PATTERN = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/;
 
@@ -25,7 +25,7 @@ export const buildNoteExcerpt = (contentHtml: string, maxLength = 120): string =
 };
 
 const toTimestamp = (value?: string): number => {
-  if (!value) {
+  if (value === undefined || value.length === 0) {
     return 0;
   }
 

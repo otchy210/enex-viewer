@@ -1,11 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
 
 const isLikelyEnex = (fileName?: string, contentType?: string) => {
-  if (fileName && fileName.toLowerCase().endsWith('.enex')) {
+  if (fileName?.toLowerCase().endsWith('.enex') === true) {
     return true;
   }
 
-  if (contentType && contentType.toLowerCase().includes('xml')) {
+  if (contentType?.toLowerCase().includes('xml') === true) {
     return true;
   }
 
@@ -31,7 +31,7 @@ export const parseEnexMultipart = async (req: Request, res: Response, next: Next
     }
 
     const contentType = extractMultipartContentType(req.headers);
-    if (!contentType) {
+    if (contentType === null) {
       return res.status(400).json({
         code: 'INVALID_MULTIPART',
         message: 'Request body must be multipart/form-data.'
@@ -44,9 +44,10 @@ export const parseEnexMultipart = async (req: Request, res: Response, next: Next
       body: req.body
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- Kept for current raw-body parser behavior in Node runtime.
     const formData = await request.formData();
     const file = formData.get('file');
-    if (!file || typeof file === 'string') {
+    if (file === null || typeof file === 'string') {
       return res.status(400).json({
         code: 'MISSING_FILE',
         message: 'file is required.'
@@ -63,8 +64,8 @@ export const parseEnexMultipart = async (req: Request, res: Response, next: Next
     }
 
     res.locals.enexFileBuffer = Buffer.from(await file.arrayBuffer());
-    return next();
+    next(); return;
   } catch (error) {
-    return next(error);
+    next(error); return;
   }
 };

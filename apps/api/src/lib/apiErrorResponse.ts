@@ -1,10 +1,10 @@
 import type express from 'express';
 
-export type ApiErrorResponse = {
+export interface ApiErrorResponse {
   code: string;
   message: string;
   details?: unknown;
-};
+}
 
 export const createApiErrorResponse = (
   code: string,

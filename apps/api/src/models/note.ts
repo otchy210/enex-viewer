@@ -1,11 +1,11 @@
-export type ResourceMeta = {
+export interface ResourceMeta {
   id: string;
   fileName?: string;
   mime?: string;
   size?: number;
-};
+}
 
-export type NoteDetail = {
+export interface NoteDetail {
   id: string;
   title: string;
   createdAt?: string;
@@ -13,9 +13,9 @@ export type NoteDetail = {
   tags: string[];
   contentHtml: string;
   resources: ResourceMeta[];
-};
+}
 
-export type ImportSession = {
+export interface ImportSession {
   id: string;
   createdAt: string;
   noteCount: number;
@@ -31,4 +31,4 @@ export type ImportSession = {
     excerpt: string;
     sortKey: number;
   }[];
-};
+}

@@ -1,7 +1,8 @@
-import type { Request, Response } from 'express';
 
 import { parseQueryIntegerValue, parseSingleQueryValue } from '../lib/httpQuery.js';
 import { listNotes } from '../services/noteListService.js';
+
+import type { Request, Response } from 'express';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
