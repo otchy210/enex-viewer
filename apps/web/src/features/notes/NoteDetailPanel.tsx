@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 
 import { fetchNoteDetail, type NoteDetail } from '../../api/notes';
-import { getAsyncErrorMessage } from '../../state/asyncState';
+import {
+  createAsyncErrorState,
+  createAsyncIdleState,
+  createAsyncLoadingState,
+  createAsyncSuccessState,
+  type AsyncDataState
+} from '../../state/asyncState';
 import { formatResourceLabel, formatTimestamp } from './formatters';
 import { NoteContent } from './NoteContent';
 
@@ -10,36 +16,32 @@ type NoteDetailPanelProps = {
   noteId: string | null;
 };
 
-type DetailState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'error'; error: string }
-  | { status: 'success'; note: NoteDetail };
-
 export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
-  const [state, setState] = useState<DetailState>({ status: 'idle' });
+  const [state, setState] = useState<AsyncDataState<NoteDetail>>(() => createAsyncIdleState());
 
   useEffect(() => {
     if (!noteId) {
-      setState({ status: 'idle' });
+      setState(createAsyncIdleState());
       return;
     }
 
     let active = true;
-    setState({ status: 'loading' });
 
-    fetchNoteDetail(importId, noteId)
-      .then((note) => {
+    const run = async () => {
+      setState(createAsyncLoadingState());
+      try {
+        const note = await fetchNoteDetail(importId, noteId);
         if (active) {
-          setState({ status: 'success', note });
+          setState(createAsyncSuccessState(note));
         }
-      })
-      .catch((error: unknown) => {
-        if (!active) {
-          return;
+      } catch (error) {
+        if (active) {
+          setState(createAsyncErrorState(error));
         }
-        setState({ status: 'error', error: getAsyncErrorMessage(error) });
-      });
+      }
+    };
+
+    run();
 
     return () => {
       active = false;
@@ -54,7 +56,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
     );
   }
 
-  if (state.status === 'loading') {
+  if (state.loading) {
     return (
       <div className="note-detail">
         <p>Loading note details...</p>
@@ -62,7 +64,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
     );
   }
 
-  if (state.status === 'error') {
+  if (state.error) {
     return (
       <div className="note-detail">
         <p className="error">Error: {state.error}</p>
@@ -70,7 +72,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
     );
   }
 
-  if (state.status !== 'success') {
+  if (!state.data) {
     return (
       <div className="note-detail">
         <p>Note details are not available yet.</p>
@@ -78,7 +80,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
     );
   }
 
-  const { note } = state;
+  const note = state.data;
 
   return (
     <div className="note-detail">

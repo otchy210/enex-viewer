@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import type { ImportSession, NoteDetail } from '../models/note.js';
 import { saveImportSession } from '../repositories/importSessionRepository.js';
 import { parseEnex } from './enexParserService.js';
+import { buildNoteListIndex } from './noteListIndex.js';
 
 export type EnexParseResult = {
   importId: string;
@@ -56,7 +57,17 @@ export const parseEnexFile = (payload: { data: Buffer }): EnexParseResult => {
     createdAt: new Date().toISOString(),
     noteCount: notes.length,
     warnings,
-    notes
+    notes,
+    noteListIndex: buildNoteListIndex(notes).map((entry) => ({
+      noteId: entry.note.id,
+      title: entry.note.title,
+      createdAt: entry.note.createdAt,
+      updatedAt: entry.note.updatedAt,
+      tags: entry.note.tags,
+      searchText: entry.searchText,
+      excerpt: entry.excerpt,
+      sortKey: entry.sortKey
+    }))
   };
 
   saveImportSession(session);

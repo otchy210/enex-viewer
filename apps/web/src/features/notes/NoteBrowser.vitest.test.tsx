@@ -1,13 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NoteBrowser } from './NoteBrowser';
-import { fetchNotesList, type NoteListResponse } from '../../api/notes';
-import { createDeferred } from '../../test-utils/deferred';
-
-vi.mock('../../api/notes', () => ({
-  fetchNotesList: vi.fn()
-}));
 
 vi.mock('./NoteDetailPanel', () => ({
   NoteDetailPanel: ({ noteId }: { noteId: string | null }) => (
@@ -15,72 +9,54 @@ vi.mock('./NoteDetailPanel', () => ({
   )
 }));
 
-const mockedFetchNotesList = vi.mocked(fetchNotesList);
-
 describe('NoteBrowser', () => {
-  beforeEach(() => {
-    mockedFetchNotesList.mockReset();
-  });
-
   afterEach(() => {
     cleanup();
   });
 
-  it('shows a loading state while fetching', () => {
-    const deferred = createDeferred<NoteListResponse>();
-    mockedFetchNotesList.mockReturnValueOnce(deferred.promise);
-
-    render(<NoteBrowser importId="import-1" />);
-
+  it('shows loading/error/empty states', () => {
+    const { rerender } = render(
+      <NoteBrowser importId="import-1" loading error={null} data={null} />
+    );
     expect(screen.getByText('Loading notes...')).toBeInTheDocument();
+
+    rerender(<NoteBrowser importId="import-1" loading={false} error="Network error" data={null} />);
+    expect(screen.getByText('Error: Network error')).toBeInTheDocument();
+
+    rerender(<NoteBrowser importId="import-1" loading={false} error={null} data={{ total: 0, notes: [] }} />);
+    expect(screen.getByText('No notes found for this import.')).toBeInTheDocument();
   });
 
-  it('shows an error when the request fails', async () => {
-    mockedFetchNotesList.mockRejectedValueOnce(new Error('Network error'));
+  it('renders notes and updates the selection', () => {
+    render(
+      <NoteBrowser
+        importId="import-4"
+        loading={false}
+        error={null}
+        data={{
+          total: 3,
+          notes: [
+            {
+              id: 'note-1',
+              title: 'First note',
+              createdAt: '2024-01-01T00:00:00Z',
+              tags: ['alpha'],
+              excerpt: 'Excerpt one'
+            },
+            {
+              id: 'note-2',
+              title: 'Second note',
+              updatedAt: 'invalid-date',
+              tags: [],
+              excerpt: 'Excerpt two'
+            },
+            { id: 'note-3', title: 'Third note', tags: [], excerpt: 'Excerpt three' }
+          ]
+        }}
+      />
+    );
 
-    render(<NoteBrowser importId="import-2" />);
-
-    expect(await screen.findByText('Error: Network error')).toBeInTheDocument();
-  });
-
-  it('shows an empty state when there are no notes', async () => {
-    mockedFetchNotesList.mockResolvedValueOnce({ total: 0, notes: [] });
-
-    render(<NoteBrowser importId="import-3" />);
-
-    expect(await screen.findByText('No notes found for this import.')).toBeInTheDocument();
-  });
-
-  it('renders notes and updates the selection', async () => {
-    mockedFetchNotesList.mockResolvedValueOnce({
-      total: 2,
-      notes: [
-        {
-          id: 'note-1',
-          title: 'First note',
-          createdAt: '2024-01-01T00:00:00Z',
-          tags: ['alpha'],
-          excerpt: 'Excerpt one'
-        },
-        {
-          id: 'note-2',
-          title: 'Second note',
-          updatedAt: 'invalid-date',
-          tags: [],
-          excerpt: 'Excerpt two'
-        },
-        {
-          id: 'note-3',
-          title: 'Third note',
-          tags: [],
-          excerpt: 'Excerpt three'
-        }
-      ]
-    });
-
-    render(<NoteBrowser importId="import-4" />);
-
-    expect(await screen.findByText('First note')).toBeInTheDocument();
+    expect(screen.getByText('First note')).toBeInTheDocument();
     expect(screen.getByText('Excerpt one')).toBeInTheDocument();
     expect(screen.getByText('alpha')).toBeInTheDocument();
     expect(screen.getByText('invalid-date')).toBeInTheDocument();
@@ -92,62 +68,104 @@ describe('NoteBrowser', () => {
     expect(screen.getByRole('button', { name: /First note/ })).toHaveClass('is-selected');
   });
 
-  it('clears the selected note when the import id changes', async () => {
-    mockedFetchNotesList
-      .mockResolvedValueOnce({
-        total: 1,
-        notes: [
-          {
-            id: 'note-1',
-            title: 'First note',
-            createdAt: '2024-01-01T00:00:00Z',
-            tags: ['alpha'],
-            excerpt: 'Excerpt one'
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        total: 1,
-        notes: [
-          {
-            id: 'note-2',
-            title: 'Second note',
-            createdAt: '2024-02-01T00:00:00Z',
-            tags: [],
-            excerpt: 'Excerpt two'
-          }
-        ]
-      });
 
-    const { rerender } = render(<NoteBrowser importId="import-6" />);
+  it('clears the selected note when list data changes and selected note is missing', () => {
+    const { rerender } = render(
+      <NoteBrowser
+        importId="import-8"
+        loading={false}
+        error={null}
+        data={{
+          total: 2,
+          notes: [
+            {
+              id: 'note-1',
+              title: 'First note',
+              createdAt: '2024-01-01T00:00:00Z',
+              tags: ['alpha'],
+              excerpt: 'Excerpt one'
+            },
+            {
+              id: 'note-2',
+              title: 'Second note',
+              createdAt: '2024-01-02T00:00:00Z',
+              tags: [],
+              excerpt: 'Excerpt two'
+            }
+          ]
+        }}
+      />
+    );
 
-    await screen.findByText('First note');
     fireEvent.click(screen.getByRole('button', { name: /First note/ }));
     expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-1');
 
-    rerender(<NoteBrowser importId="import-7" />);
-
-    await screen.findByText('Second note');
-    expect(screen.getByTestId('detail-panel')).toHaveTextContent('none');
-    expect(screen.getByRole('button', { name: /Second note/ })).not.toHaveClass(
-      'is-selected'
+    rerender(
+      <NoteBrowser
+        importId="import-8"
+        loading={false}
+        error={null}
+        data={{
+          total: 1,
+          notes: [
+            {
+              id: 'note-2',
+              title: 'Second note',
+              createdAt: '2024-01-02T00:00:00Z',
+              tags: [],
+              excerpt: 'Excerpt two'
+            }
+          ]
+        }}
+      />
     );
+
+    expect(screen.getByTestId('detail-panel')).toHaveTextContent('none');
   });
+  it('clears the selected note when the import id changes', () => {
+    const { rerender } = render(
+      <NoteBrowser
+        importId="import-6"
+        loading={false}
+        error={null}
+        data={{
+          total: 1,
+          notes: [
+            {
+              id: 'note-1',
+              title: 'First note',
+              createdAt: '2024-01-01T00:00:00Z',
+              tags: ['alpha'],
+              excerpt: 'Excerpt one'
+            }
+          ]
+        }}
+      />
+    );
 
-  it('does not update state after unmount when the request fails', async () => {
-    const deferred = createDeferred<NoteListResponse>();
-    mockedFetchNotesList.mockReturnValueOnce(deferred.promise);
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    fireEvent.click(screen.getByRole('button', { name: /First note/ }));
+    expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-1');
 
-    const { unmount } = render(<NoteBrowser importId="import-5" />);
+    rerender(
+      <NoteBrowser
+        importId="import-7"
+        loading={false}
+        error={null}
+        data={{
+          total: 1,
+          notes: [
+            {
+              id: 'note-2',
+              title: 'Second note',
+              createdAt: '2024-02-01T00:00:00Z',
+              tags: [],
+              excerpt: 'Excerpt two'
+            }
+          ]
+        }}
+      />
+    );
 
-    unmount();
-
-    deferred.reject(new Error('Late failure'));
-
-    await expect(deferred.promise).rejects.toThrow('Late failure');
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-
-    consoleErrorSpy.mockRestore();
+    expect(screen.getByTestId('detail-panel')).toHaveTextContent('none');
   });
 });
