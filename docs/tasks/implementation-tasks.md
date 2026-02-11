@@ -42,7 +42,11 @@
 | [x]  | T-030 | I      | Refactor       | Web API クライアント統一（`message.ts` を含むエラー処理の `ensureOk` 統一）              | T-008, T-009, T-010, T-020                                                                | API クライアントのエラー処理が共通化され、失敗時メッセージ挙動と既存テストが維持される                                                                                            |
 | [x]  | T-031 | I      | Refactor       | Web 非同期 state/コンポーネント整理（共通 async パターン + `NoteContent` 分離）          | T-008, T-009, T-010, T-020                                                                | state 管理の実装ゆれが減り、`dangerouslySetInnerHTML` 表示責務が分離され、既存 UI とテストが維持される                                                                            |
 | [x]  | T-032 | J      | Refactor       | 横断リファクタ（重複解消・共通化・パフォーマンス改善）                                   | T-024, T-031                                                                              | ノート一覧の二重取得解消、一覧検索/整形コスト低減、データ変換重複の削減、resource size 算出と multipart 処理の効率改善、非同期 state 実装の統一を行い、既存仕様とテストを維持する |
-| [x]  | T-033 | K      | Quality        | API 本体コード strict lint エラー解消（`apps/api/src`、テスト/設定除外）                  | T-022, T-023, T-024                                                                       | `apps/api/src` の本体コードで strict lint エラーが解消され、既存 API 挙動（HTTP ステータス/レスポンス形）を維持したまま `typecheck` と API テストが通過する |
+| [x]  | T-033 | K      | Quality        | API 本体コード strict lint エラー解消（`apps/api/src`、テスト/設定除外）                  | T-022, T-023, T-024, T-032                                                                | `apps/api/src` の本体コードで strict lint エラーが解消され、既存 API 挙動（HTTP ステータス/レスポンス形）を維持したまま `typecheck` と API テストが通過する |
+| [ ]  | T-034 | K      | Quality        | API テスト/設定 strict lint エラー解消（`apps/api/src/__tests__`、`apps/api/vitest.config.ts` 等） | T-022, T-023, T-024, T-032                                                                | API のテストコード/設定ファイルで strict lint エラーが解消され、`npm run test:api` と lint 全体が通る（本体コードは T-033 で完了済みであること）                      |
+| [ ]  | T-035 | L      | Quality        | Web 本体コード strict lint エラー解消（`apps/web/src`、テスト/設定除外）                 | T-029, T-030, T-031, T-032                                                                | `apps/web/src` の本体コードで strict lint エラーが解消され、既存 UI/状態遷移を維持したまま `typecheck` と Web テストが通過する                                             |
+| [ ]  | T-036 | L      | Quality        | Web テスト/設定 strict lint エラー解消（`apps/web/src/**/*.test.tsx`、`apps/web/*config.ts`） | T-029, T-030, T-031, T-032                                                                | Web のテストコード/設定ファイルで strict lint エラーが解消され、`npm run test:web` と lint 全体が通る（本体コードは T-035 で完了済みであること）                        |
+| [ ]  | T-037 | M      | Quality        | lint 最終収束（API/Web 全体で lint/typecheck/test の再確認）                            | T-033, T-034, T-035, T-036                                                                | `npm run lint` `npm run typecheck -w apps/api` `npm run typecheck -w apps/web` `npm run test:api` `npm run test:web` をまとめて実行し、CI 相当の最終確認が完了している         |
 
 ## 3. 並列化レーン
 
@@ -56,7 +60,9 @@
 - レーン H（API リファクタ拡張）: T-022, T-023, T-024
 - レーン I（Web リファクタ拡張）: T-029, T-030, T-031
 - レーン J（横断リファクタ最適化）: T-032
-- レーン K（API lint 改善）: T-033
+- レーン K（API lint 改善）: T-033, T-034
+- レーン L（Web lint 改善）: T-035, T-036
+- レーン M（lint 最終収束）: T-037
 
 ## 4. レーン間の依存関係
 
@@ -70,7 +76,8 @@
 - A, C, F -> H（API 実装/テスト基盤を前提に段階実施）
 - D, F, G -> I（Web 機能/テスト基盤/既存リファクタを前提に段階実施）
 - H, I -> J（API/Web の基盤リファクタ完了後に横断最適化を実施）
-- H, J -> K（API 基盤整理後に strict lint を段階適用）
+- J -> K, L（横断リファクタ後に lint タスクを開始）
+- K, L -> M（API/Web の lint が揃い次第、最終収束へ進む）
 
 ## 5. 依存切り離し方針（契約先行 + モック）
 

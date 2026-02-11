@@ -108,6 +108,40 @@
   - リファクタ後に既存 Web テストを実行し、リグレッションがない
   - 既存の UI 文言/状態遷移/HTTP 挙動を壊さない
 
+## レーン K: API lint 改善（T-033, T-034）
+
+- 目的: API ランタイム/テスト/設定コードに strict lint を適用し、品質を底上げする。
+- 主成果物:
+  - `apps/api/src`（本体）の lint エラー解消（T-033）
+  - `apps/api/src/__tests__` や `apps/api/vitest.config.ts`（テスト/設定）の lint エラー解消（T-034）
+- 受け入れ観点:
+  - `npm run lint -- apps/api` など対象範囲の lint が通る
+  - `npm run typecheck -w apps/api` が通る
+  - `npm run test:api` が通る
+  - 本体/テスト/設定の責務を混ぜず、段階的に適用する
+
+## レーン L: Web lint 改善（T-035, T-036）
+
+- 目的: Web ランタイム/テスト/設定コードに strict lint を適用し、品質を底上げする。
+- 主成果物:
+  - `apps/web/src`（本体）の lint エラー解消（T-035）
+  - `apps/web/src/**/*.test.tsx` や `apps/web/vitest.config.ts`（テスト/設定）の lint エラー解消（T-036）
+- 受け入れ観点:
+  - `npm run lint -- apps/web` など対象範囲の lint が通る
+  - `npm run typecheck -w apps/web` が通る
+  - `npm run test:web` が通る
+  - 本体/テスト/設定の責務を混ぜず、段階的に適用する
+
+## レーン M: lint 最終収束（T-037）
+
+- 目的: API/Web の lint タスク完了後に CI 相当の総合確認を行い、後続タスクが安心して進める状態にする。
+- 主成果物:
+  - `npm run lint`（リポジトリ全体）の完走
+  - API/Web の typecheck/test が再確認され、結果が記録される
+- 受け入れ観点:
+  - `npm run lint` `npm run typecheck -w apps/api` `npm run typecheck -w apps/web` `npm run test:api` `npm run test:web` のコマンドがすべて通る
+  - 追加の lint エラーや型/テスト失敗が出た場合は、前段タスクに差し戻して再調整する
+
 ## レーン J: 横断リファクタ最適化（T-032）
 
 - 目的: API/Web を横断して、重複ロジックの削減・共通化・実行効率改善をまとめて実施する。
