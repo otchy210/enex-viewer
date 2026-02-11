@@ -1,24 +1,25 @@
-import type { ImportSession } from '../models/note.js';
-import { buildNoteListIndex } from '../services/noteListIndex.js';
 import {
   clearImportSessions,
   getImportSession,
   saveImportSession
 } from './importSessionRepository.js';
+import { buildNoteListIndex } from '../services/noteListIndex.js';
 
-export type StoredNote = {
+import type { ImportSession } from '../models/note.js';
+
+export interface StoredNote {
   id: string;
   title: string;
   createdAt?: string;
   updatedAt?: string;
   tags: string[];
   content: string;
-};
+}
 
-type StoredImport = {
+interface StoredImport {
   importId: string;
   notes: StoredNote[];
-};
+}
 
 export const saveImport = (importId: string, notes: StoredNote[]): void => {
   const sessionNotes = notes.map((note) => ({

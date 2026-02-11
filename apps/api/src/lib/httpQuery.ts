@@ -1,6 +1,6 @@
 import type { ParsedQs } from 'qs';
 
-type QueryValue = string | ParsedQs | Array<string | ParsedQs> | undefined;
+type QueryValue = string | ParsedQs | (string | ParsedQs)[] | undefined;
 
 export type SingleValueResult =
   | { ok: true; value: string | undefined }
@@ -35,10 +35,10 @@ export const parseQueryIntegerValue = (
     return { ok: false, message: `${name} must be ${requirement}.` };
   }
   if (parsed < options.min) {
-    return { ok: false, message: `${name} must be at least ${options.min}.` };
+    return { ok: false, message: `${name} must be at least ${String(options.min)}.` };
   }
   if (options.max !== undefined && parsed > options.max) {
-    return { ok: false, message: `${name} must be at most ${options.max}.` };
+    return { ok: false, message: `${name} must be at most ${String(options.max)}.` };
   }
   return { ok: true, value: parsed };
 };

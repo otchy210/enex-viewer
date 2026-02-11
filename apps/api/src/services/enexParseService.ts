@@ -1,15 +1,16 @@
 import { randomUUID } from 'crypto';
 
-import type { ImportSession, NoteDetail } from '../models/note.js';
-import { saveImportSession } from '../repositories/importSessionRepository.js';
 import { parseEnex } from './enexParserService.js';
 import { buildNoteListIndex } from './noteListIndex.js';
+import { saveImportSession } from '../repositories/importSessionRepository.js';
 
-export type EnexParseResult = {
+import type { ImportSession, NoteDetail } from '../models/note.js';
+
+export interface EnexParseResult {
   importId: string;
   noteCount: number;
   warnings: string[];
-};
+}
 
 export class EnexParseError extends Error {
   readonly code: string;
@@ -23,7 +24,7 @@ export class EnexParseError extends Error {
 }
 
 const formatWarning = (warning: { noteTitle?: string; message: string }): string => {
-  if (warning.noteTitle) {
+  if (warning.noteTitle !== undefined && warning.noteTitle.length > 0) {
     return `${warning.noteTitle}: ${warning.message}`;
   }
   return warning.message;

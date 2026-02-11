@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
-import healthRoutes from './healthRoutes.js';
 import enexRoutes from './enexRoutes.js';
-import messageRoutes from './messageRoutes.js';
+import healthRoutes from './healthRoutes.js';
 import importRoutes from './importRoutes.js';
+import messageRoutes from './messageRoutes.js';
 import noteRoutes from './noteRoutes.js';
 
 const router = Router();

@@ -3,19 +3,19 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser';
 // NOTE: NodeNext ESM requires .js extension for runtime module resolution.
 import { sanitizeEnml } from '../lib/sanitizeEnml.js';
 
-export type EnexParseWarning = {
+export interface EnexParseWarning {
   noteTitle?: string;
   message: string;
-};
+}
 
-export type ParsedResourceMeta = {
+export interface ParsedResourceMeta {
   id: string;
   fileName?: string;
   mime?: string;
   size?: number;
-};
+}
 
-export type ParsedNote = {
+export interface ParsedNote {
   id: string;
   title: string;
   createdAt?: string;
@@ -23,25 +23,25 @@ export type ParsedNote = {
   tags: string[];
   content: string;
   resources: ParsedResourceMeta[];
-};
+}
 
-export type EnexParseError = {
+export interface EnexParseError {
   code: 'INVALID_XML' | 'INVALID_ENEX';
   message: string;
   details?: unknown;
-};
+}
 
-export type EnexParseSuccess = {
+export interface EnexParseSuccess {
   ok: true;
   notes: ParsedNote[];
   warnings: EnexParseWarning[];
-};
+}
 
-export type EnexParseFailure = {
+export interface EnexParseFailure {
   ok: false;
   error: EnexParseError;
   warnings: EnexParseWarning[];
-};
+}
 
 export type EnexParseResult = EnexParseSuccess | EnexParseFailure;
 
@@ -53,7 +53,7 @@ const parser = new XMLParser({
 });
 
 const toArray = <T>(value: T | T[] | undefined): T[] => {
-  if (!value) {
+  if (value === undefined) {
     return [];
   }
   return Array.isArray(value) ? value : [value];
@@ -74,7 +74,7 @@ const extractCdataString = (value: unknown): string => {
 
 const decodeBase64Size = (raw: string): number | undefined => {
   const normalized = raw.replace(/\s+/g, '');
-  if (!normalized) {
+  if (normalized.length === 0) {
     return undefined;
   }
 
@@ -99,7 +99,7 @@ const extractResourceSize = (data: unknown): number | undefined => {
   const encodedData = data as { __cdata?: unknown; encoding?: unknown };
   const encoding =
     typeof encodedData.encoding === 'string' ? encodedData.encoding.toLowerCase() : undefined;
-  if (encoding && encoding !== 'base64') {
+  if (encoding !== undefined && encoding !== 'base64') {
     return undefined;
   }
 
@@ -158,9 +158,9 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
     const title = typeof note.title === 'string' ? note.title.trim() : '';
     const content = extractCdataString(note.content);
 
-    if (!title || !content) {
+    if (title.length === 0 || content.length === 0) {
       warnings.push({
-        noteTitle: title || undefined,
+        noteTitle: title.length > 0 ? title : undefined,
         message: 'Skipped note due to missing title or content.'
       });
       return;
@@ -180,7 +180,7 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
       const size = extractResourceSize(resource.data);
 
       return {
-        id: `resource-${noteIndex + 1}-${resourceIndex + 1}`,
+        id: `resource-${String(noteIndex + 1)}-${String(resourceIndex + 1)}`,
         fileName,
         mime,
         size
@@ -188,7 +188,7 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
     });
 
     parsedNotes.push({
-      id: typeof note.guid === 'string' ? note.guid : `note-${noteIndex + 1}`,
+      id: typeof note.guid === 'string' ? note.guid : `note-${String(noteIndex + 1)}`,
       title,
       createdAt: typeof note.created === 'string' ? note.created : undefined,
       updatedAt: typeof note.updated === 'string' ? note.updated : undefined,

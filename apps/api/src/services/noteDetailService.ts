@@ -1,10 +1,11 @@
-import type { NoteDetail } from '../models/note.js';
 import { getImportSession } from '../repositories/importSessionRepository.js';
 
-export type NoteDetailError = {
+import type { NoteDetail } from '../models/note.js';
+
+export interface NoteDetailError {
   code: 'IMPORT_NOT_FOUND' | 'NOTE_NOT_FOUND';
   message: string;
-};
+}
 
 export type NoteDetailResult =
   | { ok: true; note: NoteDetail }

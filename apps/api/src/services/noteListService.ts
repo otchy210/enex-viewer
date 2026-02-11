@@ -1,24 +1,24 @@
 import { getImportSession } from '../repositories/importSessionRepository.js';
 
-export type NoteSummary = {
+export interface NoteSummary {
   id: string;
   title: string;
   createdAt?: string;
   updatedAt?: string;
   tags: string[];
   excerpt: string;
-};
+}
 
-export type NoteListQuery = {
+export interface NoteListQuery {
   q?: string;
   limit: number;
   offset: number;
-};
+}
 
-export type NoteListResult = {
+export interface NoteListResult {
   total: number;
   notes: NoteSummary[];
-};
+}
 
 const normalizeQuery = (value?: string): string | undefined => {
   if (value === undefined) {
@@ -31,14 +31,15 @@ const normalizeQuery = (value?: string): string | undefined => {
 
 export const listNotes = (importId: string, query: NoteListQuery): NoteListResult | null => {
   const session = getImportSession(importId);
-  if (!session) {
+  if (session === undefined) {
     return null;
   }
 
   const normalized = normalizeQuery(query.q);
-  const filtered = normalized
-    ? session.noteListIndex.filter((entry) => entry.searchText.includes(normalized))
-    : session.noteListIndex;
+  const filtered =
+    normalized !== undefined
+      ? session.noteListIndex.filter((entry) => entry.searchText.includes(normalized))
+      : session.noteListIndex;
 
   return {
     total: filtered.length,
