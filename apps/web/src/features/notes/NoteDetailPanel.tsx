@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { formatResourceLabel, formatTimestamp } from './formatters';
+import { NoteContent } from './NoteContent';
 import { fetchNoteDetail, type NoteDetail } from '../../api/notes';
 import {
   createAsyncErrorState,
@@ -8,19 +10,17 @@ import {
   createAsyncSuccessState,
   type AsyncDataState
 } from '../../state/asyncState';
-import { formatResourceLabel, formatTimestamp } from './formatters';
-import { NoteContent } from './NoteContent';
 
-type NoteDetailPanelProps = {
+interface NoteDetailPanelProps {
   importId: string;
   noteId: string | null;
-};
+}
 
 export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
   const [state, setState] = useState<AsyncDataState<NoteDetail>>(() => createAsyncIdleState());
 
   useEffect(() => {
-    if (!noteId) {
+    if (noteId == null) {
       setState(createAsyncIdleState());
       return;
     }
@@ -41,14 +41,14 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
       }
     };
 
-    run();
+    void run();
 
     return () => {
       active = false;
     };
   }, [importId, noteId]);
 
-  if (!noteId) {
+  if (noteId == null) {
     return (
       <div className="note-detail">
         <p>Select a note to view details.</p>
@@ -64,7 +64,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
     );
   }
 
-  if (state.error) {
+  if (state.error != null) {
     return (
       <div className="note-detail">
         <p className="error">Error: {state.error}</p>
@@ -72,7 +72,7 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
     );
   }
 
-  if (!state.data) {
+  if (state.data == null) {
     return (
       <div className="note-detail">
         <p>Note details are not available yet.</p>
@@ -124,7 +124,9 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
                 {resource.size !== undefined && (
                   <span className="note-resource-meta">{resource.size} bytes</span>
                 )}
-                {resource.mime && <span className="note-resource-meta">{resource.mime}</span>}
+                {resource.mime != null && resource.mime.length > 0 && (
+                  <span className="note-resource-meta">{resource.mime}</span>
+                )}
               </li>
             ))}
           </ul>

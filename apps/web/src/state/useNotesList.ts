@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { fetchNotesList, type NoteListResponse } from '../api/notes';
 import {
   createAsyncErrorState,
   createAsyncIdleState,
@@ -8,16 +7,17 @@ import {
   createAsyncSuccessState,
   type AsyncDataState
 } from './asyncState';
+import { fetchNotesList, type NoteListResponse } from '../api/notes';
 
 type NotesListState = AsyncDataState<NoteListResponse> & {
   reload: () => void;
 };
 
-type NotesListOptions = {
+interface NotesListOptions {
   query: string;
   limit: number;
   offset: number;
-};
+}
 
 export function useNotesList(
   importId: string | null,
@@ -33,7 +33,7 @@ export function useNotesList(
   }, []);
 
   useEffect(() => {
-    if (!importId) {
+    if (importId == null) {
       setState(createAsyncIdleState());
       return;
     }
@@ -45,7 +45,7 @@ export function useNotesList(
 
       try {
         const response = await fetchNotesList(importId, {
-          q: query || undefined,
+          q: query.length > 0 ? query : undefined,
           limit,
           offset
         });
@@ -59,7 +59,7 @@ export function useNotesList(
       }
     };
 
-    run();
+    void run();
 
     return () => {
       cancelled = true;

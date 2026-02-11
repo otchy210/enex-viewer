@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 
-import { fetchMessage, type ApiResponse } from '../api/message';
 import {
   createAsyncErrorState,
   createAsyncIdleState,
   createAsyncSuccessState,
   type AsyncDataState
 } from './asyncState';
+import { fetchMessage, type ApiResponse } from '../api/message';
 
 type MessageState = AsyncDataState<ApiResponse>;
 
@@ -23,7 +23,7 @@ export function useMessage(): MessageState {
       }
     };
 
-    run();
+    void run();
   }, []);
 
   return state;

@@ -1,9 +1,10 @@
 import { useMemo, type FormEvent } from 'react';
 
-import type { NoteListResponse } from '../../api/notes';
 import { formatSummaryTimestamp } from './formatters';
 
-type NotesListSectionProps = {
+import type { NoteListResponse } from '../../api/notes';
+
+interface NotesListSectionProps {
   importId: string | null;
   searchInput: string;
   query: string;
@@ -15,7 +16,7 @@ type NotesListSectionProps = {
   onSearchSubmit: () => void;
   onClear: () => void;
   onOffsetChange: (nextOffset: number) => void;
-};
+}
 
 const PAGE_LIMIT = 20;
 
@@ -40,20 +41,20 @@ export function NotesListSection({
   const canGoNext = offset + PAGE_LIMIT < total;
 
   const summaryText = useMemo(() => {
-    if (!importId) {
+    if (importId == null) {
       return 'Upload an ENEX file to view notes.';
     }
     if (loading) {
       return 'Loading notes...';
     }
-    if (error) {
+    if (error != null) {
       return 'Failed to load notes.';
     }
     if (!hasNotes) {
       return 'No notes found.';
     }
 
-    return `Showing ${startIndex}-${endIndex} of ${total} notes.`;
+    return `Showing ${String(startIndex)}-${String(endIndex)} of ${String(total)} notes.`;
   }, [importId, loading, error, hasNotes, startIndex, endIndex, total]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -66,7 +67,7 @@ export function NotesListSection({
       <h2>Notes</h2>
       <p>{summaryText}</p>
 
-      {!importId ? null : (
+      {importId == null ? null : (
         <>
           <form onSubmit={handleSubmit} className="notes-search">
             <label htmlFor="notes-search-input">Search notes</label>
@@ -76,7 +77,7 @@ export function NotesListSection({
                 type="search"
                 placeholder="Search title or content"
                 value={searchInput}
-                onChange={(event) => onSearchInputChange(event.target.value)}
+                onChange={(event) => { onSearchInputChange(event.target.value); }}
               />
               <button type="submit" disabled={loading}>
                 Search
@@ -87,7 +88,7 @@ export function NotesListSection({
             </div>
           </form>
 
-          {error && <p className="error">Error: {error}</p>}
+          {error != null && <p className="error">Error: {error}</p>}
 
           {hasNotes && (
             <ul className="notes-list">
@@ -114,17 +115,17 @@ export function NotesListSection({
             <div className="notes-pagination">
               <button
                 type="button"
-                onClick={() => onOffsetChange(Math.max(offset - PAGE_LIMIT, 0))}
+                onClick={() => { onOffsetChange(Math.max(offset - PAGE_LIMIT, 0)); }}
                 disabled={!canGoPrev || loading}
               >
                 Previous
               </button>
               <span>
-                {startIndex}-{endIndex} / {total}
+                {String(startIndex)}-{String(endIndex)} / {String(total)}
               </span>
               <button
                 type="button"
-                onClick={() => onOffsetChange(offset + PAGE_LIMIT)}
+                onClick={() => { onOffsetChange(offset + PAGE_LIMIT); }}
                 disabled={!canGoNext || loading}
               >
                 Next

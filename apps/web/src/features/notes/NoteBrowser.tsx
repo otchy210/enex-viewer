@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 
-import type { NoteListResponse } from '../../api/notes';
-import { NoteDetailPanel } from './NoteDetailPanel';
 import { formatSummaryTimestamp } from './formatters';
+import { NoteDetailPanel } from './NoteDetailPanel';
 
-type NoteBrowserProps = {
+import type { NoteListResponse } from '../../api/notes';
+
+interface NoteBrowserProps {
   importId: string;
   loading: boolean;
   error: string | null;
   data: NoteListResponse | null;
-};
+}
 
 export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps) {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -19,7 +20,7 @@ export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps
   }, [importId]);
 
   useEffect(() => {
-    if (!selectedNoteId || !data) {
+    if (selectedNoteId == null || data == null) {
       return;
     }
 
@@ -34,13 +35,13 @@ export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps
       <h2>Notes</h2>
 
       {loading && <p>Loading notes...</p>}
-      {!loading && error && <p className="error">Error: {error}</p>}
+      {!loading && error != null && <p className="error">Error: {error}</p>}
 
-      {!loading && !error && data && data.notes.length === 0 && (
+      {!loading && error == null && data?.notes.length === 0 && (
         <p>No notes found for this import.</p>
       )}
 
-      {!loading && !error && data && data.notes.length > 0 && (
+      {!loading && error == null && data != null && data.notes.length > 0 && (
         <div className="note-browser">
           <div className="note-list" role="list">
             {data.notes.map((note) => (
@@ -48,7 +49,7 @@ export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps
                 key={note.id}
                 type="button"
                 className={`note-list-item${selectedNoteId === note.id ? ' is-selected' : ''}`}
-                onClick={() => setSelectedNoteId(note.id)}
+                onClick={() => { setSelectedNoteId(note.id); }}
               >
                 <div className="note-list-header">
                   <span className="note-list-title">{note.title}</span>

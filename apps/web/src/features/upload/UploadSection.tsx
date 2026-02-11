@@ -3,13 +3,13 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import type { ParseEnexResponse } from '../../api/enex';
 import type { UploadStatus } from '../../state/useEnexUpload';
 
-type UploadSectionProps = {
+interface UploadSectionProps {
   status: UploadStatus;
   error: string | null;
   result: ParseEnexResponse | null;
   uploadFile: (file: File) => Promise<void>;
   reset: () => void;
-};
+}
 
 export function UploadSection({ status, error, result, uploadFile, reset }: UploadSectionProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -35,7 +35,11 @@ export function UploadSection({ status, error, result, uploadFile, reset }: Uplo
       <h2>Upload ENEX</h2>
       <p>Select an ENEX file to start parsing.</p>
 
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(event) => {
+          void handleSubmit(event);
+        }}
+      >
         <input
           aria-label="ENEX file"
           type="file"
@@ -59,7 +63,7 @@ export function UploadSection({ status, error, result, uploadFile, reset }: Uplo
           {result.warnings.length > 0 && <p>Warnings: {result.warnings.length}</p>}
         </div>
       )}
-      {status === 'error' && error && <p className="error">Error: {error}</p>}
+      {status === 'error' && error != null && <p className="error">Error: {error}</p>}
     </section>
   );
 }
