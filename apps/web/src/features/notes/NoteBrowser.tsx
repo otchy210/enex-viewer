@@ -37,7 +37,7 @@ export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps
       {loading && <p>Loading notes...</p>}
       {!loading && error != null && <p className="error">Error: {error}</p>}
 
-      {!loading && error == null && (data?.notes.length ?? 0) === 0 && (
+      {!loading && error == null && data?.notes.length === 0 && (
         <p>No notes found for this import.</p>
       )}
 
