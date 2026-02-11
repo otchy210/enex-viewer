@@ -17,6 +17,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+              examples:
+                default:
+                  value:
+                    ok: true
+
   /api/message:
     get:
       summary: サンプルメッセージの取得
@@ -28,6 +33,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+
   /api/enex/parse:
     post:
       summary: ENEX ファイルのアップロードと解析
@@ -44,6 +50,9 @@ paths:
                 file:
                   type: string
                   format: binary
+            encoding:
+              file:
+                contentType: application/xml
       responses:
         '200':
           description: ENEX 解析結果
@@ -52,29 +61,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/EnexParseResponse'
         '400':
-          description: ファイル形式不正、必須パラメータ不備
+          description: multipart 形式不正、file 欠落、ファイル種別不正
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidMultipart:
+                  value:
+                    code: INVALID_MULTIPART
+                    message: Request body must be multipart/form-data.
+                missingFile:
+                  value:
+                    code: MISSING_FILE
+                    message: file is required.
+                invalidFileType:
+                  value:
+                    code: INVALID_FILE_TYPE
+                    message: Invalid ENEX file type.
         '413':
-          description: ファイルサイズ超過
+          description: ファイルサイズ超過（10MB）
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                fileTooLarge:
+                  value:
+                    code: FILE_TOO_LARGE
+                    message: File size exceeds the allowed limit.
         '422':
-          description: ENEX 解析失敗
+          description: ENEX 解析失敗（XML 不正・ENEX 構造不正など）
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidXml:
+                  value:
+                    code: INVALID_XML
+                    message: Failed to parse XML.
+                    details:
+                      err:
+                        code: InvalidTag
+                invalidEnex:
+                  value:
+                    code: INVALID_ENEX
+                    message: Missing <en-export> root element.
         '500':
           description: 想定外エラー
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internal:
+                  value:
+                    code: INTERNAL_SERVER_ERROR
+                    message: Unexpected error.
+
   /api/imports/{importId}/notes:
     get:
       summary: ノート一覧の取得
@@ -88,11 +133,13 @@ paths:
         - in: query
           name: q
           required: false
+          description: 検索キーワード。空文字は未指定として扱われる。
           schema:
             type: string
         - in: query
           name: limit
           required: false
+          description: 取得件数（1-100、未指定時 50）
           schema:
             type: integer
             minimum: 1
@@ -101,6 +148,7 @@ paths:
         - in: query
           name: offset
           required: false
+          description: 取得開始位置（0 以上、未指定時 0）
           schema:
             type: integer
             minimum: 0
@@ -118,30 +166,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidLimitType:
+                  value:
+                    code: INVALID_QUERY
+                    message: limit must be a single value.
+                invalidLimitValue:
+                  value:
+                    code: INVALID_QUERY
+                    message: limit must be a positive integer.
+                invalidLimitMax:
+                  value:
+                    code: INVALID_QUERY
+                    message: limit must be at most 100.
+                invalidOffset:
+                  value:
+                    code: INVALID_QUERY
+                    message: offset must be a non-negative integer.
+                invalidQ:
+                  value:
+                    code: INVALID_QUERY
+                    message: q must be a single string.
         '404':
           description: 参照対象のインポートが存在しない
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                importNotFound:
+                  value:
+                    code: IMPORT_NOT_FOUND
+                    message: Import session not found.
         '500':
           description: 想定外エラー
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /api/imports/{importId}/notes/{noteId}:
     get:
       summary: ノート詳細の取得
       operationId: getNoteDetail
       parameters:
-        - name: importId
-          in: path
+        - in: path
+          name: importId
           required: true
           schema:
             type: string
-        - name: noteId
-          in: path
+        - in: path
+          name: noteId
           required: true
           schema:
             type: string
@@ -153,17 +228,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/NoteDetailResponse'
         '404':
-          description: 対象が見つからない
+          description: 対象 import または note が見つからない
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                importNotFound:
+                  value:
+                    code: IMPORT_NOT_FOUND
+                    message: Import session not found.
+                noteNotFound:
+                  value:
+                    code: NOTE_NOT_FOUND
+                    message: Note not found.
         '500':
           description: 想定外エラー
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     HealthResponse:
@@ -174,6 +259,7 @@ components:
         ok:
           type: boolean
           example: true
+
     MessageResponse:
       type: object
       required:
@@ -187,6 +273,7 @@ components:
           type: string
           format: date-time
           example: '2026-02-08T00:00:00.000Z'
+
     EnexParseResponse:
       type: object
       required:
@@ -199,11 +286,14 @@ components:
           example: 7bfa5e83-8a9c-49ec-ae4f-7a7cd5ad2f5f
         noteCount:
           type: integer
-          example: 0
+          example: 1
         warnings:
           type: array
           items:
             type: string
+          example:
+            - Incomplete Note: Skipped note due to missing title or content.
+
     NoteSummary:
       type: object
       required:
@@ -220,12 +310,12 @@ components:
           example: Sample Note
         createdAt:
           type: string
-          nullable: true
-          example: '2024-01-01T00:00:00Z'
+          description: ENEX の created 値（存在する場合のみ）
+          example: '20240101T000000Z'
         updatedAt:
           type: string
-          nullable: true
-          example: '2024-01-02T00:00:00Z'
+          description: ENEX の updated 値（存在する場合のみ）
+          example: '20240102T000000Z'
         tags:
           type: array
           items:
@@ -233,6 +323,7 @@ components:
         excerpt:
           type: string
           example: hello world...
+
     NoteListResponse:
       type: object
       required:
@@ -246,20 +337,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NoteSummary'
-    ErrorResponse:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          example: INVALID_FILE_TYPE
-        message:
-          type: string
-          example: Invalid ENEX file type.
-        details:
-          nullable: true
+
     ResourceMeta:
       type: object
       required:
@@ -270,13 +348,14 @@ components:
           example: resource-1-1
         fileName:
           type: string
-          example: attachment.pdf
+          example: image.png
         mime:
           type: string
-          example: application/pdf
+          example: image/png
         size:
           type: integer
-          example: 1024
+          example: 3
+
     NoteDetailResponse:
       type: object
       required:
@@ -288,24 +367,46 @@ components:
       properties:
         id:
           type: string
-          example: note-1
+          example: note-123
         title:
           type: string
-          example: Sample Note
+          example: Sample Detail
         createdAt:
           type: string
-          example: 20240101T000000Z
+          description: ENEX の created 値（存在する場合のみ）
+          example: '20240101T000000Z'
         updatedAt:
           type: string
-          example: 20240102T000000Z
+          description: ENEX の updated 値（存在する場合のみ）
+          example: '20240102T000000Z'
         tags:
           type: array
           items:
             type: string
         contentHtml:
           type: string
-          example: '<en-note>hello</en-note>'
+          example: '<en-note>Detail Body</en-note>'
         resources:
           type: array
           items:
             $ref: '#/components/schemas/ResourceMeta'
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: INVALID_QUERY
+        message:
+          type: string
+          example: limit must be a positive integer.
+        details:
+          nullable: true
+          description: エラー詳細（存在しない場合は省略される）
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: string

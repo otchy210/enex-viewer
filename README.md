@@ -1,70 +1,34 @@
 # enex-viewer
 
-TypeScript で REST API (`apps/api`) と Web UI (`apps/web`) を同一リポジトリで開発するための初期構成です。
+ENEX Viewer は、Evernote ENEX ファイルを読み込み、ノートの一覧検索と詳細閲覧を行うためのモノレポです。
 
-## セットアップ
+- API: `apps/api`（ENEX 解析、ノート一覧/詳細 API）
+- Web: `apps/web`（アップロード、検索、詳細表示 UI）
 
-```bash
-nvm use
-npm install
-```
+## 主要機能
+- ENEX ファイルのアップロードと解析（`POST /api/enex/parse`）
+- インポート単位のノート一覧取得（`GET /api/imports/:importId/notes`）
+- ノート詳細取得（`GET /api/imports/:importId/notes/:noteId`）
 
-## 開発起動
+## ドキュメント索引
 
-```bash
-npm run dev
-```
-
-- API: [http://localhost:3001](http://localhost:3001)
-- Web: [http://localhost:5173](http://localhost:5173)
-
-## 個別起動
-
-```bash
-npm run dev:api
-npm run dev:web
-```
-
-## ビルド
-
-```bash
-npm run build
-```
-
-## 個別ビルド
-
-```bash
-npm run build:api
-npm run build:web
-```
-
-## 型チェック
-
-```bash
-npm run typecheck
-```
-
-```bash
-npm run typecheck:api
-npm run typecheck:web
-```
-
-## Agent/設計ドキュメント
-
-- Agent の実行ルール: `AGENTS.md`
-- アーキテクチャの正本: `docs/architecture.md`
-- API 契約 (OpenAPI): `apps/api/openapi.yaml`
-- 環境変数テンプレート: `.env.example`
-
-## ENEX Viewer 開発ドキュメント
-
+### プロダクト/設計
 - ドキュメント入口: `docs/INDEX.md`
 - 要件定義: `docs/product/requirements.md`
 - 仕様書: `docs/product/spec.md`
+- アーキテクチャ: `docs/architecture.md`
 - 詳細設計: `docs/design/system-design.md`
-- タスクドキュメント入口: `docs/tasks/README.md`
+
+### API 契約
+- OpenAPI: `apps/api/openapi.yaml`
+
+### 開発者向けガイド
+- 開発ガイド（環境構築、コマンド、ワークスペース構成）: `docs/development/developer-guide.md`
+- テスト運用ガイドライン: `docs/testing/test-guidelines.md`
+- 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
+
+### タスク/運用
+- タスク入口: `docs/tasks/README.md`
 - 実装タスク一覧: `docs/tasks/implementation-tasks.md`
 - エージェント実行ガイド: `docs/tasks/agent-execution.md`
 - ワークストリーム定義: `docs/tasks/workstreams.md`
-- テスト運用ガイドライン: `docs/testing/test-guidelines.md`
-- 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
