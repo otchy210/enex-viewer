@@ -52,8 +52,11 @@ const parser = new XMLParser({
   cdataPropName: '__cdata'
 });
 
-const toArray = <T>(value: T | T[] | undefined): T[] => {
-  if (value === undefined) {
+const toArray = <T>(value: T | T[] | undefined | null): T[] => {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (typeof value === 'string' && value.length === 0) {
     return [];
   }
   return Array.isArray(value) ? value : [value];
