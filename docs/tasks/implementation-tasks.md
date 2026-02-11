@@ -25,7 +25,7 @@
 | [x] | T-010 | D | Web | ノート詳細 UI 実装 | T-002, T-005 | 選択ノートを表示できる |
 | [x] | T-011 | E | Quality | API テスト整備（unit/integration） | T-003, T-004, T-005, T-006, T-007 | 主要正常系/異常系をカバー |
 | [x] | T-012 | E | Quality | Web テスト整備（unit） | T-008, T-009, T-010 | 主要 UI の表示と状態遷移をカバーし、`apps/web/src/api/enex.ts` のエラー整形分岐を直接テストする |
-| [ ] | T-013 | E | Docs | OpenAPI 更新と README 更新 | T-003, T-004, T-005 | API 契約と使用手順が一致 |
+| [x] | T-013 | E | Docs | OpenAPI 更新と README 更新 | T-003, T-004, T-005 | API 契約と使用手順が一致 |
 | [ ] | T-014 | E | QA | 人間による動作テスト（手動シナリオ実施） | T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, T-011, T-012, T-013 | 手動テスト結果を記録し、主要シナリオが期待通りに動作する |
 | [x] | T-015 | F | Test-Migration | API 既存テストを Vitest へ移行（node:test/tsx 依存を削減） | T-006 | 既存 API テストが Vitest で動作する |
 | [x] | T-016 | F | Test-Migration | API エンドポイント統合テスト追加（Supertest） | T-003 | `/health` `/api/message` `/api/enex/parse` の主要正常系/異常系を検証 |

@@ -14,11 +14,14 @@ ENEX Viewer 開発で参照する主要ドキュメントの入口です。
 - エージェント実行ガイド: `docs/tasks/agent-execution.md`
 - ワークストリーム定義: `docs/tasks/workstreams.md`
 
-## 3. テスト時に読む
+## 3. 開発時に読む
+- 開発ガイド（環境構築・コマンド・構成）: `docs/development/developer-guide.md`
+
+## 4. テスト時に読む
 - テスト運用ガイドライン: `docs/testing/test-guidelines.md`
 - 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
 
-## 4. 正本の考え方
+## 5. 正本の考え方
 - 要件の正本: `docs/product/requirements.md`
 - API 契約の正本: `apps/api/openapi.yaml`
 - 構造/責務分離の正本: `docs/architecture.md`
