@@ -1,8 +1,8 @@
-export type AsyncDataState<T> = {
+export interface AsyncDataState<T> {
   data: T | null;
   error: string | null;
   loading: boolean;
-};
+}
 
 export const getAsyncErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Unknown error';

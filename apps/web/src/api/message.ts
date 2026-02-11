@@ -1,9 +1,9 @@
 import { ensureOk } from './error';
 
-export type ApiResponse = {
+export interface ApiResponse {
   message: string;
   timestamp: string;
-};
+}
 
 export async function fetchMessage(): Promise<ApiResponse> {
   const res = await fetch('/api/message');

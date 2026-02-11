@@ -59,7 +59,7 @@ export function HomePage() {
         onClear={handleClear}
         onOffsetChange={setOffset}
       />
-      {importId && (
+      {importId != null && (
         <NoteBrowser
           importId={importId}
           loading={notes.loading}
@@ -69,7 +69,7 @@ export function HomePage() {
       )}
 
       {loading && <p>Loading...</p>}
-      {error && <p className="error">Error: {error}</p>}
+      {error != null && <p className="error">Error: {error}</p>}
 
       {data && <MessageSection data={data} />}
     </main>

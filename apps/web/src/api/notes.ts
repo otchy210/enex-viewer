@@ -1,33 +1,33 @@
 import { ensureOk } from './error';
 
-export type NoteSummary = {
+export interface NoteSummary {
   id: string;
   title: string;
   createdAt?: string | null;
   updatedAt?: string | null;
   tags: string[];
   excerpt: string;
-};
+}
 
-export type NoteListResponse = {
+export interface NoteListResponse {
   total: number;
   notes: NoteSummary[];
-};
+}
 
-export type NoteListQuery = {
+export interface NoteListQuery {
   q?: string;
   limit?: number;
   offset?: number;
-};
+}
 
-export type NoteResource = {
+export interface NoteResource {
   id: string;
   fileName?: string;
   mime?: string;
   size?: number;
-};
+}
 
-export type NoteDetail = {
+export interface NoteDetail {
   id: string;
   title: string;
   createdAt?: string | null;
@@ -35,14 +35,14 @@ export type NoteDetail = {
   tags: string[];
   contentHtml: string;
   resources: NoteResource[];
-};
+}
 
 export async function fetchNotesList(
   importId: string,
   { q, limit, offset }: NoteListQuery = {}
 ): Promise<NoteListResponse> {
   const params = new URLSearchParams();
-  if (q) {
+  if (q != null && q.length > 0) {
     params.set('q', q);
   }
   if (typeof limit === 'number') {

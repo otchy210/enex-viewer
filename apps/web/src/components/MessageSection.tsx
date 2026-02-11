@@ -1,8 +1,8 @@
 import type { ApiResponse } from '../api/message';
 
-type MessageSectionProps = {
+interface MessageSectionProps {
   data: ApiResponse;
-};
+}
 
 export function MessageSection({ data }: MessageSectionProps) {
   return (

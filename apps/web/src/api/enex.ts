@@ -1,10 +1,10 @@
 import { ensureOk } from './error';
 
-export type ParseEnexResponse = {
+export interface ParseEnexResponse {
   importId: string;
   noteCount: number;
   warnings: string[];
-};
+}
 
 export async function parseEnexFile(file: File): Promise<ParseEnexResponse> {
   const formData = new FormData();

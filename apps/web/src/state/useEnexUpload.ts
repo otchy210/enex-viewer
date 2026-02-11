@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 
-import { parseEnexFile, type ParseEnexResponse } from '../api/enex';
 import {
   createAsyncErrorState,
   createAsyncIdleState,
@@ -8,19 +7,20 @@ import {
   createAsyncSuccessState,
   type AsyncDataState
 } from './asyncState';
+import { parseEnexFile, type ParseEnexResponse } from '../api/enex';
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
-type EnexUploadState = {
+interface EnexUploadState {
   status: UploadStatus;
   error: string | null;
   result: ParseEnexResponse | null;
-};
+}
 
-type EnexUploadActions = {
+interface EnexUploadActions {
   uploadFile: (file: File) => Promise<void>;
   reset: () => void;
-};
+}
 
 type EnexUploadHook = EnexUploadState & EnexUploadActions;
 
@@ -29,11 +29,11 @@ const toUploadStatus = (state: AsyncDataState<ParseEnexResponse>): UploadStatus 
     return 'uploading';
   }
 
-  if (state.error) {
+  if (state.error != null) {
     return 'error';
   }
 
-  if (state.data) {
+  if (state.data != null) {
     return 'success';
   }
 
