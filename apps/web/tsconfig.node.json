@@ -2,6 +2,7 @@
   "compilerOptions": {
     "composite": true,
     "module": "ESNext",
+    "erasableSyntaxOnly": true,
     "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true
   },
