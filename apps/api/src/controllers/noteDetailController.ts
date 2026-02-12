@@ -1,4 +1,3 @@
-
 import { parsePathParam } from '../lib/httpPath.js';
 import { fetchNoteDetail } from '../services/noteDetailService.js';
 

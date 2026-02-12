@@ -77,7 +77,9 @@ export function NotesListSection({
                 type="search"
                 placeholder="Search title or content"
                 value={searchInput}
-                onChange={(event) => { onSearchInputChange(event.target.value); }}
+                onChange={(event) => {
+                  onSearchInputChange(event.target.value);
+                }}
               />
               <button type="submit" disabled={loading}>
                 Search
@@ -115,7 +117,9 @@ export function NotesListSection({
             <div className="notes-pagination">
               <button
                 type="button"
-                onClick={() => { onOffsetChange(Math.max(offset - PAGE_LIMIT, 0)); }}
+                onClick={() => {
+                  onOffsetChange(Math.max(offset - PAGE_LIMIT, 0));
+                }}
                 disabled={!canGoPrev || loading}
               >
                 Previous
@@ -125,7 +129,9 @@ export function NotesListSection({
               </span>
               <button
                 type="button"
-                onClick={() => { onOffsetChange(offset + PAGE_LIMIT); }}
+                onClick={() => {
+                  onOffsetChange(offset + PAGE_LIMIT);
+                }}
                 disabled={!canGoNext || loading}
               >
                 Next

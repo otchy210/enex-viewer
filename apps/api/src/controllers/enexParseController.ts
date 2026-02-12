@@ -2,7 +2,6 @@ import { parseEnexFile, EnexParseError } from '../services/enexParseService.js';
 
 import type { NextFunction, Request, Response } from 'express';
 
-
 interface EnexParseLocals {
   enexFileBuffer?: Buffer;
 }

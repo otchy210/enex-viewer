@@ -303,7 +303,9 @@ describe('API integration', () => {
     const parseResponse = await uploadEnex(app, payload);
 
     const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
-    const detailResponse = await request(app).get(`/api/imports/${parseBody.importId}/notes/note-123`);
+    const detailResponse = await request(app).get(
+      `/api/imports/${parseBody.importId}/notes/note-123`
+    );
 
     expect(detailResponse.status).toBe(200);
     const detailBody = parseResponseBody(detailResponse.body as unknown, isRecord);
@@ -354,7 +356,9 @@ describe('API integration', () => {
     const parseResponse = await uploadEnex(app, payload);
 
     const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
-    const response = await request(app).get(`/api/imports/${parseBody.importId}/notes/missing-note`);
+    const response = await request(app).get(
+      `/api/imports/${parseBody.importId}/notes/missing-note`
+    );
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({

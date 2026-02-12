@@ -49,7 +49,9 @@ export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps
                 key={note.id}
                 type="button"
                 className={`note-list-item${selectedNoteId === note.id ? ' is-selected' : ''}`}
-                onClick={() => { setSelectedNoteId(note.id); }}
+                onClick={() => {
+                  setSelectedNoteId(note.id);
+                }}
               >
                 <div className="note-list-header">
                   <span className="note-list-title">{note.title}</span>

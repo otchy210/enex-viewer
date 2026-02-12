@@ -1,4 +1,3 @@
-
 import { parseQueryIntegerValue, parseSingleQueryValue } from '../lib/httpQuery.js';
 import { listNotes } from '../services/noteListService.js';
 
