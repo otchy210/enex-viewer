@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<en-export>
+  <note>
+    <title>Broken</title>
+    <created>20240101T010101Z</created>
+    <content><![CDATA[<en-note><div>missing closing tags</div>]]></content>
+  <!-- Missing closing tags for note and en-export -->
