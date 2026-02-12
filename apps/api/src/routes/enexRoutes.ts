@@ -10,10 +10,11 @@ router.post(
   '/api/enex/parse',
   express.raw({ type: 'multipart/form-data', limit: maxFileSizeBytes }),
   (req, res, next) => {
-    void parseEnexMultipart(req, res, next);
+    // eslint-disable-next-line promise/prefer-await-to-then
+    void parseEnexMultipart(req, res, next).catch(next);
   },
   (req, res, next) => {
-    void enexParseController(req, res, next);
+    enexParseController(req, res, next);
   }
 );
 

@@ -1,5 +1,7 @@
 import { HomePage } from './pages/HomePage';
 
-export function App() {
+import type { ReactElement } from 'react';
+
+export function App(): ReactElement {
   return <HomePage />;
 }

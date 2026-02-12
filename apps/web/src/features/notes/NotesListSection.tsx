@@ -1,4 +1,4 @@
-import { useMemo, type FormEvent } from 'react';
+import { useMemo, type FormEvent, type ReactElement } from 'react';
 
 import { formatSummaryTimestamp } from './formatters';
 
@@ -32,7 +32,7 @@ export function NotesListSection({
   onSearchSubmit,
   onClear,
   onOffsetChange
-}: NotesListSectionProps) {
+}: NotesListSectionProps): ReactElement {
   const total = data?.total ?? 0;
   const hasNotes = (data?.notes.length ?? 0) > 0;
   const startIndex = total === 0 ? 0 : offset + 1;

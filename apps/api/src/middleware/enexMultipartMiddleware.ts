@@ -21,21 +21,27 @@ const extractMultipartContentType = (headers: Request['headers']): string | null
   return headerValue.toLowerCase().includes('multipart/form-data') ? headerValue : null;
 };
 
-export const parseEnexMultipart = async (req: Request, res: Response, next: NextFunction) => {
+export const parseEnexMultipart = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     if (!Buffer.isBuffer(req.body)) {
-      return res.status(400).json({
+      res.status(400).json({
         code: 'INVALID_MULTIPART',
         message: 'Request body must be multipart/form-data.'
       });
+      return;
     }
 
     const contentType = extractMultipartContentType(req.headers);
     if (contentType === null) {
-      return res.status(400).json({
+      res.status(400).json({
         code: 'INVALID_MULTIPART',
         message: 'Request body must be multipart/form-data.'
       });
+      return;
     }
 
     const request = new Request('http://localhost/api/enex/parse', {
@@ -48,24 +54,28 @@ export const parseEnexMultipart = async (req: Request, res: Response, next: Next
     const formData = await request.formData();
     const file = formData.get('file');
     if (file === null || typeof file === 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         code: 'MISSING_FILE',
         message: 'file is required.'
       });
+      return;
     }
 
     const fileName = 'name' in file ? file.name : undefined;
     const fileContentType = 'type' in file ? file.type : undefined;
     if (!isLikelyEnex(fileName, fileContentType)) {
-      return res.status(400).json({
+      res.status(400).json({
         code: 'INVALID_FILE_TYPE',
         message: 'Invalid ENEX file type.'
       });
+      return;
     }
 
     res.locals.enexFileBuffer = Buffer.from(await file.arrayBuffer());
-    next(); return;
+    next();
+    return;
   } catch (error) {
-    next(error); return;
+    next(error);
+    return;
   }
 };

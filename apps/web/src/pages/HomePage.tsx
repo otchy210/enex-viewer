@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 
 import { MessageSection } from '../components/MessageSection';
 import { NoteBrowser } from '../features/notes/NoteBrowser';
@@ -8,7 +8,7 @@ import { useEnexUpload } from '../state/useEnexUpload';
 import { useMessage } from '../state/useMessage';
 import { useNotesList } from '../state/useNotesList';
 
-export function HomePage() {
+export function HomePage(): ReactElement {
   const { data, error, loading } = useMessage();
   const upload = useEnexUpload();
   const importId = upload.result?.importId ?? null;

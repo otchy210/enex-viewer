@@ -4,17 +4,18 @@ import { fetchNoteDetail } from '../services/noteDetailService.js';
 
 import type { Request, Response } from 'express';
 
-export const noteDetailController = (req: Request, res: Response) => {
+export const noteDetailController = (req: Request, res: Response): void => {
   const importId = parsePathParam(req.params.importId) ?? '';
   const noteId = parsePathParam(req.params.noteId) ?? '';
   const result = fetchNoteDetail(importId, noteId);
 
   if (!result.ok) {
-    return res.status(404).json({
+    res.status(404).json({
       code: result.error.code,
       message: result.error.message
     });
+    return;
   }
 
-  return res.json(result.note);
+  res.json(result.note);
 };

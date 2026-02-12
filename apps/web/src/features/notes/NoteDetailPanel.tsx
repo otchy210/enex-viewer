@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 
 import { formatResourceLabel, formatTimestamp } from './formatters';
 import { NoteContent } from './NoteContent';
@@ -16,7 +16,7 @@ interface NoteDetailPanelProps {
   noteId: string | null;
 }
 
-export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps) {
+export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps): ReactElement {
   const [state, setState] = useState<AsyncDataState<NoteDetail>>(() => createAsyncIdleState());
 
   useEffect(() => {

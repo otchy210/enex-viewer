@@ -7,37 +7,41 @@ import type { Request, Response } from 'express';
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
-export const noteListController = (req: Request, res: Response) => {
+export const noteListController = (req: Request, res: Response): void => {
   const importId = req.params.importId;
   if (!importId) {
-    return res.status(400).json({
+    res.status(400).json({
       code: 'INVALID_IMPORT_ID',
       message: 'importId is required.'
     });
+    return;
   }
 
   const qResult = parseSingleQueryValue(req.query.q, 'q must be a single string.');
   if (!qResult.ok) {
-    return res.status(400).json({
+    res.status(400).json({
       code: 'INVALID_QUERY',
       message: qResult.message
     });
+    return;
   }
 
   const limitResult = parseSingleQueryValue(req.query.limit, 'limit must be a single value.');
   if (!limitResult.ok) {
-    return res.status(400).json({
+    res.status(400).json({
       code: 'INVALID_QUERY',
       message: limitResult.message
     });
+    return;
   }
 
   const offsetResult = parseSingleQueryValue(req.query.offset, 'offset must be a single value.');
   if (!offsetResult.ok) {
-    return res.status(400).json({
+    res.status(400).json({
       code: 'INVALID_QUERY',
       message: offsetResult.message
     });
+    return;
   }
 
   const parsedLimit = parseQueryIntegerValue(limitResult.value, 'limit', {
@@ -45,18 +49,20 @@ export const noteListController = (req: Request, res: Response) => {
     max: MAX_LIMIT
   });
   if (!parsedLimit.ok) {
-    return res.status(400).json({
+    res.status(400).json({
       code: 'INVALID_QUERY',
       message: parsedLimit.message
     });
+    return;
   }
 
   const parsedOffset = parseQueryIntegerValue(offsetResult.value, 'offset', { min: 0 });
   if (!parsedOffset.ok) {
-    return res.status(400).json({
+    res.status(400).json({
       code: 'INVALID_QUERY',
       message: parsedOffset.message
     });
+    return;
   }
 
   const limit = limitResult.value === undefined ? DEFAULT_LIMIT : parsedLimit.value;
@@ -69,11 +75,12 @@ export const noteListController = (req: Request, res: Response) => {
   });
 
   if (!result) {
-    return res.status(404).json({
+    res.status(404).json({
       code: 'IMPORT_NOT_FOUND',
       message: 'Import session not found.'
     });
+    return;
   }
 
-  return res.json(result);
+  res.json(result);
 };

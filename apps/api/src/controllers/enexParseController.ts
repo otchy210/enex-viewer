@@ -11,18 +11,20 @@ export const enexParseController = (
   _req: Request,
   res: Response<unknown, EnexParseLocals>,
   next: NextFunction
-) => {
+): void => {
   try {
     const fileBuffer = res.locals.enexFileBuffer;
     if (!Buffer.isBuffer(fileBuffer)) {
-      return res.status(400).json({
+      res.status(400).json({
         code: 'INVALID_MULTIPART',
         message: 'Request body must be multipart/form-data.'
       });
+      return;
     }
 
     const result = parseEnexFile({ data: fileBuffer });
-    return res.json(result);
+    res.json(result);
+    return;
   } catch (error) {
     if (error instanceof EnexParseError) {
       const payload: { code: string; message: string; details?: unknown } = {
@@ -32,7 +34,8 @@ export const enexParseController = (
       if (error.details !== undefined) {
         payload.details = error.details;
       }
-      return res.status(422).json(payload);
+      res.status(422).json(payload);
+      return;
     }
 
     next(error);

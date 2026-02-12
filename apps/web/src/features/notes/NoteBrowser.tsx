@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 
 import { formatSummaryTimestamp } from './formatters';
 import { NoteDetailPanel } from './NoteDetailPanel';
@@ -12,7 +12,7 @@ interface NoteBrowserProps {
   data: NoteListResponse | null;
 }
 
-export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps) {
+export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps): ReactElement {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
   useEffect(() => {

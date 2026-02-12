@@ -1,4 +1,4 @@
-import request from 'supertest';
+import request, { type Test } from 'supertest';
 
 import { clearImports } from '../repositories/importRepository.js';
 import { clearImportSessions } from '../repositories/importSessionRepository.js';
@@ -18,7 +18,11 @@ export const initializeApiTestState = (): void => {
 export const buildEnexPayload = (notesXml: string): Buffer =>
   Buffer.from(`<?xml version="1.0" encoding="UTF-8"?><en-export>${notesXml}</en-export>`);
 
-export const uploadEnex = (app: express.Express, payload: Buffer, options: UploadOptions = {}) => {
+export const uploadEnex = (
+  app: express.Express,
+  payload: Buffer,
+  options: UploadOptions = {}
+): Test => {
   const { filename = 'sample.enex', contentType = 'application/xml' } = options;
   return request(app).post('/api/enex/parse').attach('file', payload, { filename, contentType });
 };
