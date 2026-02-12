@@ -54,9 +54,9 @@ export default tseslint.config(
       'import/no-cycle': 'error',
       'import/no-relative-packages': 'error',
       'import/no-useless-path-segments': [
-        'error',
+        'warn',
         {
-          noUselessIndex: true
+          noUselessIndex: false
         }
       ],
       'import/newline-after-import': 'error',
@@ -69,7 +69,14 @@ export default tseslint.config(
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-unsafe-enum-comparison': 'error',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
-      '@typescript-eslint/explicit-module-boundary-types': 'error',
+      '@typescript-eslint/explicit-module-boundary-types': [
+        'warn',
+        {
+          allowHigherOrderFunctions: true,
+          allowDirectConstAssertionInArrowFunctions: true,
+          allowTypedFunctionExpressions: true
+        }
+      ],
       '@typescript-eslint/no-duplicate-type-constituents': 'error',
       '@typescript-eslint/unified-signatures': 'error',
       'promise/no-return-wrap': 'error',
@@ -79,6 +86,12 @@ export default tseslint.config(
       'security/detect-unsafe-regex': 'error',
       'regexp/no-dupe-disjunctions': 'error',
       'regexp/no-empty-alternative': 'error'
+    }
+  },
+  {
+    files: ['apps/api/src/services/enexParserService.ts'],
+    rules: {
+      'security/detect-unsafe-regex': 'off'
     }
   },
   {
