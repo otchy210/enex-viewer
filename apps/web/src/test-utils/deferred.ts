@@ -1,8 +1,8 @@
-export type Deferred<T> = {
+export interface Deferred<T> {
   promise: Promise<T>;
   resolve: (value: T) => void;
   reject: (reason?: unknown) => void;
-};
+}
 
 export const createDeferred = <T>(): Deferred<T> => {
   let resolve!: (value: T) => void;
