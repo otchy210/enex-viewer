@@ -47,14 +47,17 @@
 | [x]  | T-035 | L      | Quality        | Web 本体コード strict lint エラー解消（`apps/web/src`、テスト/設定除外）                           | T-029, T-030, T-031, T-032                                                                | `apps/web/src` の本体コードで strict lint エラーが解消され、既存 UI/状態遷移を維持したまま `typecheck` と Web テストが通過する                                                    |
 | [x]  | T-036 | L      | Quality        | Web テスト/設定 strict lint エラー解消（`apps/web/src/**/*.test.tsx`、`apps/web/*config.ts`）      | T-029, T-030, T-031, T-032                                                                | Web のテストコード/設定ファイルで strict lint エラーが解消され、`npm run test:web` と lint 全体が通る（本体コードは T-035 で完了済みであること）                                  |
 | [x]  | T-037 | M      | Quality        | lint 最終収束（API/Web 全体で lint/typecheck/test の再確認）                                       | T-033, T-034, T-035, T-036                                                                | `npm run lint` `npm run typecheck -w apps/api` `npm run typecheck -w apps/web` `npm run test:api` `npm run test:web` をまとめて実行し、CI 相当の最終確認が完了している            |
+| [ ]  | T-038 | E      | Quality        | 手動テスト MT-003 失敗対応（一覧 `limit` パラメータの検証/適用を修正）                               | T-004, T-009                                                                              | URL クエリで `limit` を指定した場合に正しく反映され、無効値は API が 400 を返し Web がユーザーフレンドリーに通知する。`manual-test-scenarios.md` の MT-003 が Pass になる        |
+| [ ]  | T-039 | E      | Quality        | 手動テスト MT-005 失敗対応（壊れた ENEX でのエラー表示改善）                                       | T-003, T-008                                                                              | `docs/testing/data/broken.enex` をアップロードした際に、API/Web 共にクラッシュせず具体的なエラーメッセージと再試行手段を表示する。`manual-test-scenarios.md` の MT-005 が Pass |
+| [ ]  | T-040 | D      | Web            | 手動テスト MT-008 失敗対応（モバイル幅でのノート詳細レイアウト崩れ修正）                           | T-008, T-010                                                                              | 幅 390px 相当の画面でもノート詳細が横にはみ出さずスクロールなしで主要情報を閲覧できる。`manual-test-scenarios.md` の MT-008 が Pass                                              |
 
 ## 3. 並列化レーン
 
 - レーン A（API 基盤）: T-001, T-006, T-007
 - レーン B（Web 基盤）: T-002
 - レーン C（API エンドポイント）: T-003, T-004, T-005
-- レーン D（Web 機能）: T-008, T-009, T-010
-- レーン E（品質/文書/最終確認）: T-011, T-012, T-013, T-021, T-014
+- レーン D（Web 機能）: T-008, T-009, T-010, T-040
+- レーン E（品質/文書/最終確認）: T-011, T-012, T-013, T-021, T-014, T-038, T-039
 - レーン F（テスト基盤移行）: T-015, T-016, T-017, T-018
 - レーン G（リファクタ）: T-019, T-020
 - レーン H（API リファクタ拡張）: T-022, T-023, T-024
