@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { clearImports, saveImport } from '../repositories/importRepository.js';
 import { listNotes } from './noteListService.js';
+import { clearImports, saveImport } from '../repositories/importRepository.js';
 
 describe('listNotes', () => {
   beforeEach(() => {
