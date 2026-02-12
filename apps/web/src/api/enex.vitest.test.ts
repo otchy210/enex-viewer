@@ -29,10 +29,14 @@ describe('parseEnexFile', () => {
       expect.objectContaining({ method: 'POST' })
     );
 
-    const request = fetchMock.mock.calls[0]?.[1];
+    const call = fetchMock.mock.calls[0] as
+      | [RequestInfo | URL, RequestInit | undefined]
+      | undefined;
+    const request = call?.[1];
     expect(request?.body).toBeInstanceOf(FormData);
-    const body = request?.body as FormData;
-    expect(body.get('file')).toBe(file);
+    const body = request?.body;
+    expect(body).toBeInstanceOf(FormData);
+    expect((body as FormData).get('file')).toBe(file);
   });
 
   it('prefers the API error message when available', async () => {

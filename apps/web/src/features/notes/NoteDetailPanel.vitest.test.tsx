@@ -95,7 +95,7 @@ describe('NoteDetailPanel', () => {
   it('does not update state after unmount when the request fails', async () => {
     const deferred = createDeferred<NoteDetail>();
     mockedFetchNoteDetail.mockReturnValueOnce(deferred.promise);
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const { unmount } = render(<NoteDetailPanel importId="import-1" noteId="note-4" />);
 
