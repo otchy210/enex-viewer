@@ -55,6 +55,16 @@ export default tseslint.config(
     }
   },
   {
+    files: ['apps/api/vitest.config.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        project: ['./apps/api/tsconfig.vitest.json'],
+        tsconfigRootDir: import.meta.dirname
+      }
+    }
+  },
+  {
     files: ['apps/api/**/*.ts'],
     languageOptions: {
       globals: {

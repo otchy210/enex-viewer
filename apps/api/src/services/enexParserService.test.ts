@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { parseEnex } from './enexParserService.js';
 
 describe('parseEnex', () => {

@@ -4,6 +4,57 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../app.js';
 import { buildEnexPayload, initializeApiTestState, uploadEnex } from './testHelpers.js';
 
+interface MessageResponse {
+  message: string;
+  timestamp: string;
+}
+
+interface ParseResponse {
+  importId: string;
+  noteCount: number;
+  warnings: string[];
+}
+
+interface NoteListResponse {
+  total: number;
+  notes: { title: string }[];
+}
+
+interface ApiErrorResponse {
+  code: string;
+  message: string;
+  details?: unknown;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const parseResponseBody = <T>(body: unknown, guard: (value: unknown) => value is T): T => {
+  if (!guard(body)) {
+    throw new Error('Unexpected API response body.');
+  }
+
+  return body;
+};
+
+const isMessageResponse = (value: unknown): value is MessageResponse =>
+  isRecord(value) && typeof value.message === 'string' && typeof value.timestamp === 'string';
+
+const isParseResponse = (value: unknown): value is ParseResponse =>
+  isRecord(value) &&
+  typeof value.importId === 'string' &&
+  typeof value.noteCount === 'number' &&
+  Array.isArray(value.warnings);
+
+const isNoteListResponse = (value: unknown): value is NoteListResponse =>
+  isRecord(value) &&
+  typeof value.total === 'number' &&
+  Array.isArray(value.notes) &&
+  value.notes.every((note) => isRecord(note) && typeof note.title === 'string');
+
+const isApiErrorResponse = (value: unknown): value is ApiErrorResponse =>
+  isRecord(value) && typeof value.code === 'string' && typeof value.message === 'string';
+
 describe('API integration', () => {
   beforeEach(() => {
     initializeApiTestState();
@@ -24,8 +75,10 @@ describe('API integration', () => {
     const response = await request(app).get('/api/message');
 
     expect(response.status).toBe(200);
-    expect(response.body.message).toBe('Hello from TypeScript REST API');
-    expect(new Date(response.body.timestamp).toString()).not.toBe('Invalid Date');
+    const body = parseResponseBody(response.body as unknown, isMessageResponse);
+
+    expect(body.message).toBe('Hello from TypeScript REST API');
+    expect(new Date(body.timestamp).toString()).not.toBe('Invalid Date');
   });
 
   it('POST /api/enex/parse accepts a valid ENEX upload', async () => {
@@ -42,11 +95,11 @@ describe('API integration', () => {
     const response = await uploadEnex(app, payload);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      importId: expect.any(String),
-      noteCount: 1,
-      warnings: []
-    });
+    const body = parseResponseBody(response.body as unknown, isParseResponse);
+
+    expect(body.importId).not.toHaveLength(0);
+    expect(body.noteCount).toBe(1);
+    expect(body.warnings).toEqual([]);
   });
 
   it('POST /api/enex/parse rejects missing file uploads', async () => {
@@ -116,14 +169,17 @@ describe('API integration', () => {
 
     expect(parseResponse.status).toBe(200);
 
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
     const listResponse = await request(app)
-      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .get(`/api/imports/${parseBody.importId}/notes`)
       .query({ limit: 1, offset: 1 });
 
     expect(listResponse.status).toBe(200);
-    expect(listResponse.body.total).toBe(2);
-    expect(listResponse.body.notes).toHaveLength(1);
-    expect(listResponse.body.notes[0].title).toBe('First Note');
+    const listBody = parseResponseBody(listResponse.body as unknown, isNoteListResponse);
+
+    expect(listBody.total).toBe(2);
+    expect(listBody.notes).toHaveLength(1);
+    expect(listBody.notes[0]?.title).toBe('First Note');
   });
 
   it('GET /api/imports/:importId/notes supports search query', async () => {
@@ -147,13 +203,16 @@ describe('API integration', () => {
 
     const parseResponse = await uploadEnex(app, payload);
 
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
     const listResponse = await request(app)
-      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .get(`/api/imports/${parseBody.importId}/notes`)
       .query({ q: 'coffee' });
 
     expect(listResponse.status).toBe(200);
-    expect(listResponse.body.total).toBe(1);
-    expect(listResponse.body.notes[0].title).toBe('Kitchen Log');
+    const listBody = parseResponseBody(listResponse.body as unknown, isNoteListResponse);
+
+    expect(listBody.total).toBe(1);
+    expect(listBody.notes[0]?.title).toBe('Kitchen Log');
   });
 
   it('GET /api/imports/:importId/notes returns 404 for unknown import', async () => {
@@ -173,8 +232,9 @@ describe('API integration', () => {
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
     const response = await request(app)
-      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .get(`/api/imports/${parseBody.importId}/notes`)
       .query({ limit: -1 });
 
     expect(response.status).toBe(400);
@@ -189,8 +249,9 @@ describe('API integration', () => {
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
     const response = await request(app)
-      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .get(`/api/imports/${parseBody.importId}/notes`)
       .query({ limit: ['1', '2'] });
 
     expect(response.status).toBe(400);
@@ -205,8 +266,9 @@ describe('API integration', () => {
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
     const response = await request(app)
-      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .get(`/api/imports/${parseBody.importId}/notes`)
       .query({ offset: '10abc' });
 
     expect(response.status).toBe(400);
@@ -240,27 +302,29 @@ describe('API integration', () => {
 
     const parseResponse = await uploadEnex(app, payload);
 
-    const detailResponse = await request(app).get(
-      `/api/imports/${parseResponse.body.importId}/notes/note-123`
-    );
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+    const detailResponse = await request(app).get(`/api/imports/${parseBody.importId}/notes/note-123`);
 
     expect(detailResponse.status).toBe(200);
-    expect(detailResponse.body).toEqual({
-      id: 'note-123',
-      title: 'Sample Detail',
-      createdAt: '20240101T000000Z',
-      updatedAt: '20240102T000000Z',
-      tags: ['demo'],
-      contentHtml: expect.stringContaining('Detail Body'),
-      resources: [
-        {
-          id: 'resource-1-1',
-          fileName: 'image.png',
-          mime: 'image/png',
-          size: 3
-        }
-      ]
-    });
+    const detailBody = parseResponseBody(detailResponse.body as unknown, isRecord);
+
+    expect(detailBody.id).toBe('note-123');
+    expect(detailBody.title).toBe('Sample Detail');
+    expect(detailBody.createdAt).toBe('20240101T000000Z');
+    expect(detailBody.updatedAt).toBe('20240102T000000Z');
+    expect(detailBody.tags).toEqual(['demo']);
+    expect(typeof detailBody.contentHtml).toBe('string');
+    if (typeof detailBody.contentHtml === 'string') {
+      expect(detailBody.contentHtml).toContain('Detail Body');
+    }
+    expect(detailBody.resources).toEqual([
+      {
+        id: 'resource-1-1',
+        fileName: 'image.png',
+        mime: 'image/png',
+        size: 3
+      }
+    ]);
   });
 
   it('GET /api/imports/:importId/notes/:noteId returns 404 for missing import', async () => {
@@ -289,9 +353,8 @@ describe('API integration', () => {
 
     const parseResponse = await uploadEnex(app, payload);
 
-    const response = await request(app).get(
-      `/api/imports/${parseResponse.body.importId}/notes/missing-note`
-    );
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+    const response = await request(app).get(`/api/imports/${parseBody.importId}/notes/missing-note`);
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({
@@ -318,9 +381,11 @@ describe('API integration', () => {
     const response = await uploadEnex(app, Buffer.from('<en-export><note></en-export>'));
 
     expect(response.status).toBe(422);
-    expect(response.body.code).toBe('INVALID_XML');
-    expect(response.body.message).toBe('Failed to parse XML.');
-    expect(response.body.details).toBeDefined();
+    const body = parseResponseBody(response.body as unknown, isApiErrorResponse);
+
+    expect(body.code).toBe('INVALID_XML');
+    expect(body.message).toBe('Failed to parse XML.');
+    expect(body.details).toBeDefined();
   });
 
   it('POST /api/enex/parse returns warnings for skipped notes', async () => {
@@ -338,9 +403,11 @@ describe('API integration', () => {
     const response = await uploadEnex(app, payload);
 
     expect(response.status).toBe(200);
-    expect(response.body.noteCount).toBe(1);
-    expect(response.body.warnings).toHaveLength(1);
-    expect(response.body.warnings[0]).toContain('Incomplete Note');
+    const body = parseResponseBody(response.body as unknown, isParseResponse);
+
+    expect(body.noteCount).toBe(1);
+    expect(body.warnings).toHaveLength(1);
+    expect(body.warnings[0]).toContain('Incomplete Note');
   });
 
   it('GET /api/imports/:importId/notes rejects array search params', async () => {
@@ -348,8 +415,9 @@ describe('API integration', () => {
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
     const response = await request(app)
-      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .get(`/api/imports/${parseBody.importId}/notes`)
       .query({ q: ['one', 'two'] });
 
     expect(response.status).toBe(400);
@@ -364,8 +432,9 @@ describe('API integration', () => {
     const payload = buildEnexPayload('');
     const parseResponse = await uploadEnex(app, payload);
 
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
     const response = await request(app)
-      .get(`/api/imports/${parseResponse.body.importId}/notes`)
+      .get(`/api/imports/${parseBody.importId}/notes`)
       .query({ limit: 200 });
 
     expect(response.status).toBe(400);

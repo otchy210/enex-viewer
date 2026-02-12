@@ -1,13 +1,14 @@
-import type express from 'express';
 import request from 'supertest';
 
 import { clearImports } from '../repositories/importRepository.js';
 import { clearImportSessions } from '../repositories/importSessionRepository.js';
 
-type UploadOptions = {
+import type express from 'express';
+
+interface UploadOptions {
   filename?: string;
   contentType?: string;
-};
+}
 
 export const initializeApiTestState = (): void => {
   clearImports();
