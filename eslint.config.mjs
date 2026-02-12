@@ -1,5 +1,8 @@
 import js from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';
+import promisePlugin from 'eslint-plugin-promise';
+import regexpPlugin from 'eslint-plugin-regexp';
+import securityPlugin from 'eslint-plugin-security';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
@@ -28,7 +31,10 @@ export default tseslint.config(
       }
     },
     plugins: {
-      import: importPlugin
+      import: importPlugin,
+      promise: promisePlugin,
+      regexp: regexpPlugin,
+      security: securityPlugin
     },
     settings: {
       'import/resolver': {
@@ -46,12 +52,33 @@ export default tseslint.config(
       ],
       'import/no-duplicates': 'error',
       'import/no-cycle': 'error',
+      'import/no-relative-packages': 'error',
+      'import/no-useless-path-segments': [
+        'error',
+        {
+          noUselessIndex: true
+        }
+      ],
       'import/newline-after-import': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/strict-boolean-expressions': 'error',
-      '@typescript-eslint/no-unnecessary-condition': 'error'
+      '@typescript-eslint/no-unnecessary-condition': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/no-unsafe-enum-comparison': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/explicit-module-boundary-types': 'error',
+      '@typescript-eslint/no-duplicate-type-constituents': 'error',
+      '@typescript-eslint/unified-signatures': 'error',
+      'promise/no-return-wrap': 'error',
+      'promise/prefer-await-to-then': 'error',
+      'promise/no-promise-in-callback': 'error',
+      'security/detect-object-injection': 'error',
+      'security/detect-unsafe-regex': 'error',
+      'regexp/no-dupe-disjunctions': 'error',
+      'regexp/no-empty-alternative': 'error'
     }
   },
   {
