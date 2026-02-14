@@ -8,6 +8,7 @@ interface NotesListSectionProps {
   importId: string | null;
   searchInput: string;
   query: string;
+  limit: number;
   offset: number;
   loading: boolean;
   error: string | null;
@@ -15,15 +16,18 @@ interface NotesListSectionProps {
   onSearchInputChange: (value: string) => void;
   onSearchSubmit: () => void;
   onClear: () => void;
+  onLimitChange: (nextLimit: number) => void;
   onOffsetChange: (nextOffset: number) => void;
 }
 
-const PAGE_LIMIT = 20;
+const LIMIT_OPTIONS = [20, 50, 100] as const;
+const DEFAULT_PAGE_LIMIT = LIMIT_OPTIONS[0];
 
 export function NotesListSection({
   importId,
   searchInput,
   query,
+  limit,
   offset,
   loading,
   error,
@@ -31,14 +35,15 @@ export function NotesListSection({
   onSearchInputChange,
   onSearchSubmit,
   onClear,
+  onLimitChange,
   onOffsetChange
 }: NotesListSectionProps): ReactElement {
   const total = data?.total ?? 0;
   const hasNotes = (data?.notes.length ?? 0) > 0;
   const startIndex = total === 0 ? 0 : offset + 1;
-  const endIndex = Math.min(offset + PAGE_LIMIT, total);
+  const endIndex = Math.min(offset + limit, total);
   const canGoPrev = offset > 0;
-  const canGoNext = offset + PAGE_LIMIT < total;
+  const canGoNext = offset + limit < total;
 
   const summaryText = useMemo(() => {
     if (importId == null) {
@@ -87,6 +92,21 @@ export function NotesListSection({
               <button type="button" onClick={onClear} disabled={loading && !query && !searchInput}>
                 Clear
               </button>
+              <label htmlFor="notes-limit-select">Per page</label>
+              <select
+                id="notes-limit-select"
+                value={limit}
+                onChange={(event) => {
+                  onLimitChange(Number(event.target.value));
+                }}
+                disabled={loading}
+              >
+                {LIMIT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
           </form>
 
@@ -118,7 +138,7 @@ export function NotesListSection({
               <button
                 type="button"
                 onClick={() => {
-                  onOffsetChange(Math.max(offset - PAGE_LIMIT, 0));
+                  onOffsetChange(Math.max(offset - limit, 0));
                 }}
                 disabled={!canGoPrev || loading}
               >
@@ -130,7 +150,7 @@ export function NotesListSection({
               <button
                 type="button"
                 onClick={() => {
-                  onOffsetChange(offset + PAGE_LIMIT);
+                  onOffsetChange(offset + limit);
                 }}
                 disabled={!canGoNext || loading}
               >
@@ -144,4 +164,4 @@ export function NotesListSection({
   );
 }
 
-export const NOTES_PAGE_LIMIT = PAGE_LIMIT;
+export const NOTES_PAGE_LIMIT = DEFAULT_PAGE_LIMIT;
