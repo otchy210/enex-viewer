@@ -8,6 +8,7 @@ const baseProps = {
   importId: 'import-1',
   searchInput: '',
   query: '',
+  limit: 20,
   offset: 0,
   loading: false,
   error: null,
@@ -27,6 +28,7 @@ const baseProps = {
   onSearchInputChange: vi.fn(),
   onSearchSubmit: vi.fn(),
   onClear: vi.fn(),
+  onLimitChange: vi.fn(),
   onOffsetChange: vi.fn()
 };
 
@@ -55,6 +57,9 @@ describe('NotesListSection', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(baseProps.onClear).toHaveBeenCalledTimes(1);
+
+    await userEvent.selectOptions(screen.getByLabelText('Per page'), '50');
+    expect(baseProps.onLimitChange).toHaveBeenCalledWith(50);
   });
 
   it('shows error feedback and pagination actions', async () => {
@@ -62,8 +67,9 @@ describe('NotesListSection', () => {
       <NotesListSection
         {...baseProps}
         error="Network error"
+        limit={50}
         data={{
-          total: 25,
+          total: 120,
           notes: [
             {
               id: 'note-1',
@@ -81,6 +87,6 @@ describe('NotesListSection', () => {
     expect(screen.getByText('Error: Network error')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(baseProps.onOffsetChange).toHaveBeenCalledWith(20);
+    expect(baseProps.onOffsetChange).toHaveBeenCalledWith(50);
   });
 });

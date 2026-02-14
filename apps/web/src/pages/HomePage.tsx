@@ -15,11 +15,12 @@ export function HomePage(): ReactElement {
 
   const [searchInput, setSearchInput] = useState('');
   const [query, setQuery] = useState('');
+  const [limit, setLimit] = useState<number>(NOTES_PAGE_LIMIT);
   const [offset, setOffset] = useState(0);
 
   const notes = useNotesList(importId, {
     query,
-    limit: NOTES_PAGE_LIMIT,
+    limit,
     offset
   });
 
@@ -27,11 +28,17 @@ export function HomePage(): ReactElement {
     setSearchInput('');
     setQuery('');
     setOffset(0);
+    setLimit(NOTES_PAGE_LIMIT);
   }, [importId]);
 
   const handleSearchSubmit = () => {
     setOffset(0);
     setQuery(searchInput.trim());
+  };
+
+  const handleLimitChange = (nextLimit: number) => {
+    setLimit(nextLimit);
+    setOffset(0);
   };
 
   const handleClear = () => {
@@ -50,6 +57,7 @@ export function HomePage(): ReactElement {
         importId={importId}
         searchInput={searchInput}
         query={query}
+        limit={limit}
         offset={offset}
         loading={notes.loading}
         error={notes.error}
@@ -57,6 +65,7 @@ export function HomePage(): ReactElement {
         onSearchInputChange={setSearchInput}
         onSearchSubmit={handleSearchSubmit}
         onClear={handleClear}
+        onLimitChange={handleLimitChange}
         onOffsetChange={setOffset}
       />
       {importId != null && (
