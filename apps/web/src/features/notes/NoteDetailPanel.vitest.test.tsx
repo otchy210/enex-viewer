@@ -35,8 +35,8 @@ describe('NoteDetailPanel', () => {
       title: 'Sample note',
       tags: ['demo'],
       contentHtml: '<p>Content</p>',
-      createdAt: '2024-01-01T01:02:03',
-      updatedAt: '2024-01-02T03:04:05',
+      createdAt: '20240101T010203Z',
+      updatedAt: '20240102T030405Z',
       resources: [
         {
           id: 'resource-1',

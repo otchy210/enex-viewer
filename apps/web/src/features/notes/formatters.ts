@@ -1,27 +1,29 @@
-import { formatLocalDateTime } from '../../lib/dateTime';
-
 import type { NoteDetail } from '../../api/notes';
 
-const parseTimestamp = (value?: string | null): Date | string | null => {
-  if (value == null || value.length === 0) {
+const EVERNOTE_TIMESTAMP = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/;
+
+const formatEvernoteTimestamp = (value: string): string | null => {
+  const match = EVERNOTE_TIMESTAMP.exec(value);
+  if (match == null) {
     return null;
   }
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) {
-    return value;
-  }
-  return new Date(parsed);
+  const [, year, month, day, hour, minute, second] = match;
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 };
 
-const formatNoteTimestamp = (value?: string | null): string => {
-  const parsed = parseTimestamp(value);
-  if (parsed == null) {
+const formatNoteTimestamp = (raw?: string | null): string => {
+  if (raw == null) {
     return '—';
   }
-  if (typeof parsed === 'string') {
-    return parsed;
+  const value = raw.trim();
+  if (value.length === 0) {
+    return '—';
   }
-  return formatLocalDateTime(parsed);
+  const formatted = formatEvernoteTimestamp(value);
+  if (formatted != null) {
+    return formatted;
+  }
+  return value;
 };
 
 export const formatTimestamp = (value?: string | null): string => formatNoteTimestamp(value);

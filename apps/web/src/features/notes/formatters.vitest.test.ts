@@ -12,8 +12,12 @@ describe('formatTimestamp', () => {
     expect(formatTimestamp('not-a-date')).toBe('not-a-date');
   });
 
-  it('formats valid dates in yyyy-MM-dd HH:mm:ss', () => {
-    expect(formatTimestamp('2024-01-02T03:04:05')).toBe('2024-01-02 03:04:05');
+  it('leaves ISO timestamps as-is', () => {
+    expect(formatTimestamp('2024-01-02T03:04:05')).toBe('2024-01-02T03:04:05');
+  });
+
+  it('formats Evernote compact timestamps', () => {
+    expect(formatTimestamp('20240102T030405Z')).toBe('2024-01-02 03:04:05');
   });
 });
 
@@ -41,7 +45,11 @@ describe('formatSummaryTimestamp', () => {
     expect(formatSummaryTimestamp('not-a-date')).toBe('not-a-date');
   });
 
-  it('formats valid dates in yyyy-MM-dd HH:mm:ss', () => {
-    expect(formatSummaryTimestamp('2024-01-02T03:04:05')).toBe('2024-01-02 03:04:05');
+  it('leaves ISO timestamps as-is', () => {
+    expect(formatSummaryTimestamp('2024-01-02T03:04:05')).toBe('2024-01-02T03:04:05');
+  });
+
+  it('formats Evernote compact timestamps', () => {
+    expect(formatSummaryTimestamp('20240102T030405Z')).toBe('2024-01-02 03:04:05');
   });
 });
