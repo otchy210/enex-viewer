@@ -61,6 +61,8 @@ describe('HomePage', () => {
       });
     });
 
+    expect(await screen.findByText('No notes found for this import.')).toBeInTheDocument();
+
     await userEvent.selectOptions(screen.getByLabelText('Per page'), '50');
 
     await waitFor(() => {
