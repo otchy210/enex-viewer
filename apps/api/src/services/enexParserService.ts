@@ -52,6 +52,9 @@ const parser = new XMLParser({
   cdataPropName: '__cdata'
 });
 
+const INVALID_XML_MESSAGE =
+  'The uploaded ENEX file is malformed XML. Please export the file again and retry.';
+
 const toArray = <T>(value: T | T[] | undefined | null): T[] => {
   if (value === undefined || value === null) {
     return [];
@@ -119,7 +122,7 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
       ok: false,
       error: {
         code: 'INVALID_XML',
-        message: 'Failed to parse XML.',
+        message: INVALID_XML_MESSAGE,
         details: validation
       },
       warnings
@@ -134,7 +137,7 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
       ok: false,
       error: {
         code: 'INVALID_XML',
-        message: 'Failed to parse XML.',
+        message: INVALID_XML_MESSAGE,
         details: error
       },
       warnings

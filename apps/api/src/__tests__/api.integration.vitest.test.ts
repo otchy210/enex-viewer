@@ -131,7 +131,8 @@ describe('API integration', () => {
     });
   });
 
-  it('POST /api/enex/parse reports parse failures', async () => {
+
+    it('POST /api/enex/parse reports parse failures', async () => {
     const app = createApp();
 
     const response = await uploadEnex(app, Buffer.from('<note></note>'), {
@@ -388,8 +389,9 @@ describe('API integration', () => {
     const body = parseResponseBody(response.body as unknown, isApiErrorResponse);
 
     expect(body.code).toBe('INVALID_XML');
-    expect(body.message).toBe('Failed to parse XML.');
-    expect(body.details).toBeDefined();
+    expect(body.message).toBe(
+      'The uploaded ENEX file is malformed XML. Please export the file again and retry.'
+    );
   });
 
   it('POST /api/enex/parse returns warnings for skipped notes', async () => {

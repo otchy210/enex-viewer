@@ -100,10 +100,7 @@ paths:
                 invalidXml:
                   value:
                     code: INVALID_XML
-                    message: Failed to parse XML.
-                    details:
-                      err:
-                        code: InvalidTag
+                    message: The uploaded ENEX file is malformed XML. Please export the file again and retry.
                 invalidEnex:
                   value:
                     code: INVALID_ENEX

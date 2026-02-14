@@ -26,13 +26,10 @@ export const enexParseController = (
     return;
   } catch (error) {
     if (error instanceof EnexParseError) {
-      const payload: { code: string; message: string; details?: unknown } = {
+      const payload: { code: string; message: string } = {
         code: error.code,
         message: error.message
       };
-      if (error.details !== undefined) {
-        payload.details = error.details;
-      }
       res.status(422).json(payload);
       return;
     }

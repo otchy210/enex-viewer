@@ -34,6 +34,9 @@ describe('parseEnex', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.code).toBe('INVALID_XML');
+      expect(result.error.message).toBe(
+        'The uploaded ENEX file is malformed XML. Please export the file again and retry.'
+      );
     }
   });
 
