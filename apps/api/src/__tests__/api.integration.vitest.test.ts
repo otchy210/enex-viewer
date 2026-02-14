@@ -4,11 +4,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../app.js';
 import { buildEnexPayload, initializeApiTestState, uploadEnex } from './testHelpers.js';
 
-interface MessageResponse {
-  message: string;
-  timestamp: string;
-}
-
 interface ParseResponse {
   importId: string;
   noteCount: number;
@@ -37,9 +32,6 @@ const parseResponseBody = <T>(body: unknown, guard: (value: unknown) => value is
   return body;
 };
 
-const isMessageResponse = (value: unknown): value is MessageResponse =>
-  isRecord(value) && typeof value.message === 'string' && typeof value.timestamp === 'string';
-
 const isParseResponse = (value: unknown): value is ParseResponse =>
   isRecord(value) &&
   typeof value.importId === 'string' &&
@@ -67,18 +59,6 @@ describe('API integration', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ ok: true });
-  });
-
-  it('GET /api/message returns message payload', async () => {
-    const app = createApp();
-
-    const response = await request(app).get('/api/message');
-
-    expect(response.status).toBe(200);
-    const body = parseResponseBody(response.body as unknown, isMessageResponse);
-
-    expect(body.message).toBe('Hello from TypeScript REST API');
-    expect(new Date(body.timestamp).toString()).not.toBe('Invalid Date');
   });
 
   it('POST /api/enex/parse accepts a valid ENEX upload', async () => {

@@ -22,18 +22,6 @@ paths:
                   value:
                     ok: true
 
-  /api/message:
-    get:
-      summary: サンプルメッセージの取得
-      operationId: getMessage
-      responses:
-        '200':
-          description: メッセージのレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageResponse'
-
   /api/enex/parse:
     post:
       summary: ENEX ファイルのアップロードと解析
@@ -256,20 +244,6 @@ components:
         ok:
           type: boolean
           example: true
-
-    MessageResponse:
-      type: object
-      required:
-        - message
-        - timestamp
-      properties:
-        message:
-          type: string
-          example: Hello from TypeScript REST API
-        timestamp:
-          type: string
-          format: date-time
-          example: '2026-02-08T00:00:00.000Z'
 
     EnexParseResponse:
       type: object

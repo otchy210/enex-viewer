@@ -1,15 +1,12 @@
 import { useEffect, useState, type ReactElement } from 'react';
 
-import { MessageSection } from '../components/MessageSection';
 import { NoteBrowser } from '../features/notes/NoteBrowser';
 import { NOTES_PAGE_LIMIT, NotesListSection } from '../features/notes/NotesListSection';
 import { UploadSection } from '../features/upload/UploadSection';
 import { useEnexUpload } from '../state/useEnexUpload';
-import { useMessage } from '../state/useMessage';
 import { useNotesList } from '../state/useNotesList';
 
 export function HomePage(): ReactElement {
-  const { data, error, loading } = useMessage();
   const upload = useEnexUpload();
   const importId = upload.result?.importId ?? null;
 
@@ -58,7 +55,7 @@ export function HomePage(): ReactElement {
 
   return (
     <main className="container">
-      <h1>TypeScript REST API + Web UI</h1>
+      <h1>ENEX Viewer</h1>
 
       <UploadSection {...upload} />
       <NotesListSection
@@ -84,11 +81,6 @@ export function HomePage(): ReactElement {
           data={notes.data}
         />
       )}
-
-      {loading && <p>Loading...</p>}
-      {error != null && <p className="error">Error: {error}</p>}
-
-      {data && <MessageSection data={data} />}
     </main>
   );
 }
