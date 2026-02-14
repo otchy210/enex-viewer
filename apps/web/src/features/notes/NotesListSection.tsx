@@ -77,36 +77,46 @@ export function NotesListSection({
           <form onSubmit={handleSubmit} className="notes-search">
             <label htmlFor="notes-search-input">Search notes</label>
             <div className="notes-search__controls">
-              <input
-                id="notes-search-input"
-                type="search"
-                placeholder="Search title or content"
-                value={searchInput}
-                onChange={(event) => {
-                  onSearchInputChange(event.target.value);
-                }}
-              />
-              <button type="submit" disabled={loading}>
-                Search
-              </button>
-              <button type="button" onClick={onClear} disabled={loading && !query && !searchInput}>
-                Clear
-              </button>
-              <label htmlFor="notes-limit-select">Per page</label>
-              <select
-                id="notes-limit-select"
-                value={limit}
-                onChange={(event) => {
-                  onLimitChange(Number(event.target.value));
-                }}
-                disabled={loading}
-              >
-                {LIMIT_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              <div className="notes-search__input-row">
+                <input
+                  id="notes-search-input"
+                  type="search"
+                  placeholder="Search title or content"
+                  value={searchInput}
+                  onChange={(event) => {
+                    onSearchInputChange(event.target.value);
+                  }}
+                />
+              </div>
+              <div className="notes-search__action-row">
+                <button type="submit" disabled={loading}>
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={onClear}
+                  disabled={loading && !query && !searchInput}
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="notes-search__limit-row">
+                <label htmlFor="notes-limit-select">Per page</label>
+                <select
+                  id="notes-limit-select"
+                  value={limit}
+                  onChange={(event) => {
+                    onLimitChange(Number(event.target.value));
+                  }}
+                  disabled={loading}
+                >
+                  {LIMIT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </form>
 
