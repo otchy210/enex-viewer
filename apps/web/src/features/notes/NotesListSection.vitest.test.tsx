@@ -44,11 +44,10 @@ describe('NotesListSection', () => {
     expect(screen.getByText('Upload an ENEX file to view notes.')).toBeInTheDocument();
   });
 
-  it('renders notes and handles search interactions', async () => {
+  it('renders summary and handles search interactions', async () => {
     render(<NotesListSection {...baseProps} searchInput="meeting" />);
 
-    expect(screen.getByText('Sample Note')).toBeInTheDocument();
-    expect(screen.getByText('Updated: 2024-01-02 03:04:05')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1-1 of 1 notes.')).toBeInTheDocument();
 
     await userEvent.type(screen.getByPlaceholderText('Search title or content'), ' notes');
     expect(baseProps.onSearchInputChange).toHaveBeenCalled();

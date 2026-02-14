@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HomePage } from './HomePage';
 import { parseEnexFile } from '../api/enex';
-import { fetchNotesList } from '../api/notes';
+import { fetchNoteDetail, fetchNotesList } from '../api/notes';
 
 vi.mock('../api/enex', () => ({
   parseEnexFile: vi.fn()
@@ -15,15 +15,16 @@ vi.mock('../api/notes', async () => {
 
   return {
     ...actual,
-    fetchNotesList: vi.fn()
+    fetchNotesList: vi.fn(),
+    fetchNoteDetail: vi.fn()
   };
 });
 
 const mockedParseEnexFile = vi.mocked(parseEnexFile);
 const mockedFetchNotesList = vi.mocked(fetchNotesList);
+const mockedFetchNoteDetail = vi.mocked(fetchNoteDetail);
 
 describe('HomePage', () => {
-
   afterEach(() => {
     cleanup();
   });
@@ -31,7 +32,17 @@ describe('HomePage', () => {
   beforeEach(() => {
     mockedParseEnexFile.mockReset();
     mockedFetchNotesList.mockReset();
+    mockedFetchNoteDetail.mockReset();
     mockedFetchNotesList.mockResolvedValue({ total: 0, notes: [] });
+    mockedFetchNoteDetail.mockResolvedValue({
+      id: 'note-1',
+      title: 'First page note',
+      contentHtml: '<p>body</p>',
+      tags: [],
+      resources: [],
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z'
+    });
   });
 
   it('renders the ENEX viewer heading', () => {
@@ -128,6 +139,64 @@ describe('HomePage', () => {
         limit: 20,
         offset: 0
       });
+    });
+  });
+
+  it('keeps note selection in sync with paged list results', async () => {
+    mockedParseEnexFile.mockResolvedValue({
+      importId: 'import-1',
+      noteCount: 40,
+      warnings: []
+    });
+
+    mockedFetchNotesList.mockImplementation((_importId, params) => {
+      if (params?.offset === 20) {
+        return Promise.resolve({
+          total: 40,
+          notes: [
+            {
+              id: 'note-2',
+              title: 'Second page note',
+              excerpt: 'Another note',
+              tags: [],
+              createdAt: '2024-01-02T00:00:00Z'
+            }
+          ]
+        });
+      }
+
+      return Promise.resolve({
+        total: 40,
+        notes: [
+          {
+            id: 'note-1',
+            title: 'First page note',
+            excerpt: 'First note excerpt',
+            tags: [],
+            createdAt: '2024-01-01T00:00:00Z'
+          }
+        ]
+      });
+    });
+
+    render(<HomePage />);
+
+    const file = new File(['dummy'], 'small.enex', { type: 'text/xml' });
+    await userEvent.upload(screen.getByLabelText('ENEX file'), file);
+    await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
+
+    const firstNoteButton = await screen.findByRole('button', { name: /First page note/ });
+    await userEvent.click(firstNoteButton);
+    await waitFor(() => {
+      expect(mockedFetchNoteDetail).toHaveBeenCalledWith('import-1', 'note-1');
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(await screen.findByRole('button', { name: /Second page note/ })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Select a note to view details.')).toBeInTheDocument();
     });
   });
 });

@@ -14,6 +14,7 @@ export function HomePage(): ReactElement {
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState<number>(NOTES_PAGE_LIMIT);
   const [offset, setOffset] = useState(0);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
   const notes = useNotesList(importId, {
     query,
@@ -26,7 +27,19 @@ export function HomePage(): ReactElement {
     setQuery('');
     setOffset(0);
     setLimit(NOTES_PAGE_LIMIT);
+    setSelectedNoteId(null);
   }, [importId]);
+
+  useEffect(() => {
+    if (selectedNoteId == null || notes.data == null) {
+      return;
+    }
+
+    const existsInCurrentList = notes.data.notes.some((note) => note.id === selectedNoteId);
+    if (!existsInCurrentList) {
+      setSelectedNoteId(null);
+    }
+  }, [notes.data, selectedNoteId]);
 
   const handleSearchSubmit = () => {
     setOffset(0);
@@ -79,6 +92,8 @@ export function HomePage(): ReactElement {
           loading={notes.loading}
           error={notes.error}
           data={notes.data}
+          selectedNoteId={selectedNoteId}
+          onSelectedNoteIdChange={setSelectedNoteId}
         />
       )}
     </main>

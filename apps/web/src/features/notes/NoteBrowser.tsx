@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { formatSummaryTimestamp } from './formatters';
 import { NoteDetailPanel } from './NoteDetailPanel';
@@ -10,30 +10,20 @@ interface NoteBrowserProps {
   loading: boolean;
   error: string | null;
   data: NoteListResponse | null;
+  selectedNoteId: string | null;
+  onSelectedNoteIdChange: (noteId: string) => void;
 }
 
-export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps): ReactElement {
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setSelectedNoteId(null);
-  }, [importId]);
-
-  useEffect(() => {
-    if (selectedNoteId == null || data == null) {
-      return;
-    }
-
-    const existsInCurrentList = data.notes.some((note) => note.id === selectedNoteId);
-    if (!existsInCurrentList) {
-      setSelectedNoteId(null);
-    }
-  }, [data, selectedNoteId]);
-
+export function NoteBrowser({
+  importId,
+  loading,
+  error,
+  data,
+  selectedNoteId,
+  onSelectedNoteIdChange
+}: NoteBrowserProps): ReactElement {
   return (
     <section>
-      <h2>Notes</h2>
-
       {loading && <p>Loading notes...</p>}
       {!loading && error != null && <p className="error">Error: {error}</p>}
 
@@ -50,7 +40,7 @@ export function NoteBrowser({ importId, loading, error, data }: NoteBrowserProps
                 type="button"
                 className={`note-list-item${selectedNoteId === note.id ? ' is-selected' : ''}`}
                 onClick={() => {
-                  setSelectedNoteId(note.id);
+                  onSelectedNoteIdChange(note.id);
                 }}
               >
                 <div className="note-list-header">
