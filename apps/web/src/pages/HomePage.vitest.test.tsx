@@ -110,4 +110,61 @@ describe('HomePage', () => {
       });
     });
   });
+
+  it('resets query and offset when search input is cleared', async () => {
+    mockedParseEnexFile.mockResolvedValue({
+      importId: 'import-1',
+      noteCount: 120,
+      warnings: []
+    });
+    mockedFetchNotesList.mockResolvedValue({
+      total: 120,
+      notes: [
+        {
+          id: 'note-1',
+          title: 'Sample Note',
+          excerpt: 'Hello world',
+          tags: [],
+          createdAt: '2024-01-01T00:00:00Z'
+        }
+      ]
+    });
+
+    render(<HomePage />);
+
+    const file = new File(['dummy'], 'small.enex', { type: 'text/xml' });
+    await userEvent.upload(screen.getByLabelText('ENEX file'), file);
+    await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
+
+    const searchInput = await screen.findByPlaceholderText('Search title or content');
+    await userEvent.type(searchInput, 'meeting');
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+    await waitFor(() => {
+      expect(mockedFetchNotesList).toHaveBeenLastCalledWith('import-1', {
+        q: 'meeting',
+        limit: 20,
+        offset: 0
+      });
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => {
+      expect(mockedFetchNotesList).toHaveBeenLastCalledWith('import-1', {
+        q: 'meeting',
+        limit: 20,
+        offset: 20
+      });
+    });
+
+    await userEvent.clear(searchInput);
+
+    await waitFor(() => {
+      expect(mockedFetchNotesList).toHaveBeenLastCalledWith('import-1', {
+        q: undefined,
+        limit: 20,
+        offset: 0
+      });
+    });
+  });
 });

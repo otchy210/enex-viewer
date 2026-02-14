@@ -36,6 +36,15 @@ export function HomePage(): ReactElement {
     setQuery(searchInput.trim());
   };
 
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+
+    if (value === '') {
+      setQuery('');
+      setOffset(0);
+    }
+  };
+
   const handleLimitChange = (nextLimit: number) => {
     setLimit(nextLimit);
     setOffset(0);
@@ -45,7 +54,6 @@ export function HomePage(): ReactElement {
     setSearchInput('');
     setQuery('');
     setOffset(0);
-    notes.reload();
   };
 
   return (
@@ -62,7 +70,7 @@ export function HomePage(): ReactElement {
         loading={notes.loading}
         error={notes.error}
         data={notes.data}
-        onSearchInputChange={setSearchInput}
+        onSearchInputChange={handleSearchInputChange}
         onSearchSubmit={handleSearchSubmit}
         onClear={handleClear}
         onLimitChange={handleLimitChange}
