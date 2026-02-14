@@ -21,7 +21,7 @@ const baseProps = {
         excerpt: 'Hello world',
         tags: ['work'],
         createdAt: null,
-        updatedAt: '2024-01-02T00:00:00Z'
+        updatedAt: '2024-01-02T03:04:05'
       }
     ]
   },
@@ -48,6 +48,7 @@ describe('NotesListSection', () => {
     render(<NotesListSection {...baseProps} searchInput="meeting" />);
 
     expect(screen.getByText('Sample Note')).toBeInTheDocument();
+    expect(screen.getByText('Updated: 2024-01-02 03:04:05')).toBeInTheDocument();
 
     await userEvent.type(screen.getByPlaceholderText('Search title or content'), ' notes');
     expect(baseProps.onSearchInputChange).toHaveBeenCalled();
@@ -77,7 +78,7 @@ describe('NotesListSection', () => {
               excerpt: 'Hello world',
               tags: ['work'],
               createdAt: null,
-              updatedAt: '2024-01-02T00:00:00Z'
+              updatedAt: '2024-01-02T03:04:05'
             }
           ]
         }}

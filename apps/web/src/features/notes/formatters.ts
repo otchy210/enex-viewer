@@ -1,3 +1,5 @@
+import { formatLocalDateTime } from '../../lib/dateTime';
+
 import type { NoteDetail } from '../../api/notes';
 
 const parseTimestamp = (value?: string | null): Date | string | null => {
@@ -11,7 +13,7 @@ const parseTimestamp = (value?: string | null): Date | string | null => {
   return new Date(parsed);
 };
 
-export const formatTimestamp = (value?: string | null): string => {
+const formatNoteTimestamp = (value?: string | null): string => {
   const parsed = parseTimestamp(value);
   if (parsed == null) {
     return '—';
@@ -19,19 +21,12 @@ export const formatTimestamp = (value?: string | null): string => {
   if (typeof parsed === 'string') {
     return parsed;
   }
-  return parsed.toLocaleString();
+  return formatLocalDateTime(parsed);
 };
 
-export const formatSummaryTimestamp = (value?: string | null): string => {
-  const parsed = parseTimestamp(value);
-  if (parsed == null) {
-    return '—';
-  }
-  if (typeof parsed === 'string') {
-    return parsed;
-  }
-  return parsed.toLocaleDateString();
-};
+export const formatTimestamp = (value?: string | null): string => formatNoteTimestamp(value);
+
+export const formatSummaryTimestamp = (value?: string | null): string => formatNoteTimestamp(value);
 
 export const formatResourceLabel = (resource: NoteDetail['resources'][number]): string => {
   if (resource.fileName != null && resource.fileName.length > 0) {
