@@ -1,7 +1,5 @@
 import { useMemo, type FormEvent, type ReactElement } from 'react';
 
-import { formatSummaryTimestamp } from './formatters';
-
 import type { NoteListResponse } from '../../api/notes';
 
 interface NotesListSectionProps {
@@ -121,27 +119,6 @@ export function NotesListSection({
           </form>
 
           {error != null && <p className="error">Error: {error}</p>}
-
-          {hasNotes && (
-            <ul className="notes-list">
-              {data?.notes.map((note) => (
-                <li key={note.id} className="notes-list__item">
-                  <article>
-                    <header className="notes-list__header">
-                      <h3>{note.title}</h3>
-                      <small>
-                        Updated: {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
-                      </small>
-                    </header>
-                    <p>{note.excerpt}</p>
-                    <div className="notes-list__tags">
-                      <strong>Tags:</strong> {note.tags.length > 0 ? note.tags.join(', ') : 'None'}
-                    </div>
-                  </article>
-                </li>
-              ))}
-            </ul>
-          )}
 
           {total > 0 && (
             <div className="notes-pagination">
