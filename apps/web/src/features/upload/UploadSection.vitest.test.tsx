@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UploadSection } from './UploadSection';
 import { parseEnexFile, type ParseEnexResponse } from '../../api/enex';
+import { ApiError } from '../../api/error';
 import { useEnexUpload } from '../../state/useEnexUpload';
 import { createDeferred } from '../../test-utils/deferred';
 
@@ -81,6 +82,29 @@ describe('UploadSection', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
 
     expect(await screen.findByText('Error: Invalid file')).toBeInTheDocument();
+    expect(screen.getByText('Select a file and upload again.')).toBeInTheDocument();
+  });
+
+
+  it('maps INVALID_XML errors to a user friendly message', async () => {
+    mockedParseEnexFile.mockRejectedValueOnce(
+      new ApiError(
+        'The uploaded ENEX file is malformed XML. Please export the file again and retry.',
+        'INVALID_XML'
+      )
+    );
+
+    render(<UploadSectionHarness />);
+
+    const file = new File(['data'], 'broken.enex', { type: 'application/xml' });
+    await userEvent.upload(screen.getByLabelText('ENEX file'), file);
+    await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
+
+    expect(
+      await screen.findByText(
+        'Error: The ENEX file appears to be corrupted. Please re-export it from Evernote and try again.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('resets the success state when a new file is selected', async () => {

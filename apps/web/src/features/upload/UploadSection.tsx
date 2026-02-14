@@ -69,7 +69,12 @@ export function UploadSection({
           {result.warnings.length > 0 && <p>Warnings: {result.warnings.length}</p>}
         </div>
       )}
-      {status === 'error' && error != null && <p className="error">Error: {error}</p>}
+      {status === 'error' && error != null && (
+        <div className="error" role="alert">
+          <p>Error: {error}</p>
+          <p>Select a file and upload again.</p>
+        </div>
+      )}
     </section>
   );
 }

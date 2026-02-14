@@ -8,6 +8,7 @@ import {
   type AsyncDataState
 } from './asyncState';
 import { parseEnexFile, type ParseEnexResponse } from '../api/enex';
+import { ApiError } from '../api/error';
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -40,6 +41,14 @@ const toUploadStatus = (state: AsyncDataState<ParseEnexResponse>): UploadStatus 
   return 'idle';
 };
 
+const toUserFriendlyError = (error: unknown): unknown => {
+  if (error instanceof ApiError && error.code === 'INVALID_XML') {
+    return new Error('The ENEX file appears to be corrupted. Please re-export it from Evernote and try again.');
+  }
+
+  return error;
+};
+
 export function useEnexUpload(): EnexUploadHook {
   const [state, setState] = useState<AsyncDataState<ParseEnexResponse>>(() =>
     createAsyncIdleState()
@@ -52,7 +61,7 @@ export function useEnexUpload(): EnexUploadHook {
       const response = await parseEnexFile(file);
       setState(createAsyncSuccessState(response));
     } catch (error) {
-      setState(createAsyncErrorState(error));
+      setState(createAsyncErrorState(toUserFriendlyError(error)));
     }
   }, []);
 
