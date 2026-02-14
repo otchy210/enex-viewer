@@ -35,8 +35,8 @@ describe('NoteDetailPanel', () => {
       title: 'Sample note',
       tags: ['demo'],
       contentHtml: '<p>Content</p>',
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-02T00:00:00Z',
+      createdAt: '2024-01-01T01:02:03',
+      updatedAt: '2024-01-02T03:04:05',
       resources: [
         {
           id: 'resource-1',
@@ -50,6 +50,8 @@ describe('NoteDetailPanel', () => {
     await deferred.promise;
 
     expect(await screen.findByRole('heading', { name: 'Sample note' })).toBeInTheDocument();
+    expect(screen.getByText('2024-01-01 01:02:03')).toBeInTheDocument();
+    expect(screen.getByText('2024-01-02 03:04:05')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Resources', level: 4 })).toBeInTheDocument();
     expect(screen.getByText('image.png')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Content', level: 4 })).toBeInTheDocument();

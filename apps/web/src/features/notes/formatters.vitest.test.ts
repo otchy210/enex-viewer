@@ -12,10 +12,8 @@ describe('formatTimestamp', () => {
     expect(formatTimestamp('not-a-date')).toBe('not-a-date');
   });
 
-  it('formats valid dates', () => {
-    const formatted = formatTimestamp('2024-01-01T00:00:00Z');
-    expect(formatted).not.toBe('—');
-    expect(formatted).not.toBe('2024-01-01T00:00:00Z');
+  it('formats valid dates in yyyy-MM-dd HH:mm:ss', () => {
+    expect(formatTimestamp('2024-01-02T03:04:05')).toBe('2024-01-02 03:04:05');
   });
 });
 
@@ -43,9 +41,7 @@ describe('formatSummaryTimestamp', () => {
     expect(formatSummaryTimestamp('not-a-date')).toBe('not-a-date');
   });
 
-  it('formats valid dates', () => {
-    const formatted = formatSummaryTimestamp('2024-01-01T00:00:00Z');
-    expect(formatted).not.toBe('—');
-    expect(formatted).not.toBe('2024-01-01T00:00:00Z');
+  it('formats valid dates in yyyy-MM-dd HH:mm:ss', () => {
+    expect(formatSummaryTimestamp('2024-01-02T03:04:05')).toBe('2024-01-02 03:04:05');
   });
 });
