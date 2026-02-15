@@ -33,3 +33,16 @@
 - 期待結果
   - SQLite の UNIQUE 制約違反は発生しない。
   - 既存 import が再利用され、クライアントは同一 importId を受け取る。
+
+
+### MT-202: hash lookup によりアップロードをスキップできる
+- 前提
+  - API が起動している。
+  - 検証用 ENEX ファイルが 1 つ用意されている。
+- 手順
+  1. 初回は `POST /api/imports/hash-lookup` に計算済み SHA-256 を送信し、`shouldUpload=true` を確認する。
+  2. 同ファイルを `POST /api/enex/parse` へアップロードして import を作成する。
+  3. 同じハッシュで再度 `POST /api/imports/hash-lookup` を呼び出す。
+- 期待結果
+  - 1 回目 lookup は `importId=null` かつ `shouldUpload=true` を返し、`POST /api/enex/parse` を案内する。
+  - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが分かる。

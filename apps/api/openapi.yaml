@@ -105,6 +105,43 @@ paths:
                     code: INTERNAL_SERVER_ERROR
                     message: Unexpected error.
 
+
+  /api/imports/hash-lookup:
+    post:
+      summary: ENEX ハッシュの既存 import 検索
+      operationId: postImportHashLookup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportHashLookupRequest'
+      responses:
+        '200':
+          description: ハッシュ検索結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportHashLookupResponse'
+        '400':
+          description: ハッシュ形式不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidHash:
+                  value:
+                    code: INVALID_HASH
+                    message: hash must be a SHA-256 hex string.
+        '500':
+          description: 想定外エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
   /api/imports/{importId}/notes:
     get:
       summary: ノート一覧の取得
@@ -269,6 +306,43 @@ components:
             type: string
           example:
             - Incomplete Note: Skipped note due to missing title or content.
+
+
+    ImportHashLookupRequest:
+      type: object
+      required:
+        - hash
+      properties:
+        hash:
+          type: string
+          description: 検索対象の SHA-256 ハッシュ
+          pattern: '^[a-fA-F0-9]{64}$'
+          example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+    ImportHashLookupResponse:
+      type: object
+      required:
+        - hash
+        - importId
+        - shouldUpload
+        - message
+      properties:
+        hash:
+          type: string
+          description: 検索した SHA-256 ハッシュ
+        importId:
+          type: string
+          nullable: true
+          description: 既存 import がある場合はその ID、未登録なら null
+          example: 7bfa5e83-8a9c-49ec-ae4f-7a7cd5ad2f5f
+        shouldUpload:
+          type: boolean
+          description: true の場合は POST /api/enex/parse でアップロードを継続する
+          example: true
+        message:
+          type: string
+          description: クライアントが次のアクションを判断するための案内文
+          example: No import found for the hash. Continue with POST /api/enex/parse.
 
     NoteSummary:
       type: object
