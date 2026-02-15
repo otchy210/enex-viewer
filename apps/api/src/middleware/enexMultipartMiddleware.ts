@@ -1,4 +1,7 @@
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { Writable } from 'stream';
 
 import formidable from 'formidable';
@@ -35,7 +38,7 @@ const hasMultipartContentType = (headers: Request['headers']): boolean => {
 };
 
 interface EnexParseLocals {
-  enexFileBuffer?: Buffer;
+  enexFilePath?: string;
   enexFileHash?: string;
 }
 
@@ -63,7 +66,10 @@ export const parseEnexMultipart = (
   }
 
   const hash = createHash('sha256');
-  const chunks: Buffer[] = [];
+  const uploadTempDir = path.join(os.tmpdir(), 'enex-viewer-upload-cache');
+  fs.mkdirSync(uploadTempDir, { recursive: true });
+  const tempFilePath = path.join(uploadTempDir, randomUUID());
+  const writeStream = fs.createWriteStream(tempFilePath);
 
   const form = formidable({
     maxFiles: 1,
@@ -72,9 +78,15 @@ export const parseEnexMultipart = (
     fileWriteStreamHandler: () =>
       new Writable({
         write(chunk: Buffer, _encoding, callback) {
-          chunks.push(chunk);
+          if (!writeStream.write(chunk)) {
+            writeStream.once('drain', callback);
+          } else {
+            callback();
+          }
           hash.update(chunk);
-          callback();
+        },
+        final(callback) {
+          writeStream.end(callback);
         }
       })
   });
@@ -89,6 +101,8 @@ export const parseEnexMultipart = (
         return;
       }
 
+      writeStream.destroy();
+      fs.promises.unlink(tempFilePath).catch(() => undefined);
       next(error);
       return;
     }
@@ -111,10 +125,11 @@ export const parseEnexMultipart = (
         code: 'INVALID_FILE_TYPE',
         message: 'Invalid ENEX file type.'
       });
+      fs.promises.unlink(tempFilePath).catch(() => undefined);
       return;
     }
 
-    res.locals.enexFileBuffer = Buffer.concat(chunks);
+    res.locals.enexFilePath = tempFilePath;
     res.locals.enexFileHash = hash.digest('hex');
     next();
   });

@@ -21,6 +21,7 @@
 2. 未登録なら `POST /api/enex/parse` にストリーム送信（1GB 対応のため `busboy` 等を利用）。
 3. API は ENEX を逐次パースし、結果を SQLite とファイルシステムへ保存。
 4. 成功後に importId と hash を返す。既存 import の場合は DB 参照のみ。
+- 現状の Phase 2 実装では、アップロード時点でのハッシュ計算と一時ファイルへの書き込みはストリーム処理だが、最終的な `parseEnexFile` で一度だけ全バッファを読み込む制約がある。1 GB までのファイルはメモリに展開する必要がある点を周知し、将来完全ストリーミング対応を行う際はこの箇所を置き換える。
 
 ## 5. 添付ダウンロード
 - 個別: `GET /api/imports/:importId/notes/:noteId/resources/:resourceId` が `Content-Disposition` を設定しストリーミング。
