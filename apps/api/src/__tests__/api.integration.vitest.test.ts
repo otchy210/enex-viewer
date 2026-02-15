@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -20,6 +22,13 @@ interface ParseResponse {
 interface NoteListResponse {
   total: number;
   notes: { title: string }[];
+}
+
+interface ImportHashLookupResponse {
+  hash: string;
+  importId: string | null;
+  shouldUpload: boolean;
+  message: string;
 }
 
 interface ApiErrorResponse {
@@ -54,6 +63,13 @@ const isNoteListResponse = (value: unknown): value is NoteListResponse =>
 
 const isApiErrorResponse = (value: unknown): value is ApiErrorResponse =>
   isRecord(value) && typeof value.code === 'string' && typeof value.message === 'string';
+
+const isImportHashLookupResponse = (value: unknown): value is ImportHashLookupResponse =>
+  isRecord(value) &&
+  typeof value.hash === 'string' &&
+  (typeof value.importId === 'string' || value.importId === null) &&
+  typeof value.shouldUpload === 'boolean' &&
+  typeof value.message === 'string';
 
 describe('API integration', () => {
   beforeEach(() => {
@@ -115,6 +131,67 @@ describe('API integration', () => {
       expect(secondBody.importId).toBe(firstBody.importId);
       expect(secondBody.hash).toBe(firstBody.hash);
       expect(secondBody.noteCount).toBe(firstBody.noteCount);
+    } finally {
+      cleanupApiTestDataDirectory(dataDirectory);
+    }
+  });
+
+  it('POST /api/imports/hash-lookup validates hash format', async () => {
+    const app = createApp();
+
+    const response = await request(app).post('/api/imports/hash-lookup').send({ hash: 'abc' });
+
+    expect(response.status).toBe(400);
+    const body = parseResponseBody(response.body as unknown, isApiErrorResponse);
+    expect(body).toEqual({
+      code: 'INVALID_HASH',
+      message: 'hash must be a SHA-256 hex string.'
+    });
+  });
+
+  it('POST /api/imports/hash-lookup guides lookup -> parse -> reuse flow', async () => {
+    const dataDirectory = createTempApiTestDataDirectory();
+
+    try {
+      initializeApiTestState(dataDirectory);
+      const app = createApp();
+      const payload = buildEnexPayload(`
+        <note>
+          <title>Lookup Flow Note</title>
+          <content><![CDATA[<en-note>lookup flow</en-note>]]></content>
+        </note>
+      `);
+
+      const payloadHash = createHash('sha256').update(payload).digest('hex');
+      const beforeLookupResponse = await request(app)
+        .post('/api/imports/hash-lookup')
+        .send({ hash: payloadHash });
+
+      expect(beforeLookupResponse.status).toBe(200);
+      const beforeLookupBody = parseResponseBody(
+        beforeLookupResponse.body as unknown,
+        isImportHashLookupResponse
+      );
+      expect(beforeLookupBody.importId).toBeNull();
+      expect(beforeLookupBody.shouldUpload).toBe(true);
+      expect(beforeLookupBody.message).toContain('POST /api/enex/parse');
+
+      const parseResponse = await uploadEnex(app, payload);
+      expect(parseResponse.status).toBe(200);
+      const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+      const afterLookupResponse = await request(app)
+        .post('/api/imports/hash-lookup')
+        .send({ hash: payloadHash });
+
+      expect(afterLookupResponse.status).toBe(200);
+      const afterLookupBody = parseResponseBody(
+        afterLookupResponse.body as unknown,
+        isImportHashLookupResponse
+      );
+      expect(afterLookupBody.importId).toBe(parseBody.importId);
+      expect(afterLookupBody.shouldUpload).toBe(false);
+      expect(afterLookupBody.message).toContain('skip upload');
     } finally {
       cleanupApiTestDataDirectory(dataDirectory);
     }

@@ -25,7 +25,12 @@
   - `POST /api/enex/parse`: 1GB まで許可。レスポンスに `hash` フィールドを追加。既存 `imports.hash` が見つかった場合は新規 INSERT を行わず既存 importId を返す。
   - `GET /api/imports/:importId`: Import メタデータ（hash、noteCount、createdAt）を返す。
   - `GET /api/imports/:importId/notes/:noteId/resources/:resourceId`: 添付ファイルをストリーミングで返す。
-  - `POST /api/imports/hash-lookup`: ハッシュを受け取り、存在する importId を返す（クライアントのアップロードスキップ用）。
+  - `POST /api/imports/hash-lookup`: `hash` を受け取り、`importId | null` と `shouldUpload`、次アクション案内 `message` を返す（クライアントのアップロードスキップ用）。
+
+### 3.1 ハッシュ事前判定フロー
+- Web はファイル選択後に SHA-256 を計算し、`POST /api/imports/hash-lookup` を呼び出す。
+- `shouldUpload=true` の場合のみ `POST /api/enex/parse` を実行する。
+- `shouldUpload=false` の場合は返却された `importId` をそのまま再利用し、アップロードをスキップする。
 
 ## 4. エラーハンドリング
 - ファイルサイズ超過: `413 FILE_TOO_LARGE`。

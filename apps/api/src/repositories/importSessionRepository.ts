@@ -74,7 +74,10 @@ const getDb = (): SqliteDatabase => {
       storage_path TEXT,
       FOREIGN KEY (note_id, import_id) REFERENCES notes(id, import_id) ON DELETE CASCADE
     );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_imports_hash ON imports(hash);
+    CREATE INDEX IF NOT EXISTS idx_notes_import ON notes(import_id);
     CREATE INDEX IF NOT EXISTS idx_notes_import_sort ON notes(import_id, sort_key DESC);
+    CREATE INDEX IF NOT EXISTS idx_resources_import ON resources(import_id);
     CREATE INDEX IF NOT EXISTS idx_resources_note ON resources(note_id, import_id);
   `);
   return db;
