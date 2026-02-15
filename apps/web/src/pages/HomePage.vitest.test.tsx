@@ -9,11 +9,17 @@ vi.mock('../features/notes/NoteDetailPanel', () => ({
 }));
 
 import { HomePage } from './HomePage';
-import { parseEnexFile } from '../api/enex';
+import { lookupImportByHash, parseEnexFile } from '../api/enex';
 import { fetchNotesList } from '../api/notes';
+import { computeFileSha256 } from '../lib/hashFile';
 
 vi.mock('../api/enex', () => ({
-  parseEnexFile: vi.fn()
+  parseEnexFile: vi.fn(),
+  lookupImportByHash: vi.fn()
+}));
+
+vi.mock('../lib/hashFile', () => ({
+  computeFileSha256: vi.fn()
 }));
 
 vi.mock('../api/notes', async () => {
@@ -26,7 +32,19 @@ vi.mock('../api/notes', async () => {
 });
 
 const mockedParseEnexFile = vi.mocked(parseEnexFile);
+const mockedLookupImportByHash = vi.mocked(lookupImportByHash);
+const mockedComputeFileSha256 = vi.mocked(computeFileSha256);
 const mockedFetchNotesList = vi.mocked(fetchNotesList);
+
+const setupUploadReadyState = () => {
+  mockedComputeFileSha256.mockResolvedValue('a'.repeat(64));
+  mockedLookupImportByHash.mockResolvedValue({
+    hash: 'a'.repeat(64),
+    importId: null,
+    shouldUpload: true,
+    message: 'No import found for the hash. Continue with POST /api/enex/parse.'
+  });
+};
 
 describe('HomePage', () => {
   afterEach(() => {
@@ -35,6 +53,8 @@ describe('HomePage', () => {
 
   beforeEach(() => {
     mockedParseEnexFile.mockReset();
+    mockedLookupImportByHash.mockReset();
+    mockedComputeFileSha256.mockReset();
     mockedFetchNotesList.mockReset();
     mockedFetchNotesList.mockResolvedValue({ total: 0, notes: [] });
   });
@@ -46,6 +66,7 @@ describe('HomePage', () => {
   });
 
   it('updates notes limit via UI and requests the list with updated query', async () => {
+    setupUploadReadyState();
     mockedParseEnexFile.mockResolvedValue({
       importId: 'import-1',
       noteCount: 3,
@@ -56,6 +77,7 @@ describe('HomePage', () => {
 
     const file = new File(['dummy'], 'small.enex', { type: 'text/xml' });
     await userEvent.upload(screen.getByLabelText('ENEX file'), file);
+    await screen.findByRole('button', { name: 'Upload' });
     await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
 
     await waitFor(() => {
@@ -80,6 +102,7 @@ describe('HomePage', () => {
   });
 
   it('resets query and offset when search input is cleared', async () => {
+    setupUploadReadyState();
     mockedParseEnexFile.mockResolvedValue({
       importId: 'import-1',
       noteCount: 120,
@@ -102,7 +125,7 @@ describe('HomePage', () => {
 
     const file = new File(['dummy'], 'small.enex', { type: 'text/xml' });
     await userEvent.upload(screen.getByLabelText('ENEX file'), file);
-    await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Upload' }));
 
     const searchInput = await screen.findByPlaceholderText('Search title or content');
     await userEvent.type(searchInput, 'meeting');
@@ -137,6 +160,7 @@ describe('HomePage', () => {
   });
 
   it('keeps note selection in sync with paged list results', async () => {
+    setupUploadReadyState();
     mockedParseEnexFile.mockResolvedValue({
       importId: 'import-1',
       noteCount: 40,
@@ -177,7 +201,7 @@ describe('HomePage', () => {
 
     const file = new File(['dummy'], 'small.enex', { type: 'text/xml' });
     await userEvent.upload(screen.getByLabelText('ENEX file'), file);
-    await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Upload' }));
 
     const firstNoteButton = await screen.findByRole('button', { name: /First page note/ });
     await userEvent.click(firstNoteButton);

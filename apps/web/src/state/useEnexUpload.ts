@@ -1,79 +1,224 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import {
-  createAsyncErrorState,
-  createAsyncIdleState,
-  createAsyncLoadingState,
-  createAsyncSuccessState,
-  type AsyncDataState
-} from './asyncState';
-import { parseEnexFile, type ParseEnexResponse } from '../api/enex';
+  lookupImportByHash,
+  parseEnexFile,
+  type HashLookupResponse,
+  type ParseEnexResponse
+} from '../api/enex';
 import { ApiError } from '../api/error';
+import { computeFileSha256 } from '../lib/hashFile';
 
-export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
+export type UploadStatus =
+  | 'idle'
+  | 'hashing'
+  | 'lookup'
+  | 'ready'
+  | 'uploading'
+  | 'success'
+  | 'skipped'
+  | 'error';
 
 interface EnexUploadState {
   status: UploadStatus;
   error: string | null;
   result: ParseEnexResponse | null;
+  importId: string | null;
+  hash: string | null;
+  hashProgress: number;
+  lookupMessage: string | null;
+  selectedFileName: string | null;
 }
 
 interface EnexUploadActions {
-  uploadFile: (file: File) => Promise<void>;
+  selectFile: (file: File | null) => Promise<void>;
+  uploadSelectedFile: () => Promise<void>;
+  retry: () => Promise<void>;
+  cancel: () => void;
   reset: () => void;
 }
 
 type EnexUploadHook = EnexUploadState & EnexUploadActions;
 
-const toUploadStatus = (state: AsyncDataState<ParseEnexResponse>): UploadStatus => {
-  if (state.loading) {
-    return 'uploading';
+const createInitialState = (): EnexUploadState => ({
+  status: 'idle',
+  error: null,
+  result: null,
+  importId: null,
+  hash: null,
+  hashProgress: 0,
+  lookupMessage: null,
+  selectedFileName: null
+});
+
+const toUserFriendlyError = (error: unknown): string => {
+  if (error instanceof ApiError && error.code === 'INVALID_XML') {
+    return 'The ENEX file appears to be corrupted. Please re-export it from Evernote and try again.';
   }
 
-  if (state.error != null) {
-    return 'error';
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return 'Hash calculation was canceled. Select the file again or retry.';
   }
 
-  if (state.data != null) {
-    return 'success';
+  if (error instanceof Error) {
+    return error.message;
   }
 
-  return 'idle';
+  return 'Unknown error';
 };
 
-const toUserFriendlyError = (error: unknown): unknown => {
-  if (error instanceof ApiError && error.code === 'INVALID_XML') {
-    return new Error('The ENEX file appears to be corrupted. Please re-export it from Evernote and try again.');
+const applyLookupResult = (
+  current: EnexUploadState,
+  lookup: HashLookupResponse,
+  keepResult: ParseEnexResponse | null
+): EnexUploadState => {
+  if (lookup.shouldUpload) {
+    return {
+      ...current,
+      status: 'ready',
+      importId: null,
+      result: keepResult,
+      lookupMessage: lookup.message
+    };
   }
 
-  return error;
+  return {
+    ...current,
+    status: 'skipped',
+    importId: lookup.importId,
+    result:
+      lookup.importId != null
+        ? {
+            importId: lookup.importId,
+            noteCount: keepResult?.noteCount ?? 0,
+            warnings: keepResult?.warnings ?? []
+          }
+        : null,
+    lookupMessage: lookup.message
+  };
 };
 
 export function useEnexUpload(): EnexUploadHook {
-  const [state, setState] = useState<AsyncDataState<ParseEnexResponse>>(() =>
-    createAsyncIdleState()
-  );
+  const [state, setState] = useState<EnexUploadState>(() => createInitialState());
+  const selectedFileRef = useRef<File | null>(null);
+  const preparationAbortRef = useRef<AbortController | null>(null);
 
-  const uploadFile = useCallback(async (file: File) => {
-    setState(createAsyncLoadingState());
+  const cancel = useCallback(() => {
+    preparationAbortRef.current?.abort();
+    preparationAbortRef.current = null;
+  }, []);
+
+  const prepareFile = useCallback(async (file: File) => {
+    cancel();
+    const abortController = new AbortController();
+    preparationAbortRef.current = abortController;
+
+    setState((current) => ({
+      ...current,
+      status: 'hashing',
+      error: null,
+      result: null,
+      importId: null,
+      hash: null,
+      hashProgress: 0,
+      lookupMessage: null,
+      selectedFileName: file.name
+    }));
+
+    try {
+      const hash = await computeFileSha256(file, {
+        signal: abortController.signal,
+        onProgress: (ratio) => {
+          setState((current) => ({
+            ...current,
+            hashProgress: ratio
+          }));
+        }
+      });
+
+      setState((current) => ({
+        ...current,
+        status: 'lookup',
+        hash,
+        hashProgress: 1
+      }));
+
+      const lookup = await lookupImportByHash(hash);
+      setState((current) => applyLookupResult(current, lookup, null));
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        status: 'error',
+        error: toUserFriendlyError(error)
+      }));
+    } finally {
+      if (preparationAbortRef.current === abortController) {
+        preparationAbortRef.current = null;
+      }
+    }
+  }, [cancel]);
+
+  const selectFile = useCallback(async (file: File | null) => {
+    selectedFileRef.current = file;
+
+    if (file == null) {
+      cancel();
+      setState(createInitialState());
+      return;
+    }
+
+    await prepareFile(file);
+  }, [cancel, prepareFile]);
+
+  const uploadSelectedFile = useCallback(async () => {
+    const file = selectedFileRef.current;
+    if (file == null || state.status !== 'ready') {
+      return;
+    }
+
+    setState((current) => ({
+      ...current,
+      status: 'uploading',
+      error: null
+    }));
 
     try {
       const response = await parseEnexFile(file);
-      setState(createAsyncSuccessState(response));
+      setState((current) => ({
+        ...current,
+        status: 'success',
+        result: response,
+        importId: response.importId,
+        lookupMessage: 'Upload complete.'
+      }));
     } catch (error) {
-      setState(createAsyncErrorState(toUserFriendlyError(error)));
+      setState((current) => ({
+        ...current,
+        status: 'error',
+        error: toUserFriendlyError(error)
+      }));
     }
-  }, []);
+  }, [state.status]);
+
+  const retry = useCallback(async () => {
+    if (selectedFileRef.current == null) {
+      return;
+    }
+    await prepareFile(selectedFileRef.current);
+  }, [prepareFile]);
 
   const reset = useCallback(() => {
-    setState(createAsyncIdleState());
-  }, []);
+    cancel();
+    selectedFileRef.current = null;
+    setState(createInitialState());
+  }, [cancel]);
 
   return {
-    status: toUploadStatus(state),
-    error: state.error,
-    result: state.data,
-    uploadFile,
+    ...state,
+    selectFile,
+    uploadSelectedFile,
+    retry,
+    cancel,
     reset
   };
 }

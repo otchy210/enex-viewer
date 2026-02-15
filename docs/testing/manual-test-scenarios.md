@@ -37,12 +37,14 @@
 
 ### MT-202: hash lookup によりアップロードをスキップできる
 - 前提
-  - API が起動している。
+  - API と Web が起動している。
   - 検証用 ENEX ファイルが 1 つ用意されている。
 - 手順
-  1. 初回は `POST /api/imports/hash-lookup` に計算済み SHA-256 を送信し、`shouldUpload=true` を確認する。
-  2. 同ファイルを `POST /api/enex/parse` へアップロードして import を作成する。
-  3. 同じハッシュで再度 `POST /api/imports/hash-lookup` を呼び出す。
+  1. Web で ENEX ファイルを選択し、`Calculating SHA-256 hash...` の進捗表示とハッシュ値表示を確認する。
+  2. 初回は `POST /api/imports/hash-lookup` が `shouldUpload=true` を返し、Upload ボタンが有効になることを確認する。
+  3. Upload を実行して import を作成し、表示された `importId` を記録する。
+  4. 同じ ENEX ファイルを再度選択する。
+  5. `POST /api/imports/hash-lookup` が `shouldUpload=false` を返し、Upload ボタンが無効化され、既存 `importId` 再利用導線が表示されることを確認する。
 - 期待結果
   - 1 回目 lookup は `importId=null` かつ `shouldUpload=true` を返し、`POST /api/enex/parse` を案内する。
-  - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが分かる。
+  - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが UI で明示される。

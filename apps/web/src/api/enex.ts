@@ -1,4 +1,4 @@
-import { ensureOk } from './error';
+import { requestJson } from './client';
 
 export interface ParseEnexResponse {
   importId: string;
@@ -6,15 +6,29 @@ export interface ParseEnexResponse {
   warnings: string[];
 }
 
+export interface HashLookupResponse {
+  hash: string;
+  importId: string | null;
+  shouldUpload: boolean;
+  message: string;
+}
+
 export async function parseEnexFile(file: File): Promise<ParseEnexResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch('/api/enex/parse', {
+  return requestJson<ParseEnexResponse>('/api/enex/parse', {
     method: 'POST',
     body: formData
   });
+}
 
-  await ensureOk(res);
-  return (await res.json()) as ParseEnexResponse;
+export async function lookupImportByHash(hash: string): Promise<HashLookupResponse> {
+  return requestJson<HashLookupResponse>('/api/imports/hash-lookup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ hash })
+  });
 }
