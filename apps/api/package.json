@@ -16,7 +16,8 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "fast-xml-parser": "^4.4.1",
-    "sanitize-html": "^2.15.0"
+    "sanitize-html": "^2.15.0",
+    "better-sqlite3": "^9.6.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.8",

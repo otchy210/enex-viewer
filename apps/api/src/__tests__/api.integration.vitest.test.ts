@@ -6,6 +6,7 @@ import { buildEnexPayload, initializeApiTestState, uploadEnex } from './testHelp
 
 interface ParseResponse {
   importId: string;
+  hash: string;
   noteCount: number;
   warnings: string[];
 }
@@ -35,6 +36,7 @@ const parseResponseBody = <T>(body: unknown, guard: (value: unknown) => value is
 const isParseResponse = (value: unknown): value is ParseResponse =>
   isRecord(value) &&
   typeof value.importId === 'string' &&
+  typeof value.hash === 'string' &&
   typeof value.noteCount === 'number' &&
   Array.isArray(value.warnings);
 
@@ -78,6 +80,7 @@ describe('API integration', () => {
     const body = parseResponseBody(response.body as unknown, isParseResponse);
 
     expect(body.importId).not.toHaveLength(0);
+    expect(body.hash).toHaveLength(64);
     expect(body.noteCount).toBe(1);
     expect(body.warnings).toEqual([]);
   });
@@ -112,7 +115,26 @@ describe('API integration', () => {
   });
 
 
-    it('POST /api/enex/parse reports parse failures', async () => {
+  
+  it('POST /api/enex/parse rejects files larger than configured limit', async () => {
+    process.env.ENEX_PARSE_MAX_UPLOAD_BYTES = '16';
+    const app = createApp();
+
+    const response = await uploadEnex(app, Buffer.from('12345678901234567'), {
+      filename: 'oversized.enex',
+      contentType: 'application/xml'
+    });
+
+    expect(response.status).toBe(413);
+    expect(response.body).toEqual({
+      code: 'FILE_TOO_LARGE',
+      message: 'File size exceeds the allowed limit.'
+    });
+
+    delete process.env.ENEX_PARSE_MAX_UPLOAD_BYTES;
+  });
+
+  it('POST /api/enex/parse reports parse failures', async () => {
     const app = createApp();
 
     const response = await uploadEnex(app, Buffer.from('<note></note>'), {

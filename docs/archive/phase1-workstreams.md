@@ -1,6 +1,6 @@
 # ワークストリーム定義
 
-この文書は、レーンごとの成果物と実装時の注意点を定義する。進捗管理は `implementation-tasks.md` を参照する。
+この文書は、レーンごとの成果物と実装時の注意点を定義する。進捗管理は `docs/tasks/implementation-tasks.md` を参照する。
 
 ## レーン A: API 基盤（T-001, T-006, T-007）
 
@@ -197,4 +197,4 @@
 
 - 契約先行 + モック: API 契約固定後、Web はモックで先行実装可。
 - 再発明回避: 標準 API / 枯れたライブラリを優先する。
-- 進捗更新: 完了チェックは `implementation-tasks.md` のみ更新する。
+- 進捗更新: 完了チェックは `docs/tasks/implementation-tasks.md` のみで行う。
