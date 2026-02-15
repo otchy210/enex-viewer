@@ -1,101 +1,34 @@
-# 実装タスク一覧（MVP）
+# 実装タスク運用ガイド
 
-## 1. 進め方
+これまでの Phase 1 のタスク履歴は `docs/archive/phase1-implementation-tasks.md` に保存されています。今後は新規タスクを追加する際に、このガイドラインを参照してください。
 
-- 各タスクは ID 単位で独立レビュー可能にする。
-- 依存関係を満たせば並列で着手する。
-- 受け入れ条件を満たしたら完了とする。
-- レーン H / I のリファクタタスクでは、既存テストを実行してリグレッションがないことを確認する。
-- 進捗管理の正本は本ファイルの「完了」列とし、完了時に `[ ]` から `[x]` へ更新する。
-- チェック更新は実装変更と同じ PR に含める。
-- コミットメッセージ先頭は `T-00x: <summary>` 形式にする。
+## 1. タスク作成の原則
 
-## 2. タスク一覧（進捗の正本）
+- 依存関係を明示し、可能な限り並列実行できる形で分割する。
+- 1 タスク = 1 つの独立レビューを徹底し、大規模変更はサブタスクへ分割する。
+- 受け入れ条件はテストやドキュメント更新まで含めて箇条書きで書く。
+- コミットメッセージ/PR タイトルは `T-00x: <summary>` を守り、`docs/tasks/agent-execution.md` の手順に従う。
 
-| 完了 | ID    | レーン | 種別           | タスク                                                                                             | 依存                                                                                      | 受け入れ条件                                                                                                                                                                                                                                                                           |
-| ---- | ----- | ------ | -------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [x]  | T-001 | A      | Setup          | API 層のディレクトリ分割（routes/controllers/services 等）                                         | なし                                                                                      | ビルド通過、責務に沿った雛形がある                                                                                                                                                                                                                                                     |
-| [x]  | T-002 | B      | Setup          | Web 層のディレクトリ分割（pages/features/api/state 等）                                            | なし                                                                                      | ビルド通過、既存画面が崩れない                                                                                                                                                                                                                                                         |
-| [x]  | T-003 | C      | API            | ENEX アップロード API `POST /api/enex/parse` 実装                                                  | T-001                                                                                     | サンプル ENEX を受け取り `importId` を返す                                                                                                                                                                                                                                             |
-| [x]  | T-004 | C      | API            | ノート一覧 API `GET /api/imports/:importId/notes` 実装                                             | T-001, T-003                                                                              | 検索・ページング付き一覧を返す                                                                                                                                                                                                                                                         |
-| [x]  | T-005 | C      | API            | ノート詳細 API `GET /api/imports/:importId/notes/:noteId` 実装                                     | T-001, T-003                                                                              | 指定ノート詳細を返す                                                                                                                                                                                                                                                                   |
-| [x]  | T-006 | A      | API            | ENEX 解析サービス（XML->ドメイン変換）実装                                                         | T-001                                                                                     | 解析結果と警告を返せる                                                                                                                                                                                                                                                                 |
-| [x]  | T-007 | A      | API            | 本文サニタイズ処理実装                                                                             | T-001, T-006                                                                              | 危険なタグ/属性が除去される                                                                                                                                                                                                                                                            |
-| [x]  | T-008 | D      | Web            | アップロード UI 実装                                                                               | T-002, T-003                                                                              | ENEX を送信し importId を保持できる                                                                                                                                                                                                                                                    |
-| [x]  | T-009 | D      | Web            | ノート一覧 UI 実装（検索含む）                                                                     | T-002, T-004                                                                              | 検索条件で一覧更新される                                                                                                                                                                                                                                                               |
-| [x]  | T-010 | D      | Web            | ノート詳細 UI 実装                                                                                 | T-002, T-005                                                                              | 選択ノートを表示できる                                                                                                                                                                                                                                                                 |
-| [x]  | T-011 | E      | Quality        | API テスト整備（unit/integration）                                                                 | T-003, T-004, T-005, T-006, T-007                                                         | 主要正常系/異常系をカバー                                                                                                                                                                                                                                                              |
-| [x]  | T-012 | E      | Quality        | Web テスト整備（unit）                                                                             | T-008, T-009, T-010                                                                       | 主要 UI の表示と状態遷移をカバーし、`apps/web/src/api/enex.ts` のエラー整形分岐を直接テストする                                                                                                                                                                                        |
-| [x]  | T-013 | E      | Docs           | OpenAPI 更新と README 更新                                                                         | T-003, T-004, T-005                                                                       | API 契約と使用手順が一致                                                                                                                                                                                                                                                               |
-| [x]  | T-014 | E      | QA             | 人間による動作テスト（手動シナリオ実施）                                                           | T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, T-011, T-012, T-013 | 手動テスト結果を記録し、主要シナリオが期待通りに動作する                                                                                                                                                                                                                               |
-| [x]  | T-015 | F      | Test-Migration | API 既存テストを Vitest へ移行（node:test/tsx 依存を削減）                                         | T-006                                                                                     | 既存 API テストが Vitest で動作する                                                                                                                                                                                                                                                    |
-| [x]  | T-016 | F      | Test-Migration | API エンドポイント統合テスト追加（Supertest）                                                      | T-003                                                                                     | `/health` `/api/enex/parse` `/api/imports/:importId/notes` `/api/imports/:importId/notes/:noteId` の主要正常系/異常系を検証                                                                                                                                                            |
-| [x]  | T-017 | F      | Test-Migration | Web テスト基盤で既存 UI のテスト追加（Testing Library + jsdom）                                    | T-002                                                                                     | 既存画面の主要表示/状態遷移を検証                                                                                                                                                                                                                                                      |
-| [x]  | T-018 | F      | Test-Migration | テスト運用ドキュメント更新（実行手順・命名規約・配置ルール）                                       | T-015, T-016, T-017                                                                       | テスト実行と追加方針が文書化される                                                                                                                                                                                                                                                     |
-| [x]  | T-019 | G      | Refactor       | API のクエリ/パラメータ解析ロジック共通化（厳密バリデーション）                                    | T-004, T-005                                                                              | 共通関数化後も既存挙動とテストが維持される                                                                                                                                                                                                                                             |
-| [x]  | T-020 | G      | Refactor       | Web UI ユーティリティ共通化（API エラー整形/表示フォーマッタ/テスト補助）                          | T-008, T-010, T-017                                                                       | 共通化後も既存 UI 挙動とテストが維持される                                                                                                                                                                                                                                             |
-| [x]  | T-021 | E      | Quality        | テストカバレッジ引き上げ（閾値達成）                                                               | T-011, T-012                                                                              | `npm run test:coverage` が通り、global 閾値（80%）を満たす                                                                                                                                                                                                                             |
-| [x]  | T-022 | H      | Refactor       | API アプリ基盤整理（`createApp` 抽出・エラーレスポンス helper 共通化・テスト初期化統一）           | T-001, T-011, T-016                                                                       | 本番/テストの app 初期化が共通化され、エラー応答生成の重複が削減され、テスト前初期化で順序依存が発生しない                                                                                                                                                                             |
-| [x]  | T-023 | H      | Refactor       | API データアクセス/入力解析整理（保存モデル一本化・query/path 解析責務分離）                       | T-003, T-004, T-005, T-006, T-019                                                         | import データ二重管理が解消され、入力解析 API が用途別に整理され、一覧/詳細 API の既存挙動が維持される                                                                                                                                                                                 |
-| [x]  | T-024 | H      | Refactor       | ENEX アップロード/解析境界整理（multipart middleware 分離・resource size 算出厳密化）              | T-003, T-006                                                                              | `enexParseController` の multipart 解析責務が分離され、resource size 算出が厳密化され、既存の HTTP 挙動を維持する                                                                                                                                                                      |
-| [x]  | T-029 | I      | Refactor       | Web ノート表示責務整理（`NoteBrowser`/`useNotesList` の重複解消・日時フォーマッタ統一）            | T-009, T-010, T-020                                                                       | ノート一覧取得ロジックの重複が解消され、日時表示フォーマットが共通化され、既存 UI 挙動を維持する                                                                                                                                                                                       |
-| [x]  | T-030 | I      | Refactor       | Web API クライアント統一（`message.ts` を含むエラー処理の `ensureOk` 統一）                        | T-008, T-009, T-010, T-020                                                                | API クライアントのエラー処理が共通化され、失敗時メッセージ挙動と既存テストが維持される                                                                                                                                                                                                 |
-| [x]  | T-031 | I      | Refactor       | Web 非同期 state/コンポーネント整理（共通 async パターン + `NoteContent` 分離）                    | T-008, T-009, T-010, T-020                                                                | state 管理の実装ゆれが減り、`dangerouslySetInnerHTML` 表示責務が分離され、既存 UI とテストが維持される                                                                                                                                                                                 |
-| [x]  | T-032 | J      | Refactor       | 横断リファクタ（重複解消・共通化・パフォーマンス改善）                                             | T-024, T-031                                                                              | ノート一覧の二重取得解消、一覧検索/整形コスト低減、データ変換重複の削減、resource size 算出と multipart 処理の効率改善、非同期 state 実装の統一を行い、既存仕様とテストを維持する                                                                                                      |
-| [x]  | T-033 | K      | Quality        | API 本体コード strict lint エラー解消（`apps/api/src`、テスト/設定除外）                           | T-022, T-023, T-024, T-032                                                                | `apps/api/src` の本体コードで strict lint エラーが解消され、既存 API 挙動（HTTP ステータス/レスポンス形）を維持したまま `typecheck` と API テストが通過する                                                                                                                            |
-| [x]  | T-034 | K      | Quality        | API テスト/設定 strict lint エラー解消（`apps/api/src/__tests__`、`apps/api/vitest.config.ts` 等） | T-022, T-023, T-024, T-032                                                                | API のテストコード/設定ファイルで strict lint エラーが解消され、`npm run test:api` と lint 全体が通る（本体コードは T-033 で完了済みであること）                                                                                                                                       |
-| [x]  | T-035 | L      | Quality        | Web 本体コード strict lint エラー解消（`apps/web/src`、テスト/設定除外）                           | T-029, T-030, T-031, T-032                                                                | `apps/web/src` の本体コードで strict lint エラーが解消され、既存 UI/状態遷移を維持したまま `typecheck` と Web テストが通過する                                                                                                                                                         |
-| [x]  | T-036 | L      | Quality        | Web テスト/設定 strict lint エラー解消（`apps/web/src/**/*.test.tsx`、`apps/web/*config.ts`）      | T-029, T-030, T-031, T-032                                                                | Web のテストコード/設定ファイルで strict lint エラーが解消され、`npm run test:web` と lint 全体が通る（本体コードは T-035 で完了済みであること）                                                                                                                                       |
-| [x]  | T-037 | M      | Quality        | lint 最終収束（API/Web 全体で lint/typecheck/test の再確認）                                       | T-033, T-034, T-035, T-036                                                                | `npm run lint` `npm run typecheck -w apps/api` `npm run typecheck -w apps/web` `npm run test:api` `npm run test:web` をまとめて実行し、CI 相当の最終確認が完了している                                                                                                                 |
-| [x]  | T-038 | D      | Web            | 一覧件数セレクター実装（MT-003 改善）                                                              | T-008, T-009, T-020                                                                       | NotesListSection に表示件数のプルダウン（20/50/100 など）を追加し、選択値が `useNotesList` の `limit` に連動して API の `limit` クエリに反映される。入力切替でオフセットがリセットされ、URL 直接編集が不要になる。`manual-test-scenarios.md` MT-003 を Pass できる動作と UI を確認する |
-| [x]  | T-039 | E      | Quality        | 手動テスト MT-005 失敗対応（壊れた ENEX でのエラー表示改善）                                       | T-003, T-008                                                                              | `docs/testing/data/broken.enex` をアップロードした際に、API/Web 共にクラッシュせず具体的なエラーメッセージと再試行手段を表示する。`manual-test-scenarios.md` の MT-005 が Pass                                                                                                         |
-| [x]  | T-040 | D      | Web            | 手動テスト MT-008 失敗対応（モバイル幅でのノート詳細レイアウト崩れ修正）                           | T-008, T-010                                                                              | 幅 390px 相当の画面でもノート詳細が横にはみ出さずスクロールなしで主要情報を閲覧できる。`manual-test-scenarios.md` の MT-008 が Pass                                                                                                                                                    |
-| [x]  | T-041 | D      | Web            | 検索入力右端のクリア操作で条件が解除されない不具合修正                                             | T-008, T-009                                                                              | 検索ボックスのクリア操作（x ボタンや ESC）で `useNotesList` の検索クエリと表示結果が即座にリセットされる。`manual-test-scenarios.md` MT-003 を再実施しても Fail が再発しない。該当テストとドキュメントを更新する。                                                                     |
-| [x]  | T-042 | D      | Web            | 初期スケルトン UI/バックエンドコードの完全撤去（不要画面・文言・デモ API）                         | T-002, T-003                                                                              | Web トップからテンプレート由来のセクション（「TypeScript REST API + Web UI」等）が消え、API 側にも未使用のデモエンドポイントが残らない。`npm run lint` / `npm run test` が通り、README/手動テスト手順でも不要要素が言及されない。                                                      |
-| [x]  | T-043 | D      | Web            | ノート一覧/詳細の日時表示を yyyy-mm-dd hh:mm:ss 形式へ統一                                         | T-009, T-010, T-029                                                                       | 一覧・詳細いずれでも ISO 文字列が露出せず、人が読みやすいフォーマットになる。表示差分に合わせて単体テストと `docs/testing/manual-test-scenarios.md` を更新する。                                                                                                                       |
-| [x]  | T-044 | D      | Web            | ノート一覧 UI の二重表示解消（2 ペイン UI へ検索機能集約）                                         | T-008, T-009, T-020                                                                       | 画面上部の旧一覧を廃止し、下部 2 ペインの一覧 / 詳細セクションに検索・フィルタ UI を集約する。冗長な状態管理を削減し、既存テストと MT-002/MT-003 を再実施して Pass であること。                                                                                                        |
-| [x]  | T-045 | E      | QA             | Web UI 改修完了後の人間テスト（T-041〜T-044 の最終確認）                                           | T-041, T-042, T-043, T-044                                                                | `docs/testing/manual-test-scenarios.md` の MT-002 / MT-003 / MT-004 を T-041〜T-044 反映後の画面で再実施し、検索クリア、不要 UI 削除、日時フォーマット、2 ペイン統合が期待通りであることを記録する。異常があれば差し戻し、Pass したら結果テンプレートを更新する。                      |
+## 2. 進行方法
 
-## 3. 並列化レーン
+1. `docs/archive/phase1-implementation-tasks.md` を参照し、既存仕様との整合を確認する。
+2. 新規タスクを決めたら `docs/tasks/agent-execution.md` に沿ってエージェントへ依頼する。
+3. 作業が完了したら、受け入れ条件チェックの一環で `docs/testing/manual-test-scenarios.md` を更新または再実行する。
+4. 記録が溜まったら、完了済みタスクの詳細を `docs/archive/` 以下に移し、このファイルには最新タスクのみを保持する。
 
-- レーン A（API 基盤）: T-001, T-006, T-007
-- レーン B（Web 基盤）: T-002
-- レーン C（API エンドポイント）: T-003, T-004, T-005
-- レーン D（Web 機能）: T-008, T-009, T-010, T-040, T-041, T-042, T-043, T-044
-- レーン E（品質/文書/最終確認）: T-011, T-012, T-013, T-021, T-014, T-038, T-039, T-045
-- レーン F（テスト基盤移行）: T-015, T-016, T-017, T-018
-- レーン G（リファクタ）: T-019, T-020
-- レーン H（API リファクタ拡張）: T-022, T-023, T-024
-- レーン I（Web リファクタ拡張）: T-029, T-030, T-031
-- レーン J（横断リファクタ最適化）: T-032
-- レーン K（API lint 改善）: T-033, T-034
-- レーン L（Web lint 改善）: T-035, T-036
-- レーン M（lint 最終収束）: T-037
+## 3. 新規タスクのテンプレート
 
-## 4. レーン間の依存関係
+```
+| ID | レーン/カテゴリ | 概要 | 依存 | 受け入れ条件 |
+|----|-----------------|------|------|--------------|
+| T-0xx | 例: Web / API | 一行で目的 | 例: T-041 | - 箇条書き |
+```
 
-- A -> C
-- B -> D
-- C -> D（通常）
-- C, D -> E
-- T-041, T-042, T-043, T-044 -> T-045
-- E（T-011〜T-013）, T-021 -> T-014
-- A, B, C, D -> F（対象機能がある範囲で並列）
-- C（T-004/T-005）, D（T-008）-> G
-- A, C, F -> H（API 実装/テスト基盤を前提に段階実施）
-- D, F, G -> I（Web 機能/テスト基盤/既存リファクタを前提に段階実施）
-- H, I -> J（API/Web の基盤リファクタ完了後に横断最適化を実施）
-- J -> K, L（横断リファクタ後に lint タスクを開始）
-- K, L -> M（API/Web の lint が揃い次第、最終収束へ進む）
+必要に応じて `docs/archive` にテンプレートを複製して履歴を保存し、ここにはアクティブなタスクのみを記載してください。
 
-## 5. 依存切り離し方針（契約先行 + モック）
-
-- API と Web を並列化する場合、先に `apps/api/openapi.yaml` と `docs/product/spec.md` の API 契約を固定する。
-- Web は契約準拠のモックで T-008/T-009/T-010 を先行実装してよい。
-- API 実装完了後に実 API へ差し替え、型定義とエラーフォーマットの一致を確認する。
-
-## 6. 関連ドキュメント
+## 4. 関連資料
 
 - 実行ルール: `docs/tasks/agent-execution.md`
-- レーン別の詳細方針: `docs/tasks/workstreams.md`
-- 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
+- 手動テスト: `docs/testing/manual-test-scenarios.md`
+- 完了済タスク履歴: `docs/archive/phase1-implementation-tasks.md`
+- ワークストリーム履歴: `docs/archive/phase1-workstreams.md`
