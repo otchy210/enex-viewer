@@ -13,6 +13,13 @@ ENEX Viewer は、Evernote ENEX ファイルを読み込み、ノートの一覧
 
 Web トップ画面は ENEX Viewer 本体の導線のみに整理されており、アップロード、ノート一覧検索、詳細閲覧を 1 画面で行えます。
 
+## ハッシュ lookup フロー（Phase 2）
+
+1. Web で ENEX を選択すると、クライアントで SHA-256 を計算し進捗を表示します。
+2. 計算済みハッシュを `POST /api/imports/hash-lookup` へ送信します。
+3. `shouldUpload=true` の場合のみ Upload を実行し、`POST /api/enex/parse` で import を作成します。
+4. `shouldUpload=false` の場合はアップロードをスキップし、既存 `importId` を再利用してノート一覧を表示できます。
+
 ## ドキュメント索引
 
 ### プロダクト/設計
