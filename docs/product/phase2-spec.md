@@ -22,7 +22,7 @@
 
 ## 3. API 仕様（Phase 2）
 - 既存エンドポイントに加え、以下を拡張:
-  - `POST /api/enex/parse`: 1GB まで許可。レスポンスに `hash` フィールドを追加。
+  - `POST /api/enex/parse`: 1GB まで許可。レスポンスに `hash` フィールドを追加。既存 `imports.hash` が見つかった場合は新規 INSERT を行わず既存 importId を返す。
   - `GET /api/imports/:importId`: Import メタデータ（hash、noteCount、createdAt）を返す。
   - `GET /api/imports/:importId/notes/:noteId/resources/:resourceId`: 添付ファイルをストリーミングで返す。
   - `POST /api/imports/hash-lookup`: ハッシュを受け取り、存在する importId を返す（クライアントのアップロードスキップ用）。

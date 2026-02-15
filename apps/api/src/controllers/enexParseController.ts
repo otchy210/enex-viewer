@@ -1,14 +1,22 @@
+import fs from 'fs';
+
 import { parseEnexFile, EnexParseError } from '../services/enexParseService.js';
 
 import type { NextFunction, Request, Response } from 'express';
-
-import fs from 'fs';
 
 interface EnexParseLocals {
   enexFileBuffer?: Buffer;
   enexFilePath?: string;
   enexFileHash?: string;
 }
+
+const deleteTempFile = async (filePath: string): Promise<void> => {
+  try {
+    await fs.promises.unlink(filePath);
+  } catch {
+    // ignore cleanup errors
+  }
+};
 
 export const enexParseController = (
   _req: Request,
@@ -39,7 +47,7 @@ export const enexParseController = (
       const result = parseEnexFile({ data: fileBuffer, hash: fileHash });
       res.json(result);
     } finally {
-      fs.promises.unlink(filePath).catch(() => undefined);
+      void deleteTempFile(filePath);
     }
     return;
   } catch (error) {

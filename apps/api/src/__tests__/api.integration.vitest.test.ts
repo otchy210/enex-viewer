@@ -2,7 +2,13 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app.js';
-import { buildEnexPayload, initializeApiTestState, uploadEnex } from './testHelpers.js';
+import {
+  buildEnexPayload,
+  cleanupApiTestDataDirectory,
+  createTempApiTestDataDirectory,
+  initializeApiTestState,
+  uploadEnex
+} from './testHelpers.js';
 
 interface ParseResponse {
   importId: string;
@@ -83,6 +89,35 @@ describe('API integration', () => {
     expect(body.hash).toHaveLength(64);
     expect(body.noteCount).toBe(1);
     expect(body.warnings).toEqual([]);
+  });
+
+  it('POST /api/enex/parse returns existing importId when uploading identical file', async () => {
+    const dataDirectory = createTempApiTestDataDirectory();
+
+    try {
+      initializeApiTestState(dataDirectory);
+      const app = createApp();
+      const payload = buildEnexPayload(`
+        <note>
+          <title>Duplicated Note</title>
+          <content><![CDATA[<en-note>duplicate payload</en-note>]]></content>
+        </note>
+      `);
+
+      const firstResponse = await uploadEnex(app, payload);
+      expect(firstResponse.status).toBe(200);
+      const firstBody = parseResponseBody(firstResponse.body as unknown, isParseResponse);
+
+      const secondResponse = await uploadEnex(app, payload);
+      expect(secondResponse.status).toBe(200);
+      const secondBody = parseResponseBody(secondResponse.body as unknown, isParseResponse);
+
+      expect(secondBody.importId).toBe(firstBody.importId);
+      expect(secondBody.hash).toBe(firstBody.hash);
+      expect(secondBody.noteCount).toBe(firstBody.noteCount);
+    } finally {
+      cleanupApiTestDataDirectory(dataDirectory);
+    }
   });
 
   it('POST /api/enex/parse rejects missing file uploads', async () => {

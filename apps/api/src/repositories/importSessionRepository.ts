@@ -1,6 +1,7 @@
-import Database from 'better-sqlite3';
 import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
+
+import Database from 'better-sqlite3';
 
 import { resolveDataDirectory, resolveSqlitePath } from '../config/dataDirectory.js';
 
@@ -17,14 +18,27 @@ const ensureDirectories = (): void => {
   }
 };
 
-let db: Database.Database | null = null;
+interface SqliteDatabase {
+  pragma: (value: string) => void;
+  exec: (sql: string) => void;
+  prepare: (sql: string) => {
+    run: (...params: unknown[]) => { changes: number };
+    get: (...params: unknown[]) => unknown;
+    all: (...params: unknown[]) => unknown[];
+  };
+  transaction: <T>(fn: () => T) => () => T;
+  close: () => void;
+}
 
-const getDb = (): Database.Database => {
+let db: SqliteDatabase | null = null;
+
+const getDb = (): SqliteDatabase => {
   if (db != null) {
     return db;
   }
   ensureDirectories();
-  db = new Database(resolveSqlitePath());
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  db = new Database(resolveSqlitePath()) as SqliteDatabase;
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(`
@@ -66,10 +80,18 @@ const getDb = (): Database.Database => {
   return db;
 };
 
-export const saveImportSession = (session: ImportSession): void => {
+export const findImportIdByHash = (hash: string): string | undefined => {
+  const database = getDb();
+  const row = database.prepare('SELECT id FROM imports WHERE hash = ?').get(hash) as
+    | { id: string }
+    | undefined;
+  return row?.id;
+};
+
+export const saveImportSession = (session: ImportSession): string => {
   const database = getDb();
   const insertImport = database.prepare(
-    'INSERT INTO imports (id, hash, created_at, note_count, warnings_json) VALUES (?, ?, ?, ?, ?)'
+    'INSERT OR IGNORE INTO imports (id, hash, created_at, note_count, warnings_json) VALUES (?, ?, ?, ?, ?)'
   );
   const insertNote = database.prepare(
     'INSERT INTO notes (id, import_id, title, created_at, updated_at, tags_json, excerpt, content_html, search_text, sort_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -78,14 +100,22 @@ export const saveImportSession = (session: ImportSession): void => {
     'INSERT INTO resources (id, note_id, import_id, file_name, mime, size, hash, storage_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   );
 
-  const run = database.transaction(() => {
-    insertImport.run(
+  const run = database.transaction((): string => {
+    const importInsertResult = insertImport.run(
       session.id,
       session.hash,
       session.createdAt,
       session.noteCount,
       JSON.stringify(session.warnings)
     );
+
+    if (importInsertResult.changes === 0) {
+      const existingImportId = findImportIdByHash(session.hash);
+      if (existingImportId === undefined) {
+        throw new Error(`Import session already exists for hash ${session.hash}, but id could not be resolved.`);
+      }
+      return existingImportId;
+    }
 
     const notesById = new Map(session.notes.map((note) => [note.id, note]));
     for (const noteIndex of session.noteListIndex) {
@@ -120,9 +150,11 @@ export const saveImportSession = (session: ImportSession): void => {
         );
       }
     }
+
+    return session.id;
   });
 
-  run();
+  return run();
 };
 
 export const getImportSession = (importId: string): ImportSession | undefined => {
@@ -147,7 +179,7 @@ export const getImportSession = (importId: string): ImportSession | undefined =>
     .prepare(
       'SELECT id, title, created_at, updated_at, tags_json, excerpt, content_html, search_text, sort_key FROM notes WHERE import_id = ? ORDER BY sort_key DESC'
     )
-    .all(importId) as Array<{
+    .all(importId) as {
     id: string;
     title: string;
     created_at?: string;
@@ -157,11 +189,11 @@ export const getImportSession = (importId: string): ImportSession | undefined =>
     content_html: string;
     search_text: string;
     sort_key: number;
-  }>;
+  }[];
 
   const resources = database
     .prepare('SELECT id, note_id, file_name, mime, size, hash, storage_path FROM resources WHERE import_id = ?')
-    .all(importId) as Array<{
+    .all(importId) as {
     id: string;
     note_id: string;
     file_name?: string;
@@ -169,7 +201,7 @@ export const getImportSession = (importId: string): ImportSession | undefined =>
     size?: number;
     hash?: string;
     storage_path?: string;
-  }>;
+  }[];
 
   return {
     id: importRow.id,
@@ -214,4 +246,13 @@ export const clearImportSessions = (): void => {
 export const getDatabasePath = (): string => {
   getDb();
   return resolveSqlitePath();
+};
+
+export const resetImportSessionRepository = (): void => {
+  if (db == null) {
+    return;
+  }
+
+  db.close();
+  db = null;
 };
