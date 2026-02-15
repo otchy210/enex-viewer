@@ -1,9 +1,14 @@
+import { mkdtempSync, rmSync } from 'fs';
 import os from 'os';
 import path from 'path';
+
 import request, { type Test } from 'supertest';
 
 import { clearImports } from '../repositories/importRepository.js';
-import { clearImportSessions } from '../repositories/importSessionRepository.js';
+import {
+  clearImportSessions,
+  resetImportSessionRepository
+} from '../repositories/importSessionRepository.js';
 
 import type express from 'express';
 
@@ -12,10 +17,18 @@ interface UploadOptions {
   contentType?: string;
 }
 
-export const initializeApiTestState = (): void => {
-  process.env.ENEX_VIEWER_DATA = path.join(os.tmpdir(), 'enex-viewer-api-tests');
+export const initializeApiTestState = (dataDirectory?: string): void => {
+  resetImportSessionRepository();
+  process.env.ENEX_VIEWER_DATA = dataDirectory ?? path.join(os.tmpdir(), 'enex-viewer-api-tests');
   clearImports();
   clearImportSessions();
+};
+
+export const createTempApiTestDataDirectory = (): string =>
+  mkdtempSync(path.join(os.tmpdir(), 'enex-viewer-api-tests-'));
+
+export const cleanupApiTestDataDirectory = (dataDirectory: string): void => {
+  rmSync(dataDirectory, { force: true, recursive: true });
 };
 
 export const buildEnexPayload = (notesXml: string): Buffer =>

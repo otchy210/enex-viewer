@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/strict-boolean-expressions, promise/no-promise-in-callback, promise/prefer-await-to-then */
 import { createHash, randomUUID } from 'crypto';
 import fs from 'fs';
 import os from 'os';

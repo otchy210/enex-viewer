@@ -2,7 +2,11 @@ import { randomUUID } from 'crypto';
 
 import { parseEnex } from './enexParserService.js';
 import { buildNoteListIndex } from './noteListIndex.js';
-import { saveImportSession } from '../repositories/importSessionRepository.js';
+import {
+  findImportIdByHash,
+  getImportSession,
+  saveImportSession
+} from '../repositories/importSessionRepository.js';
 
 import type { ImportSession, NoteDetail } from '../models/note.js';
 
@@ -32,6 +36,19 @@ const formatWarning = (warning: { noteTitle?: string; message: string }): string
 };
 
 export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexParseResult => {
+  const existingImportId = findImportIdByHash(payload.hash);
+  if (existingImportId !== undefined) {
+    const existingSession = getImportSession(existingImportId);
+    if (existingSession !== undefined) {
+      return {
+        importId: existingSession.id,
+        hash: existingSession.hash,
+        noteCount: existingSession.noteCount,
+        warnings: existingSession.warnings
+      };
+    }
+  }
+
   const parsed = parseEnex(payload.data);
   if (!parsed.ok) {
     throw new EnexParseError(parsed.error.code, parsed.error.message, parsed.error.details);
@@ -73,10 +90,22 @@ export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexPars
     }))
   };
 
-  saveImportSession(session);
+  const savedImportId = saveImportSession(session);
+
+  if (savedImportId !== importId) {
+    const existingSession = getImportSession(savedImportId);
+    if (existingSession !== undefined) {
+      return {
+        importId: existingSession.id,
+        hash: existingSession.hash,
+        noteCount: existingSession.noteCount,
+        warnings: existingSession.warnings
+      };
+    }
+  }
 
   return {
-    importId,
+    importId: savedImportId,
     hash: payload.hash,
     noteCount: notes.length,
     warnings
