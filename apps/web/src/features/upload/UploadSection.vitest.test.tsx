@@ -126,6 +126,57 @@ describe('UploadSection', () => {
     });
   });
 
+
+  it('ignores stale lookup responses from previously selected files', async () => {
+    const firstLookupDeferred = createDeferred<{
+      hash: string;
+      importId: string | null;
+      shouldUpload: boolean;
+      message: string;
+    }>();
+
+    mockedComputeFileSha256
+      .mockResolvedValueOnce('e'.repeat(64))
+      .mockResolvedValueOnce('f'.repeat(64));
+
+    mockedLookupImportByHash
+      .mockReturnValueOnce(firstLookupDeferred.promise)
+      .mockResolvedValueOnce({
+        hash: 'f'.repeat(64),
+        importId: null,
+        shouldUpload: true,
+        message: 'No import found for the hash. Continue with POST /api/enex/parse.'
+      });
+
+    render(<UploadSectionHarness />);
+
+    await userEvent.upload(
+      screen.getByLabelText('ENEX file'),
+      new File(['old'], 'old.enex', { type: 'text/xml' })
+    );
+
+    await userEvent.upload(
+      screen.getByLabelText('ENEX file'),
+      new File(['new'], 'new.enex', { type: 'text/xml' })
+    );
+
+    await screen.findByText('No existing import was found. You can upload this file.');
+    expect(screen.getByText('SHA-256:')).toHaveTextContent('f'.repeat(64));
+
+    firstLookupDeferred.resolve({
+      hash: 'e'.repeat(64),
+      importId: 'import-old',
+      shouldUpload: false,
+      message: 'Existing import found. You can skip upload and reuse the importId.'
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('import-old')).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: 'Upload' })).toBeEnabled();
+  });
+
   it('shows uploading state while parse request is pending', async () => {
     mockedComputeFileSha256.mockResolvedValueOnce('d'.repeat(64));
     mockedLookupImportByHash.mockResolvedValueOnce({

@@ -52,14 +52,18 @@ describe('enex api', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify(responseBody), { status: 200 }));
     globalThis.fetch = fetchMock;
 
-    await expect(lookupImportByHash('a'.repeat(64))).resolves.toEqual(responseBody);
+    const abortController = new AbortController();
+    await expect(lookupImportByHash('a'.repeat(64), { signal: abortController.signal })).resolves.toEqual(
+      responseBody
+    );
 
     expect(fetchMock).toHaveBeenCalledWith('/api/imports/hash-lookup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ hash: 'a'.repeat(64) })
+      body: JSON.stringify({ hash: 'a'.repeat(64) }),
+      signal: abortController.signal
     });
   });
 

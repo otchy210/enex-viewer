@@ -1,3 +1,5 @@
+import { sha256 } from '@noble/hashes/sha2';
+
 interface ComputeHashOptions {
   onProgress?: (ratio: number) => void;
   signal?: AbortSignal;
@@ -15,37 +17,32 @@ const throwIfAborted = (signal?: AbortSignal): void => {
 export async function computeFileSha256(file: File, options: ComputeHashOptions = {}): Promise<string> {
   const { onProgress, signal } = options;
   const reader = file.stream().getReader();
-  const chunks: Uint8Array[] = [];
+  const hash = sha256.create();
   let loadedBytes = 0;
 
   throwIfAborted(signal);
   onProgress?.(0);
 
-  for (;;) {
-    throwIfAborted(signal);
-    const { done, value } = await reader.read();
+  try {
+    for (;;) {
+      throwIfAborted(signal);
+      const { done, value } = await reader.read();
 
-    if (done) {
-      break;
+      if (done) {
+        break;
+      }
+
+      hash.update(value);
+      loadedBytes += value.byteLength;
+
+      if (file.size > 0) {
+        onProgress?.(Math.min(loadedBytes / file.size, 1));
+      }
     }
-
-    chunks.push(value);
-    loadedBytes += value.byteLength;
-
-    if (file.size > 0) {
-      onProgress?.(Math.min(loadedBytes / file.size, 1));
-    }
+  } finally {
+    reader.releaseLock();
   }
 
-  const allBytes = new Uint8Array(loadedBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    allBytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  const digest = await crypto.subtle.digest('SHA-256', allBytes);
   onProgress?.(1);
-
-  return toHex(new Uint8Array(digest));
+  return toHex(hash.digest());
 }

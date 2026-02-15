@@ -51,12 +51,15 @@ const createInitialState = (): EnexUploadState => ({
   selectedFileName: null
 });
 
+const isAbortError = (error: unknown): boolean =>
+  error instanceof DOMException && error.name === 'AbortError';
+
 const toUserFriendlyError = (error: unknown): string => {
   if (error instanceof ApiError && error.code === 'INVALID_XML') {
     return 'The ENEX file appears to be corrupted. Please re-export it from Evernote and try again.';
   }
 
-  if (error instanceof DOMException && error.name === 'AbortError') {
+  if (isAbortError(error)) {
     return 'Hash calculation was canceled. Select the file again or retry.';
   }
 
@@ -102,73 +105,104 @@ export function useEnexUpload(): EnexUploadHook {
   const [state, setState] = useState<EnexUploadState>(() => createInitialState());
   const selectedFileRef = useRef<File | null>(null);
   const preparationAbortRef = useRef<AbortController | null>(null);
+  const activePreparationIdRef = useRef(0);
 
   const cancel = useCallback(() => {
     preparationAbortRef.current?.abort();
     preparationAbortRef.current = null;
   }, []);
 
-  const prepareFile = useCallback(async (file: File) => {
-    cancel();
-    const abortController = new AbortController();
-    preparationAbortRef.current = abortController;
-
-    setState((current) => ({
-      ...current,
-      status: 'hashing',
-      error: null,
-      result: null,
-      importId: null,
-      hash: null,
-      hashProgress: 0,
-      lookupMessage: null,
-      selectedFileName: file.name
-    }));
-
-    try {
-      const hash = await computeFileSha256(file, {
-        signal: abortController.signal,
-        onProgress: (ratio) => {
-          setState((current) => ({
-            ...current,
-            hashProgress: ratio
-          }));
-        }
-      });
-
-      setState((current) => ({
-        ...current,
-        status: 'lookup',
-        hash,
-        hashProgress: 1
-      }));
-
-      const lookup = await lookupImportByHash(hash);
-      setState((current) => applyLookupResult(current, lookup, null));
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        status: 'error',
-        error: toUserFriendlyError(error)
-      }));
-    } finally {
-      if (preparationAbortRef.current === abortController) {
-        preparationAbortRef.current = null;
-      }
-    }
-  }, [cancel]);
-
-  const selectFile = useCallback(async (file: File | null) => {
-    selectedFileRef.current = file;
-
-    if (file == null) {
+  const prepareFile = useCallback(
+    async (file: File) => {
       cancel();
-      setState(createInitialState());
-      return;
-    }
+      const abortController = new AbortController();
+      const preparationId = activePreparationIdRef.current + 1;
+      activePreparationIdRef.current = preparationId;
+      preparationAbortRef.current = abortController;
 
-    await prepareFile(file);
-  }, [cancel, prepareFile]);
+      const isLatestPreparation = (): boolean =>
+        activePreparationIdRef.current === preparationId && !abortController.signal.aborted;
+
+      setState((current) => ({
+        ...current,
+        status: 'hashing',
+        error: null,
+        result: null,
+        importId: null,
+        hash: null,
+        hashProgress: 0,
+        lookupMessage: null,
+        selectedFileName: file.name
+      }));
+
+      try {
+        const hash = await computeFileSha256(file, {
+          signal: abortController.signal,
+          onProgress: (ratio) => {
+            if (!isLatestPreparation()) {
+              return;
+            }
+
+            setState((current) => ({
+              ...current,
+              hashProgress: ratio
+            }));
+          }
+        });
+
+        if (!isLatestPreparation()) {
+          return;
+        }
+
+        setState((current) => ({
+          ...current,
+          status: 'lookup',
+          hash,
+          hashProgress: 1
+        }));
+
+        const lookup = await lookupImportByHash(hash, {
+          signal: abortController.signal
+        });
+
+        if (!isLatestPreparation()) {
+          return;
+        }
+
+        setState((current) => applyLookupResult(current, lookup, null));
+      } catch (error) {
+        if (!isLatestPreparation() || isAbortError(error)) {
+          return;
+        }
+
+        setState((current) => ({
+          ...current,
+          status: 'error',
+          error: toUserFriendlyError(error)
+        }));
+      } finally {
+        if (preparationAbortRef.current === abortController) {
+          preparationAbortRef.current = null;
+        }
+      }
+    },
+    [cancel]
+  );
+
+  const selectFile = useCallback(
+    async (file: File | null) => {
+      selectedFileRef.current = file;
+
+      if (file == null) {
+        cancel();
+        setState(createInitialState());
+        return;
+      }
+
+      await prepareFile(file);
+    },
+    [cancel, prepareFile]
+  );
 
   const uploadSelectedFile = useCallback(async () => {
     const file = selectedFileRef.current;

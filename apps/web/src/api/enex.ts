@@ -13,6 +13,10 @@ export interface HashLookupResponse {
   message: string;
 }
 
+interface HashLookupOptions {
+  signal?: AbortSignal;
+}
+
 export async function parseEnexFile(file: File): Promise<ParseEnexResponse> {
   const formData = new FormData();
   formData.append('file', file);
@@ -23,12 +27,16 @@ export async function parseEnexFile(file: File): Promise<ParseEnexResponse> {
   });
 }
 
-export async function lookupImportByHash(hash: string): Promise<HashLookupResponse> {
+export async function lookupImportByHash(
+  hash: string,
+  options: HashLookupOptions = {}
+): Promise<HashLookupResponse> {
   return requestJson<HashLookupResponse>('/api/imports/hash-lookup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ hash })
+    body: JSON.stringify({ hash }),
+    signal: options.signal
   });
 }
