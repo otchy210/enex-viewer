@@ -1,3 +1,5 @@
+import os from 'os';
+import path from 'path';
 import request, { type Test } from 'supertest';
 
 import { clearImports } from '../repositories/importRepository.js';
@@ -11,6 +13,7 @@ interface UploadOptions {
 }
 
 export const initializeApiTestState = (): void => {
+  process.env.ENEX_VIEWER_DATA = path.join(os.tmpdir(), 'enex-viewer-api-tests');
   clearImports();
   clearImportSessions();
 };

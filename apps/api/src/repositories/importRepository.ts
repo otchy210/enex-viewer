@@ -34,6 +34,7 @@ export const saveImport = (importId: string, notes: StoredNote[]): void => {
 
   const session: ImportSession = {
     id: importId,
+    hash: `legacy-${importId}`,
     createdAt: new Date().toISOString(),
     noteCount: notes.length,
     warnings: [],

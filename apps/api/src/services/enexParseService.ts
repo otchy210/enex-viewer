@@ -8,6 +8,7 @@ import type { ImportSession, NoteDetail } from '../models/note.js';
 
 export interface EnexParseResult {
   importId: string;
+  hash: string;
   noteCount: number;
   warnings: string[];
 }
@@ -30,7 +31,7 @@ const formatWarning = (warning: { noteTitle?: string; message: string }): string
   return warning.message;
 };
 
-export const parseEnexFile = (payload: { data: Buffer }): EnexParseResult => {
+export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexParseResult => {
   const parsed = parseEnex(payload.data);
   if (!parsed.ok) {
     throw new EnexParseError(parsed.error.code, parsed.error.message, parsed.error.details);
@@ -55,6 +56,7 @@ export const parseEnexFile = (payload: { data: Buffer }): EnexParseResult => {
 
   const session: ImportSession = {
     id: importId,
+    hash: payload.hash,
     createdAt: new Date().toISOString(),
     noteCount: notes.length,
     warnings,
@@ -75,6 +77,7 @@ export const parseEnexFile = (payload: { data: Buffer }): EnexParseResult => {
 
   return {
     importId,
+    hash: payload.hash,
     noteCount: notes.length,
     warnings
   };

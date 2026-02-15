@@ -17,6 +17,7 @@ export interface NoteDetail {
 
 export interface ImportSession {
   id: string;
+  hash: string;
   createdAt: string;
   noteCount: number;
   warnings: string[];

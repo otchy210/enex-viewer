@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 interface EnexParseLocals {
   enexFileBuffer?: Buffer;
+  enexFileHash?: string;
 }
 
 export const enexParseController = (
@@ -13,6 +14,7 @@ export const enexParseController = (
 ): void => {
   try {
     const fileBuffer = res.locals.enexFileBuffer;
+    const fileHash = res.locals.enexFileHash;
     if (!Buffer.isBuffer(fileBuffer)) {
       res.status(400).json({
         code: 'INVALID_MULTIPART',
@@ -21,7 +23,15 @@ export const enexParseController = (
       return;
     }
 
-    const result = parseEnexFile({ data: fileBuffer });
+    if (typeof fileHash !== 'string' || fileHash.length === 0) {
+      res.status(400).json({
+        code: 'INVALID_HASH',
+        message: 'Failed to compute file hash.'
+      });
+      return;
+    }
+
+    const result = parseEnexFile({ data: fileBuffer, hash: fileHash });
     res.json(result);
     return;
   } catch (error) {

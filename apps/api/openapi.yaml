@@ -68,7 +68,7 @@ paths:
                     code: INVALID_FILE_TYPE
                     message: Invalid ENEX file type.
         '413':
-          description: ファイルサイズ超過（10MB）
+          description: ファイルサイズ超過（1GB）
           content:
             application/json:
               schema:
@@ -249,12 +249,17 @@ components:
       type: object
       required:
         - importId
+        - hash
         - noteCount
         - warnings
       properties:
         importId:
           type: string
           example: 7bfa5e83-8a9c-49ec-ae4f-7a7cd5ad2f5f
+        hash:
+          type: string
+          description: アップロードファイルの SHA-256 ハッシュ
+          example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         noteCount:
           type: integer
           example: 1

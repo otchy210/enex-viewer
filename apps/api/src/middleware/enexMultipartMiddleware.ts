@@ -1,6 +1,23 @@
+import { createHash } from 'crypto';
+import { Writable } from 'stream';
+
+import formidable from 'formidable';
+
 import type { NextFunction, Request, Response } from 'express';
 
-const isLikelyEnex = (fileName?: string, contentType?: string) => {
+const ONE_GIBIBYTE = 1024 * 1024 * 1024;
+
+const parseMaxUploadBytes = (): number => {
+  const raw = process.env.ENEX_PARSE_MAX_UPLOAD_BYTES;
+  if (raw === undefined) {
+    return ONE_GIBIBYTE;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : ONE_GIBIBYTE;
+};
+
+const isLikelyEnex = (fileName?: string, contentType?: string): boolean => {
   if (fileName?.toLowerCase().endsWith('.enex') === true) {
     return true;
   }
@@ -12,48 +29,73 @@ const isLikelyEnex = (fileName?: string, contentType?: string) => {
   return false;
 };
 
-const extractMultipartContentType = (headers: Request['headers']): string | null => {
+const hasMultipartContentType = (headers: Request['headers']): boolean => {
   const headerValue = headers['content-type'];
-  if (typeof headerValue !== 'string') {
-    return null;
-  }
-
-  return headerValue.toLowerCase().includes('multipart/form-data') ? headerValue : null;
+  return typeof headerValue === 'string' && headerValue.toLowerCase().includes('multipart/form-data');
 };
 
-export const parseEnexMultipart = async (
+interface EnexParseLocals {
+  enexFileBuffer?: Buffer;
+  enexFileHash?: string;
+}
+
+export const parseEnexMultipart = (
   req: Request,
-  res: Response,
+  res: Response<unknown, EnexParseLocals>,
   next: NextFunction
-): Promise<void> => {
-  try {
-    if (!Buffer.isBuffer(req.body)) {
-      res.status(400).json({
-        code: 'INVALID_MULTIPART',
-        message: 'Request body must be multipart/form-data.'
-      });
-      return;
-    }
-
-    const contentType = extractMultipartContentType(req.headers);
-    if (contentType === null) {
-      res.status(400).json({
-        code: 'INVALID_MULTIPART',
-        message: 'Request body must be multipart/form-data.'
-      });
-      return;
-    }
-
-    const request = new Request('http://localhost/api/enex/parse', {
-      method: 'POST',
-      headers: { 'content-type': contentType },
-      body: req.body
+): void => {
+  if (!hasMultipartContentType(req.headers)) {
+    res.status(400).json({
+      code: 'INVALID_MULTIPART',
+      message: 'Request body must be multipart/form-data.'
     });
+    return;
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- Kept for current raw-body parser behavior in Node runtime.
-    const formData = await request.formData();
-    const file = formData.get('file');
-    if (file === null || typeof file === 'string') {
+  const maxUploadBytes = parseMaxUploadBytes();
+  const contentLength = Number.parseInt(req.headers['content-length'] ?? '0', 10);
+  if (Number.isFinite(contentLength) && contentLength > maxUploadBytes) {
+    res.status(413).json({
+      code: 'FILE_TOO_LARGE',
+      message: 'File size exceeds the allowed limit.'
+    });
+    return;
+  }
+
+  const hash = createHash('sha256');
+  const chunks: Buffer[] = [];
+
+  const form = formidable({
+    maxFiles: 1,
+    maxFileSize: maxUploadBytes,
+    allowEmptyFiles: false,
+    fileWriteStreamHandler: () =>
+      new Writable({
+        write(chunk: Buffer, _encoding, callback) {
+          chunks.push(chunk);
+          hash.update(chunk);
+          callback();
+        }
+      })
+  });
+
+  form.parse(req, (error: unknown, _fields: unknown, files: Record<string, unknown>) => {
+    if (error) {
+      if ((error as { httpCode?: number }).httpCode === 413) {
+        res.status(413).json({
+          code: 'FILE_TOO_LARGE',
+          message: 'File size exceeds the allowed limit.'
+        });
+        return;
+      }
+
+      next(error);
+      return;
+    }
+
+    const file = files.file;
+    const uploaded = Array.isArray(file) ? file[0] : file;
+    if (uploaded === undefined || uploaded === null || typeof uploaded !== 'object') {
       res.status(400).json({
         code: 'MISSING_FILE',
         message: 'file is required.'
@@ -61,9 +103,10 @@ export const parseEnexMultipart = async (
       return;
     }
 
-    const fileName = 'name' in file ? file.name : undefined;
-    const fileContentType = 'type' in file ? file.type : undefined;
-    if (!isLikelyEnex(fileName, fileContentType)) {
+    const originalFilename = 'originalFilename' in uploaded ? (uploaded.originalFilename as string | null | undefined) : undefined;
+    const mimeType = 'mimetype' in uploaded ? (uploaded.mimetype as string | null | undefined) : undefined;
+
+    if (!isLikelyEnex(originalFilename ?? undefined, mimeType ?? undefined)) {
       res.status(400).json({
         code: 'INVALID_FILE_TYPE',
         message: 'Invalid ENEX file type.'
@@ -71,11 +114,8 @@ export const parseEnexMultipart = async (
       return;
     }
 
-    res.locals.enexFileBuffer = Buffer.from(await file.arrayBuffer());
+    res.locals.enexFileBuffer = Buffer.concat(chunks);
+    res.locals.enexFileHash = hash.digest('hex');
     next();
-    return;
-  } catch (error) {
-    next(error);
-    return;
-  }
+  });
 };
