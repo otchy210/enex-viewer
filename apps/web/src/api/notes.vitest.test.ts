@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchNoteDetail, fetchNotesList } from './notes';
+import { bulkDownloadResources, fetchNoteDetail, fetchNotesList } from './notes';
 
 describe('notes api', () => {
   const originalFetch = globalThis.fetch;
@@ -70,5 +70,41 @@ describe('notes api', () => {
     globalThis.fetch = fetchMock;
 
     await expect(fetchNoteDetail('import-1', 'note-2')).rejects.toThrow('HTTP 500');
+  });
+
+
+  it('posts selected resources and returns zip blob metadata', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response('zip-content', {
+        status: 200,
+        headers: {
+          'Content-Disposition': 'attachment; filename="bundle.zip"'
+        }
+      })
+    );
+    globalThis.fetch = fetchMock;
+
+    const result = await bulkDownloadResources('import-1', [
+      { noteId: 'note-1', resourceId: 'res-1' }
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/imports/import-1/resources/bulk-download', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ resources: [{ noteId: 'note-1', resourceId: 'res-1' }] })
+    });
+    expect(result.fileName).toBe('bundle.zip');
+    expect(await result.blob.text()).toBe('zip-content');
+  });
+
+  it('falls back to default file name when content-disposition is missing', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response('zip-content', { status: 200 }));
+    globalThis.fetch = fetchMock;
+
+    await expect(
+      bulkDownloadResources('import-99', [{ noteId: 'note-1', resourceId: 'res-1' }])
+    ).resolves.toMatchObject({ fileName: 'import-import-99-resources.zip' });
   });
 });

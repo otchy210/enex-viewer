@@ -77,6 +77,15 @@ h1 {
   min-width: 88px;
 }
 
+
+.notes-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .notes-list {
   list-style: none;
   padding: 0;
@@ -149,6 +158,18 @@ h1 {
 .note-list-item.is-selected {
   border-color: #7aa2f7;
   box-shadow: 0 6px 14px rgba(59, 130, 246, 0.2);
+}
+
+
+.note-list-select {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.note-list-select input {
+  width: 16px;
+  height: 16px;
 }
 
 .note-list-header {

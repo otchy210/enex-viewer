@@ -10,7 +10,7 @@ vi.mock('../features/notes/NoteDetailPanel', () => ({
 
 import { HomePage } from './HomePage';
 import { lookupImportByHash, parseEnexFile } from '../api/enex';
-import { fetchNotesList } from '../api/notes';
+import { bulkDownloadResources, fetchNoteDetail, fetchNotesList } from '../api/notes';
 import { computeFileSha256 } from '../lib/hashFile';
 
 vi.mock('../api/enex', () => ({
@@ -27,7 +27,9 @@ vi.mock('../api/notes', async () => {
 
   return {
     ...actual,
-    fetchNotesList: vi.fn()
+    fetchNotesList: vi.fn(),
+    fetchNoteDetail: vi.fn(),
+    bulkDownloadResources: vi.fn()
   };
 });
 
@@ -35,6 +37,8 @@ const mockedParseEnexFile = vi.mocked(parseEnexFile);
 const mockedLookupImportByHash = vi.mocked(lookupImportByHash);
 const mockedComputeFileSha256 = vi.mocked(computeFileSha256);
 const mockedFetchNotesList = vi.mocked(fetchNotesList);
+const mockedFetchNoteDetail = vi.mocked(fetchNoteDetail);
+const mockedBulkDownloadResources = vi.mocked(bulkDownloadResources);
 
 const setupUploadReadyState = () => {
   mockedComputeFileSha256.mockResolvedValue('a'.repeat(64));
@@ -56,7 +60,20 @@ describe('HomePage', () => {
     mockedLookupImportByHash.mockReset();
     mockedComputeFileSha256.mockReset();
     mockedFetchNotesList.mockReset();
+    mockedFetchNoteDetail.mockReset();
+    mockedBulkDownloadResources.mockReset();
     mockedFetchNotesList.mockResolvedValue({ total: 0, notes: [] });
+    mockedFetchNoteDetail.mockResolvedValue({
+      id: 'note-1',
+      title: 'Sample note',
+      tags: [],
+      contentHtml: '<p></p>',
+      resources: [{ id: 'res-1' }]
+    });
+    mockedBulkDownloadResources.mockResolvedValue({
+      blob: new Blob(['zip']),
+      fileName: 'resources.zip'
+    });
   });
 
   it('renders the ENEX viewer heading', () => {
@@ -218,4 +235,96 @@ describe('HomePage', () => {
       expect(screen.getByTestId('note-detail-panel')).toHaveTextContent('none');
     });
   });
+
+  it('downloads selected note attachments as zip', async () => {
+    setupUploadReadyState();
+    mockedParseEnexFile.mockResolvedValue({
+      importId: 'import-1',
+      noteCount: 1,
+      warnings: []
+    });
+    mockedFetchNotesList.mockResolvedValue({
+      total: 1,
+      notes: [
+        {
+          id: 'note-1',
+          title: 'First page note',
+          excerpt: 'First note excerpt',
+          tags: [],
+          createdAt: '2024-01-01T00:00:00Z'
+        }
+      ]
+    });
+
+    const originalCreateObjectUrl = URL.createObjectURL.bind(URL);
+    const originalRevokeObjectUrl = URL.revokeObjectURL.bind(URL);
+    const createObjectURL = vi.fn(() => 'blob:test-url');
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    render(<HomePage />);
+
+    const file = new File(['dummy'], 'small.enex', { type: 'text/xml' });
+    await userEvent.upload(screen.getByLabelText('ENEX file'), file);
+    await userEvent.click(await screen.findByRole('button', { name: 'Upload' }));
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Select note First page note' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Download selected attachments' }));
+
+    await waitFor(() => {
+      expect(mockedFetchNoteDetail).toHaveBeenCalledWith('import-1', 'note-1');
+      expect(mockedBulkDownloadResources).toHaveBeenCalledWith('import-1', [
+        { noteId: 'note-1', resourceId: 'res-1' }
+      ]);
+    });
+
+    expect(createObjectURL).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:test-url');
+
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+    clickSpy.mockRestore();
+  });
+
+  it('shows bulk download errors without clearing selection', async () => {
+    setupUploadReadyState();
+    mockedParseEnexFile.mockResolvedValue({
+      importId: 'import-1',
+      noteCount: 1,
+      warnings: []
+    });
+    mockedFetchNotesList.mockResolvedValue({
+      total: 1,
+      notes: [
+        {
+          id: 'note-1',
+          title: 'First page note',
+          excerpt: 'First note excerpt',
+          tags: [],
+          createdAt: '2024-01-01T00:00:00Z'
+        }
+      ]
+    });
+    mockedBulkDownloadResources.mockRejectedValueOnce(new Error('zip failed'));
+
+    render(<HomePage />);
+
+    const file = new File(['dummy'], 'small.enex', { type: 'text/xml' });
+    await userEvent.upload(screen.getByLabelText('ENEX file'), file);
+    await userEvent.click(await screen.findByRole('button', { name: 'Upload' }));
+
+    const checkbox = await screen.findByRole('checkbox', { name: 'Select note First page note' });
+    await userEvent.click(checkbox);
+    await userEvent.click(screen.getByRole('button', { name: 'Download selected attachments' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Failed to download selected attachments. zip failed'
+    );
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+  });
+
 });

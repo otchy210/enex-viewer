@@ -25,11 +25,17 @@ const baseProps = {
       }
     ]
   },
+  selectedCount: 0,
+  selectedInPageCount: 0,
+  bulkDownloading: false,
+  bulkError: null,
   onSearchInputChange: vi.fn(),
   onSearchSubmit: vi.fn(),
   onClear: vi.fn(),
   onLimitChange: vi.fn(),
-  onOffsetChange: vi.fn()
+  onOffsetChange: vi.fn(),
+  onToggleSelectAllInPage: vi.fn(),
+  onDownloadSelected: vi.fn()
 };
 
 describe('NotesListSection', () => {
@@ -88,5 +94,25 @@ describe('NotesListSection', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(baseProps.onOffsetChange).toHaveBeenCalledWith(50);
+  });
+
+  it('handles bulk action controls', async () => {
+    render(
+      <NotesListSection
+        {...baseProps}
+        selectedCount={2}
+        selectedInPageCount={1}
+        bulkError="Bulk download failed"
+      />
+    );
+
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Bulk download failed');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Unselect all in page' }));
+    expect(baseProps.onToggleSelectAllInPage).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download selected attachments' }));
+    expect(baseProps.onDownloadSelected).toHaveBeenCalledTimes(1);
   });
 });

@@ -11,11 +11,17 @@ interface NotesListSectionProps {
   loading: boolean;
   error: string | null;
   data: NoteListResponse | null;
+  selectedCount: number;
+  selectedInPageCount: number;
+  bulkDownloading: boolean;
+  bulkError: string | null;
   onSearchInputChange: (value: string) => void;
   onSearchSubmit: () => void;
   onClear: () => void;
   onLimitChange: (nextLimit: number) => void;
   onOffsetChange: (nextOffset: number) => void;
+  onToggleSelectAllInPage: () => void;
+  onDownloadSelected: () => void;
 }
 
 const LIMIT_OPTIONS = [20, 50, 100] as const;
@@ -30,11 +36,17 @@ export function NotesListSection({
   loading,
   error,
   data,
+  selectedCount,
+  selectedInPageCount,
+  bulkDownloading,
+  bulkError,
   onSearchInputChange,
   onSearchSubmit,
   onClear,
   onLimitChange,
-  onOffsetChange
+  onOffsetChange,
+  onToggleSelectAllInPage,
+  onDownloadSelected
 }: NotesListSectionProps): ReactElement {
   const total = data?.total ?? 0;
   const hasNotes = (data?.notes.length ?? 0) > 0;
@@ -42,6 +54,7 @@ export function NotesListSection({
   const endIndex = Math.min(offset + limit, total);
   const canGoPrev = offset > 0;
   const canGoNext = offset + limit < total;
+  const allInPageSelected = hasNotes && selectedInPageCount === (data?.notes.length ?? 0);
 
   const summaryText = useMemo(() => {
     if (importId == null) {
@@ -117,6 +130,26 @@ export function NotesListSection({
               </div>
             </div>
           </form>
+
+          <div className="notes-bulk-actions">
+            <button type="button" onClick={onToggleSelectAllInPage} disabled={!hasNotes || loading}>
+              {allInPageSelected ? 'Unselect all in page' : 'Select all in page'}
+            </button>
+            <span>{selectedCount} selected</span>
+            <button
+              type="button"
+              onClick={onDownloadSelected}
+              disabled={selectedCount === 0 || bulkDownloading || loading}
+            >
+              {bulkDownloading ? 'Preparing ZIP...' : 'Download selected attachments'}
+            </button>
+          </div>
+
+          {bulkError != null && (
+            <p className="error" role="alert">
+              {bulkError}
+            </p>
+          )}
 
           {error != null && <p className="error">Error: {error}</p>}
 

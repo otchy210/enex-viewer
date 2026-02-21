@@ -11,7 +11,9 @@ interface NoteBrowserProps {
   error: string | null;
   data: NoteListResponse | null;
   selectedNoteId: string | null;
+  selectedNoteIds: ReadonlySet<string>;
   onSelectedNoteIdChange: (noteId: string) => void;
+  onToggleNoteSelection: (noteId: string) => void;
 }
 
 export function NoteBrowser({
@@ -20,7 +22,9 @@ export function NoteBrowser({
   error,
   data,
   selectedNoteId,
-  onSelectedNoteIdChange
+  selectedNoteIds,
+  onSelectedNoteIdChange,
+  onToggleNoteSelection
 }: NoteBrowserProps): ReactElement {
   return (
     <section>
@@ -43,6 +47,18 @@ export function NoteBrowser({
                   onSelectedNoteIdChange(note.id);
                 }}
               >
+                <label className="note-list-select" onClick={(event) => {
+                    event.stopPropagation();
+                  }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedNoteIds.has(note.id)}
+                    aria-label={`Select note ${note.title}`}
+                    onChange={() => {
+                      onToggleNoteSelection(note.id);
+                    }}
+                  />
+                </label>
                 <div className="note-list-header">
                   <span className="note-list-title">{note.title}</span>
                   <span className="note-list-date">
@@ -52,7 +68,7 @@ export function NoteBrowser({
                 {note.tags.length > 0 && (
                   <div className="note-list-tags">
                     {note.tags.map((tag) => (
-                      <span key={`${note.id}-${tag}`} className="note-tag">
+                      <span key={tag} className="note-tag">
                         {tag}
                       </span>
                     ))}
