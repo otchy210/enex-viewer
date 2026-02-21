@@ -37,6 +37,16 @@ export interface NoteDetail {
   resources: NoteResource[];
 }
 
+export interface BulkDownloadResource {
+  noteId: string;
+  resourceId: string;
+}
+
+export interface BulkDownloadResponse {
+  blob: Blob;
+  fileName: string;
+}
+
 export async function fetchNotesList(
   importId: string,
   { q, limit, offset }: NoteListQuery = {}
@@ -67,4 +77,26 @@ export async function fetchNoteDetail(importId: string, noteId: string): Promise
 
   await ensureOk(res);
   return (await res.json()) as NoteDetail;
+}
+
+export async function bulkDownloadResources(
+  importId: string,
+  resources: BulkDownloadResource[]
+): Promise<BulkDownloadResponse> {
+  const response = await fetch(`/api/imports/${importId}/resources/bulk-download`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ resources })
+  });
+  await ensureOk(response);
+
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const fileNameMatch = /filename="?([^";]+)"?/i.exec(disposition);
+
+  return {
+    blob: await response.blob(),
+    fileName: fileNameMatch?.[1] ?? `import-${importId}-resources.zip`
+  };
 }

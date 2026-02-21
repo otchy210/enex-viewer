@@ -10,6 +10,7 @@ ENEX Viewer は、Evernote ENEX ファイルを読み込み、ノートの一覧
 - ENEX ファイルのアップロードと解析（`POST /api/enex/parse`）
 - インポート単位のノート一覧取得（`GET /api/imports/:importId/notes`）
 - ノート詳細取得（`GET /api/imports/:importId/notes/:noteId`）
+- ノート一覧での複数選択と添付の一括 ZIP ダウンロード（`POST /api/imports/:importId/resources/bulk-download`）
 
 Web トップ画面は ENEX Viewer 本体の導線のみに整理されており、アップロード、ノート一覧検索、詳細閲覧を 1 画面で行えます。
 

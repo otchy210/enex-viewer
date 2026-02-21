@@ -86,3 +86,12 @@ npm run build:web
 - API 契約 (OpenAPI): `apps/api/openapi.yaml`
 - テストガイド: `docs/testing/test-guidelines.md`
 - タスク一覧: `docs/tasks/implementation-tasks.md`
+
+
+## 8. ノート添付の一括ダウンロード手順（Web）
+
+1. 対象 import を表示後、ノート一覧のチェックボックスでノートを選択します。
+2. 必要に応じて `Select all in page` で現在ページを全選択/全解除します。
+3. `Download selected attachments` を押すと、Web は選択ノートの resources を集約し `POST /api/imports/:importId/resources/bulk-download` を呼び出します。
+4. 処理中は `Preparing ZIP...` が表示され、完了後に ZIP がダウンロードされます。
+5. 失敗時はアラートが表示され、選択状態を保持したまま再試行できます。

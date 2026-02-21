@@ -11,7 +11,9 @@ interface NoteBrowserProps {
   error: string | null;
   data: NoteListResponse | null;
   selectedNoteId: string | null;
+  selectedNoteIds: ReadonlySet<string>;
   onSelectedNoteIdChange: (noteId: string) => void;
+  onToggleNoteSelection: (noteId: string) => void;
 }
 
 export function NoteBrowser({
@@ -20,7 +22,9 @@ export function NoteBrowser({
   error,
   data,
   selectedNoteId,
-  onSelectedNoteIdChange
+  selectedNoteIds,
+  onSelectedNoteIdChange,
+  onToggleNoteSelection
 }: NoteBrowserProps): ReactElement {
   return (
     <section>
@@ -35,31 +39,46 @@ export function NoteBrowser({
         <div className="note-browser">
           <div className="note-list" role="list">
             {data.notes.map((note) => (
-              <button
+              <div
                 key={note.id}
-                type="button"
                 className={`note-list-item${selectedNoteId === note.id ? ' is-selected' : ''}`}
-                onClick={() => {
-                  onSelectedNoteIdChange(note.id);
-                }}
+                role="listitem"
               >
-                <div className="note-list-header">
-                  <span className="note-list-title">{note.title}</span>
-                  <span className="note-list-date">
-                    {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
-                  </span>
-                </div>
-                {note.tags.length > 0 && (
-                  <div className="note-list-tags">
-                    {note.tags.map((tag) => (
-                      <span key={`${note.id}-${tag}`} className="note-tag">
-                        {tag}
-                      </span>
-                    ))}
+                <label className="note-list-select">
+                  <input
+                    type="checkbox"
+                    checked={selectedNoteIds.has(note.id)}
+                    aria-label={`Select note ${note.title}`}
+                    onChange={() => {
+                      onToggleNoteSelection(note.id);
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="note-list-item__button"
+                  onClick={() => {
+                    onSelectedNoteIdChange(note.id);
+                  }}
+                >
+                  <div className="note-list-header">
+                    <span className="note-list-title">{note.title}</span>
+                    <span className="note-list-date">
+                      {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
+                    </span>
                   </div>
-                )}
-                <p className="note-list-excerpt">{note.excerpt}</p>
-              </button>
+                  {note.tags.length > 0 && (
+                    <div className="note-list-tags">
+                      {note.tags.map((tag) => (
+                        <span key={tag} className="note-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="note-list-excerpt">{note.excerpt}</p>
+                </button>
+              </div>
             ))}
           </div>
 
