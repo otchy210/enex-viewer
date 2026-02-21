@@ -1,17 +1,19 @@
 # Phase 2 手動テストシナリオ
 
-## MT-201 (Pass): 重複ハッシュ再アップロード時に既存 import を再利用する
+## MT-201 (Pass): 重複ハッシュ再アップロード時に既存 import を再利用する（再起動後も維持）
 
 - 前提
   - API が起動している。
   - 同一内容の ENEX ファイルを 2 回アップロードできる状態。
 - 手順
   1. `POST /api/enex/parse` で ENEX をアップロードし `importId` を記録する。
-  2. 同じ ENEX ファイルを再度 `POST /api/enex/parse` へアップロードする。
-  3. 2 回目レスポンスが 200 で、`importId` が 1 回目と一致することを確認する。
+  2. API/Web サーバーを Ctrl+C などで停止し、再度 `npm run dev` などで起動し直す。
+  3. 同じ ENEX ファイルを再度 `POST /api/enex/parse` へアップロードする。
+  4. 2 回目レスポンスが 200 で、`importId` が 1 回目と一致することを確認する。
 - 期待結果
   - SQLite の UNIQUE 制約違反は発生しない。
-  - 既存 import が再利用され、クライアントは同一 importId を受け取る。
+  - サーバー再起動後でも既存 import が再利用され、クライアントは同一 importId を受け取る。
+  - `imports` テーブルには 1 回目の `importId` エントリが残っている。
 
 ## MT-202 (Pass): hash lookup によりアップロードをスキップできる
 

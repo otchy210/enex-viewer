@@ -45,6 +45,7 @@
 - SQLite ファイルは `<DATA_DIR>/enex-viewer.sqlite` に配置し、Import/Notes/Resources の 3 テーブルを定義。ハッシュ列にユニーク制約を設定。
 - 添付データは常にファイルシステムに保存し、SQLite には `fileName` と `hash`（SHA-256）を保持する。物理ファイル名はハッシュ値とし、保存先は `<DATA_DIR>/resources/<hash>`。
 - 既存 hash の物理ファイルがある場合は再利用し、重複書き込みを行わない。
+- `POST /api/enex/parse` の完了時に `wal_checkpoint(TRUNCATE)` で WAL を即座にチェックポイントし、サーバーを強制終了しても最新 Import が DB に残るようにする（再起動後の hash lookup・重複アップロードでも importId が引ける状態を保証）。
 
 ## 6. 並列実装とモック
 - ハッシュ API やリソースダウンロード API のモックを `apps/web/src/api/mocks/` に追加。
