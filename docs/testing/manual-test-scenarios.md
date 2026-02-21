@@ -61,6 +61,7 @@
   - `Content-Disposition` に元ファイル名が設定される。
   - 存在しない添付 ID では `404 RESOURCE_NOT_FOUND` を返す。
 
+
 ### MT-204: 複数添付の一括 ZIP ダウンロード
 - 前提
   - 2 つ以上の添付が import 済みで、`noteId/resourceId` の組を取得できる。
@@ -72,3 +73,17 @@
 - 期待結果
   - 正常時 200 で ZIP がストリーム返却される。
   - 空配列は `400 INVALID_REQUEST`、未存在添付は `404 RESOURCE_NOT_FOUND` を返す。
+
+### MT-205: ノート詳細 UI で添付ファイルを個別ダウンロードできる
+- 前提
+  - API と Web が起動している。
+  - 添付ファイルを含む ENEX が import 済みで、ノート詳細画面を開ける。
+- 手順
+  1. Web のノート一覧から添付付きノートを選択し、詳細パネルの `Resources` セクションを表示する。
+  2. 添付ごとにファイル名・サイズ・MIME 種別と `Download` リンクが表示されることを確認する。
+  3. `Download` をクリックし、`GET /api/imports/:importId/notes/:noteId/resources/:resourceId` が呼び出されることを DevTools の Network で確認する。
+  4. ダウンロードされたファイル名と内容が ENEX 添付と一致することを確認する。
+  5. （異常系）存在しない resourceId を返す状態で `Download` を押し、エラーメッセージが表示されることを確認する。
+- 期待結果
+  - 各添付に個別ダウンロード導線があり、成功時はファイル保存できる。
+  - 失敗時はユーザーが再試行可能なエラー表示（アラート）が出る。
