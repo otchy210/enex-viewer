@@ -271,6 +271,104 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/imports/{importId}/notes/{noteId}/resources/{resourceId}:
+    get:
+      summary: 添付ファイル個別ダウンロード
+      operationId: getResourceDownload
+      parameters:
+        - in: path
+          name: importId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: noteId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 添付ファイルをストリーミングで返却
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: 対象添付が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                resourceNotFound:
+                  value:
+                    code: RESOURCE_NOT_FOUND
+                    message: Resource not found.
+
+  /api/imports/{importId}/resources/bulk-download:
+    post:
+      summary: 複数添付の ZIP 一括ダウンロード
+      operationId: postResourceBulkDownload
+      parameters:
+        - in: path
+          name: importId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkResourceDownloadRequest'
+      responses:
+        '200':
+          description: ZIP ストリーム
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: リクエスト形式不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidRequest:
+                  value:
+                    code: INVALID_REQUEST
+                    message: resources must be a non-empty array.
+        '404':
+          description: 指定した添付が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                resourceNotFound:
+                  value:
+                    code: RESOURCE_NOT_FOUND
+                    message: One or more resources were not found.
+        '500':
+          description: ZIP 生成失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                zipError:
+                  value:
+                    code: ZIP_GENERATION_FAILED
+                    message: Failed to generate zip archive.
+
 components:
   schemas:
     HealthResponse:
@@ -405,6 +503,30 @@ components:
         size:
           type: integer
           example: 3
+
+    BulkResourceDownloadItem:
+      type: object
+      required:
+        - noteId
+        - resourceId
+      properties:
+        noteId:
+          type: string
+          example: note-123
+        resourceId:
+          type: string
+          example: resource-1-1
+
+    BulkResourceDownloadRequest:
+      type: object
+      required:
+        - resources
+      properties:
+        resources:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/BulkResourceDownloadItem'
 
     NoteDetailResponse:
       type: object

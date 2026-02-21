@@ -48,3 +48,27 @@
 - 期待結果
   - 1 回目 lookup は `importId=null` かつ `shouldUpload=true` を返し、`POST /api/enex/parse` を案内する。
   - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが UI で明示される。
+
+### MT-203: ノート詳細から添付ファイルを個別ダウンロードできる
+- 前提
+  - 添付ファイルを含む ENEX が import 済みで、対象 `importId/noteId/resourceId` が特定できる。
+- 手順
+  1. `GET /api/imports/:importId/notes/:noteId/resources/:resourceId` を実行する。
+  2. レスポンスヘッダー `Content-Type` / `Content-Length` / `Content-Disposition` を確認する。
+  3. ダウンロードされたファイル内容が ENEX 内の添付と一致することを確認する。
+- 期待結果
+  - 200 でストリーミング返却される。
+  - `Content-Disposition` に元ファイル名が設定される。
+  - 存在しない添付 ID では `404 RESOURCE_NOT_FOUND` を返す。
+
+### MT-204: 複数添付の一括 ZIP ダウンロード
+- 前提
+  - 2 つ以上の添付が import 済みで、`noteId/resourceId` の組を取得できる。
+- 手順
+  1. `POST /api/imports/:importId/resources/bulk-download` に `resources` 配列を送る。
+  2. レスポンス `Content-Type: application/zip` と zip ファイルのダウンロードを確認する。
+  3. ZIP を展開し、`<noteId>/` 配下に添付ファイルが出力されることを確認する。
+  4. 不正入力（空配列）と未存在 resourceId を送ってエラーを確認する。
+- 期待結果
+  - 正常時 200 で ZIP がストリーム返却される。
+  - 空配列は `400 INVALID_REQUEST`、未存在添付は `404 RESOURCE_NOT_FOUND` を返す。

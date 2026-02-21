@@ -43,7 +43,7 @@
 | [x]  | T-202 | P2-A   | API     | SQLite 永続化とハッシュ重複判定 (`POST /api/imports/hash-lookup`)              | T-201           | - imports/notes/resources テーブルとユニークハッシュ制約を実装<br>- 同一ファイルを連続アップロードしても再パースせず importId を返す<br>- API integration test で hash lookup の挙動を検証     |
 | [x]  | T-208 | P2-A   | API     | 重複ハッシュ再アップロード時の UNIQUE 制約違反を解消                          | T-201, T-202    | - `parseEnexFile`/`saveImportSession` が既存 hash を検出した際に再挿入せず既存 importId を返却<br>- `imports.hash` の UNIQUE 制約で例外が出ないことを再現テストで確認<br>- manual docs に既存 import 再利用手順を追記 |
 | [x]  | T-203 | P2-B   | Web     | クライアント側ハッシュ計算とアップロードスキップ UX                            | T-201, T-202    | - ファイル選択時にハッシュ進捗/結果が表示される<br>- 既存 import の場合に API アップロードを呼ばず通知・再参照リンクを表示<br>- `npm run test:web` で新ロジックの unit/UI テストが通る         |
-| [ ]  | T-204 | P2-C   | API     | 添付リソースAPI（個別DL + 一括zip）とファイルシステム保存                      | T-201, T-202    | - 個別 `GET /resources/:resourceId` が Content-Disposition 付きで動作<br>- 一括ダウンロード API で zip が生成される<br>- 添付ファイルは `<DATA_DIR>/resources/<hash>` に保存され hash と紐づく |
+| [x]  | T-204 | P2-C   | API     | 添付リソースAPI（個別DL + 一括zip）とファイルシステム保存                      | T-201, T-202    | - 個別 `GET /resources/:resourceId` が Content-Disposition 付きで動作<br>- 一括ダウンロード API で zip が生成される<br>- 添付ファイルは `<DATA_DIR>/resources/<hash>` に保存され hash と紐づく |
 | [ ]  | T-205 | P2-C   | Web     | ノート詳細に添付ファイル一覧と個別ダウンロードリンクを表示                     | T-204           | - Note Detail Panel にファイル名/サイズ/ダウンロードリンクが表示<br>- UI テストが添付リンクの表示を確認<br>- Manual docs に利用方法を追記                                                      |
 | [ ]  | T-206 | P2-C   | Web     | ノート一覧チェックボックス＋全選択＋一括ダウンロード UI                        | T-204           | - 一覧各行にチェックボックスと全選択トグルがあり、状態管理と UI テストが整う<br>- 選択ノートの添付を zip ダウンロードできる<br>- アクセシビリティ（ラベル）が確保される                        |
 | [ ]  | T-207 | P2-D   | Docs/QA | Phase 2 用手動テスト/README/spec 更新                                          | T-201〜T-206    | - 新シナリオ（1GB、重複スキップ、添付DL、一括zip）を `manual-test-scenarios` に追加<br>- README/INDEX/spec が Phase2 機能を案内<br>- 手動テスト結果テンプレートが更新される                    |
@@ -51,3 +51,7 @@
 
 ### T-202 完了メモ
 - `docs/tasks/agent-execution.md` の完了手順に沿って、API 実装・OpenAPI・manual scenario・タスクチェック更新を同一変更で反映。
+
+### T-204 完了メモ
+- 添付 resource を SHA-256 で `<DATA_DIR>/resources/<hash>` へ保存し、既存 hash ファイルを再利用する実装を追加。
+- 個別 DL API と一括 ZIP DL API（zip コマンドによるストリーム生成）を実装し、OpenAPI / manual scenario を更新。

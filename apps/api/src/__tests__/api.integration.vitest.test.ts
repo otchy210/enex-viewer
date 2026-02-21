@@ -1,4 +1,6 @@
 import { createHash } from 'crypto';
+import { readdirSync } from 'fs';
+import path from 'path';
 
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -562,5 +564,122 @@ describe('API integration', () => {
       code: 'INVALID_QUERY',
       message: 'limit must be at most 100.'
     });
+  });
+
+  it('stores resources on filesystem and reuses by hash', async () => {
+    const dataDirectory = createTempApiTestDataDirectory();
+
+    try {
+      initializeApiTestState(dataDirectory);
+      const app = createApp();
+      const payload = buildEnexPayload(`
+        <note>
+          <guid>note-1</guid>
+          <title>Resource One</title>
+          <content><![CDATA[<en-note>one</en-note>]]></content>
+          <resource>
+            <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+            <mime>text/plain</mime>
+            <resource-attributes><file-name>a.txt</file-name></resource-attributes>
+          </resource>
+        </note>
+        <note>
+          <guid>note-2</guid>
+          <title>Resource Two</title>
+          <content><![CDATA[<en-note>two</en-note>]]></content>
+          <resource>
+            <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+            <mime>text/plain</mime>
+            <resource-attributes><file-name>b.txt</file-name></resource-attributes>
+          </resource>
+        </note>
+      `);
+
+      const response = await uploadEnex(app, payload);
+      expect(response.status).toBe(200);
+
+      const resourcesDirectory = path.join(dataDirectory, 'resources');
+      const files = readdirSync(resourcesDirectory);
+      expect(files).toHaveLength(1);
+    } finally {
+      cleanupApiTestDataDirectory(dataDirectory);
+    }
+  });
+
+  it('GET /api/imports/:importId/notes/:noteId/resources/:resourceId streams resource', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <guid>note-123</guid>
+        <title>Sample Detail</title>
+        <content><![CDATA[<en-note>Detail Body</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>hello.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+    `);
+
+    const parseResponse = await uploadEnex(app, payload);
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+    const response = await request(app)
+      .get(`/api/imports/${parseBody.importId}/notes/note-123/resources/resource-1-1`)
+      .buffer(true)
+      .parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => {
+          chunks.push(chunk as Buffer);
+        });
+        res.on('end', () => {
+          callback(null, Buffer.concat(chunks));
+        });
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('text/plain');
+    expect(response.headers['content-disposition']).toContain('hello.txt');
+    const responseBody = response.body as Buffer;
+    expect(responseBody.toString('utf-8')).toBe('Hello');
+  });
+
+  it('POST /api/imports/:importId/resources/bulk-download returns zip stream', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <guid>note-123</guid>
+        <title>Sample Detail</title>
+        <content><![CDATA[<en-note>Detail Body</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>hello.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+    `);
+
+    const parseResponse = await uploadEnex(app, payload);
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+    const response = await request(app)
+      .post(`/api/imports/${parseBody.importId}/resources/bulk-download`)
+      .send({ resources: [{ noteId: 'note-123', resourceId: 'resource-1-1' }] })
+      .buffer(true)
+      .parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => {
+          chunks.push(chunk as Buffer);
+        });
+        res.on('end', () => {
+          callback(null, Buffer.concat(chunks));
+        });
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('application/zip');
+    const responseBody = response.body as Buffer;
+    const zipSignature = responseBody.subarray(0, 4).toString('hex');
+    expect(zipSignature).toBe('504b0304');
   });
 });
