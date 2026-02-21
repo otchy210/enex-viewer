@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NoteDetailPanel } from './NoteDetailPanel';
 import { fetchNoteDetail, type NoteDetail } from '../../api/notes';
@@ -14,6 +14,11 @@ const mockedFetchNoteDetail = vi.mocked(fetchNoteDetail);
 describe('NoteDetailPanel', () => {
   beforeEach(() => {
     mockedFetchNoteDetail.mockReset();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('shows a placeholder when no note is selected', () => {
@@ -54,6 +59,10 @@ describe('NoteDetailPanel', () => {
     expect(screen.getByText('2024-01-02 03:04:05')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Resources', level: 4 })).toBeInTheDocument();
     expect(screen.getByText('image.png')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute(
+      'href',
+      '/api/imports/import-1/notes/note-1/resources/resource-1'
+    );
     expect(screen.getByRole('heading', { name: 'Content', level: 4 })).toBeInTheDocument();
     expect(document.querySelector('.note-content')).toHaveTextContent('Content');
   });
@@ -92,6 +101,87 @@ describe('NoteDetailPanel', () => {
     render(<NoteDetailPanel importId="import-1" noteId="note-2" />);
 
     expect(await screen.findByText('Error: Network error')).toBeInTheDocument();
+  });
+
+  it('shows an alert when resource download fails', async () => {
+    mockedFetchNoteDetail.mockResolvedValueOnce({
+      id: 'note-1',
+      title: 'Sample note',
+      tags: ['demo'],
+      contentHtml: '<p>Content</p>',
+      createdAt: '20240101T010203Z',
+      updatedAt: '20240102T030405Z',
+      resources: [
+        {
+          id: 'resource-1',
+          fileName: 'image.png',
+          mime: 'image/png',
+          size: 2048
+        }
+      ]
+    });
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    );
+
+    render(<NoteDetailPanel importId="import-1" noteId="note-1" />);
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Download' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Failed to download attachment. Not found'
+    );
+  });
+
+  it('fetches resource endpoint when download link is clicked', async () => {
+    mockedFetchNoteDetail.mockResolvedValueOnce({
+      id: 'note-1',
+      title: 'Sample note',
+      tags: ['demo'],
+      contentHtml: '<p>Content</p>',
+      createdAt: '20240101T010203Z',
+      updatedAt: '20240102T030405Z',
+      resources: [
+        {
+          id: 'resource-1',
+          fileName: 'image.png',
+          mime: 'image/png',
+          size: 2048
+        }
+      ]
+    });
+
+    Object.defineProperty(URL, 'createObjectURL', {
+      writable: true,
+      value: vi.fn(() => 'blob:https://example.test/resource-1')
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      writable: true,
+      value: vi.fn()
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response('binary', {
+        status: 200,
+        headers: { 'Content-Type': 'application/octet-stream' }
+      })
+    );
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    render(<NoteDetailPanel importId="import-1" noteId="note-1" />);
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Download' }));
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith('/api/imports/import-1/notes/note-1/resources/resource-1');
+    });
+    expect(anchorClickSpy).toHaveBeenCalled();
   });
 
   it('does not update state after unmount when the request fails', async () => {

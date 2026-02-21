@@ -251,7 +251,16 @@ h1 {
 }
 
 .note-resources li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   overflow-wrap: anywhere;
+}
+
+.note-resource-download {
+  margin-left: auto;
+  font-size: 0.85rem;
 }
 
 .note-content {

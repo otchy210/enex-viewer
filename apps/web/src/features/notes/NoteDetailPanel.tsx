@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useState, type MouseEvent, type ReactElement } from 'react';
 
 import { formatResourceLabel, formatTimestamp } from './formatters';
 import { NoteContent } from './NoteContent';
+import { ensureOk } from '../../api/error';
 import { fetchNoteDetail, type NoteDetail } from '../../api/notes';
 import {
   createAsyncErrorState,
@@ -18,10 +19,41 @@ interface NoteDetailPanelProps {
 
 export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps): ReactElement {
   const [state, setState] = useState<AsyncDataState<NoteDetail>>(() => createAsyncIdleState());
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const handleResourceDownload = async (
+    event: MouseEvent<HTMLAnchorElement>,
+    selectedNoteId: string,
+    resource: NoteDetail['resources'][number]
+  ): Promise<void> => {
+    event.preventDefault();
+    setDownloadError(null);
+
+    const resourceUrl = `/api/imports/${encodeURIComponent(importId)}/notes/${encodeURIComponent(selectedNoteId)}/resources/${encodeURIComponent(resource.id)}`;
+
+    try {
+      const response = await fetch(resourceUrl);
+      await ensureOk(response);
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = formatResourceLabel(resource);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setDownloadError(`Failed to download attachment. ${message}`);
+    }
+  };
 
   useEffect(() => {
     if (noteId == null) {
       setState(createAsyncIdleState());
+      setDownloadError(null);
       return;
     }
 
@@ -116,6 +148,11 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps): Rea
 
       <section>
         <h4>Resources</h4>
+        {downloadError != null && (
+          <p className="error" role="alert">
+            {downloadError}
+          </p>
+        )}
         {note.resources.length > 0 ? (
           <ul className="note-resources">
             {note.resources.map((resource) => (
@@ -127,6 +164,15 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps): Rea
                 {resource.mime != null && resource.mime.length > 0 && (
                   <span className="note-resource-meta">{resource.mime}</span>
                 )}
+                <a
+                  className="note-resource-download"
+                  href={`/api/imports/${encodeURIComponent(importId)}/notes/${encodeURIComponent(note.id)}/resources/${encodeURIComponent(resource.id)}`}
+                  onClick={(event) => {
+                    void handleResourceDownload(event, note.id, resource);
+                  }}
+                >
+                  Download
+                </a>
               </li>
             ))}
           </ul>
