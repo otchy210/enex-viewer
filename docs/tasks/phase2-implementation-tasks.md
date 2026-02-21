@@ -48,7 +48,7 @@
 | [x]  | T-206 | P2-C   | Web     | ノート一覧チェックボックス＋全選択＋一括ダウンロード UI                        | T-204           | - 一覧各行にチェックボックスと全選択トグルがあり、状態管理と UI テストが整う<br>- 選択ノートの添付を zip ダウンロードできる<br>- アクセシビリティ（ラベル）が確保される                        |
 | [ ]  | T-207 | P2-D   | Docs/QA | Phase 2 用手動テスト/README/spec 更新                                          | T-201〜T-206    | - 新シナリオ（1GB、重複スキップ、添付DL、一括zip）を `manual-test-scenarios` に追加<br>- README/INDEX/spec が Phase2 機能を案内<br>- 手動テスト結果テンプレートが更新される                    |
 | [x]  | T-209 | P2-C   | API     | 添付ダウンロード API の Null storagePath 実裝不備を修正                       | T-204           | - `fetchResourceDownload`/bulk zip が storagePath 未設定の添付でも 404 を返す or 正しく保存する<br>- ENEX 添付保存ロジックで storagePath/hash が常に設定されることを確認<br>- API integration test で `storage_path` null ケースを追加し、TypeError が発生しないことを検証<br>- MT-203/MT-204/MT-205/MT-206 が再実行できる状態にする |
-| [ ]  | T-210 | P2-B   | Web     | アップロード中の進捗 UI 改善（アップロードフェーズのプログレスバー）          | T-203           | - `UploadSection` にアップロード本体（ENEX POST）の進行状況を視覚化するプログレス/インジケータを追加（ハッシュ進捗とは別）<br>- API 呼び出し中は進捗/残りを表示しつつキャンセル可能か文言で案内<br>- 新 UI のテストを追加し、フェールセーフにより既存テストをパス |
+| [x]  | T-210 | P2-B   | Web     | アップロード中の進捗 UI 改善（アップロードフェーズのプログレスバー）          | T-203           | - `UploadSection` にアップロード本体（ENEX POST）の進行状況を視覚化するプログレス/インジケータを追加（ハッシュ進捗とは別）<br>- API 呼び出し中は進捗/残りを表示しつつキャンセル可能か文言で案内<br>- 新 UI のテストを追加し、フェールセーフにより既存テストをパス |
 
 
 ### T-202 完了メモ
@@ -73,3 +73,8 @@
 - `parseEnexFile` で binary data が無い添付を保存対象から除外し、保存される resource には hash/storagePath を必ず設定。
 - 添付個別/一括 DL API に Null storagePath・ファイル欠損ガードを追加し、`RESOURCE_NOT_FOUND` の 404 を返すよう修正。
 - API integration test に Null `storage_path` ケースを追加し、TypeError が発生しないことを確認。
+
+### T-210 完了メモ
+- `UploadSection` / `useEnexUpload` に ENEX POST フェーズ専用の進捗インジケータを追加し、アップロード中ボタンラベルとキャンセル不可案内を表示。
+- アップロード失敗時は POST フェーズ表示をリセットして再アップロード可能な状態へ戻す実装と UI テストを追加。
+- `MT-202` と README / 開発ガイドのアップロード手順を更新し、新 UI の確認観点を反映。

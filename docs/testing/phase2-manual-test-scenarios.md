@@ -13,7 +13,7 @@
   - SQLite の UNIQUE 制約違反は発生しない。
   - 既存 import が再利用され、クライアントは同一 importId を受け取る。
 
-## MT-202 (Psss): hash lookup によりアップロードをスキップできる
+## MT-202 (Pass): hash lookup によりアップロードをスキップできる
 
 - 前提
   - API と Web が起動している。
@@ -21,11 +21,13 @@
 - 手順
   1. Web で ENEX ファイルを選択し、`Calculating SHA-256 hash...` の進捗表示とハッシュ値表示を確認する。
   2. 初回は `POST /api/imports/hash-lookup` が `shouldUpload=true` を返し、Upload ボタンが有効になることを確認する。
-  3. Upload を実行して import を作成し、表示された `importId` を記録する。
-  4. 同じ ENEX ファイルを再度選択する。
-  5. `POST /api/imports/hash-lookup` が `shouldUpload=false` を返し、Upload ボタンが無効化され、既存 `importId` 再利用導線が表示されることを確認する。
+  3. Upload を実行し、`Uploading ENEX (cannot cancel)...` ラベルと `Phase 2/2: Sending ENEX file to server and parsing...` インジケータが表示されることを確認する。
+  4. アップロード完了後に上記インジケータが非表示となり、`Upload complete.` と `importId` が表示されることを確認する。
+  5. 同じ ENEX ファイルを再度選択する。
+  6. `POST /api/imports/hash-lookup` が `shouldUpload=false` を返し、Upload ボタンが無効化され、既存 `importId` 再利用導線が表示されることを確認する。
 - 期待結果
-  - 1 回目 lookup は `importId=null` かつ `shouldUpload=true` を返し、`POST /api/enex/parse` を案内する。
+  - 1 回目 lookup は `importId=null` かつ `shouldUpload=true` を返し、Upload 実行中は ENEX POST フェーズ専用の進捗インジケータと「キャンセル不可」文言が表示される。
+  - 1 回目アップロード成功時は POST フェーズのインジケータが消え、結果（`importId` / ノート件数）が表示される。
   - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが UI で明示される。
 
 ## MT-203 (Fail): ノート詳細から添付ファイルを個別ダウンロードできる
