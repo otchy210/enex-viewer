@@ -126,7 +126,6 @@ describe('UploadSection', () => {
     });
   });
 
-
   it('ignores stale lookup responses from previously selected files', async () => {
     const firstLookupDeferred = createDeferred<{
       hash: string;
@@ -177,7 +176,7 @@ describe('UploadSection', () => {
     expect(screen.getByRole('button', { name: 'Upload' })).toBeEnabled();
   });
 
-  it('shows uploading state while parse request is pending', async () => {
+  it('shows upload phase progress and hides it after success', async () => {
     mockedComputeFileSha256.mockResolvedValueOnce('d'.repeat(64));
     mockedLookupImportByHash.mockResolvedValueOnce({
       hash: 'd'.repeat(64),
@@ -197,9 +196,42 @@ describe('UploadSection', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
 
-    expect(await screen.findByText('Uploading ENEX file...')).toBeInTheDocument();
+    expect(await screen.findByText('Phase 2/2: Sending ENEX file to server and parsing...')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Upload phase progress' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Uploading ENEX (cannot cancel)...' })).toBeDisabled();
 
     deferred.resolve({ importId: 'import-1', noteCount: 1, warnings: [] });
-    await deferred.promise;
+    await screen.findByText('Upload complete.');
+
+    expect(screen.queryByRole('progressbar', { name: 'Upload phase progress' })).not.toBeInTheDocument();
+  });
+
+  it('resets upload progress UI and enables re-upload after upload error', async () => {
+    mockedComputeFileSha256.mockResolvedValueOnce('1'.repeat(64));
+    mockedLookupImportByHash.mockResolvedValueOnce({
+      hash: '1'.repeat(64),
+      importId: null,
+      shouldUpload: true,
+      message: 'No import found for the hash. Continue with POST /api/enex/parse.'
+    });
+    const deferredUpload = createDeferred<ParseEnexResponse>();
+    mockedParseEnexFile.mockReturnValueOnce(deferredUpload.promise);
+
+    render(<UploadSectionHarness />);
+
+    const file = new File(['data'], 'notes.enex', { type: 'text/xml' });
+    await userEvent.upload(screen.getByLabelText('ENEX file'), file);
+    await screen.findByText('No existing import was found. You can upload this file.');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Upload' }));
+
+    expect(await screen.findByText('Phase 2/2: Sending ENEX file to server and parsing...')).toBeInTheDocument();
+
+    deferredUpload.reject(new Error('upload failed'));
+
+    expect(await screen.findByText('Error: upload failed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry hash lookup' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('progressbar', { name: 'Upload phase progress' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Upload' })).toBeEnabled();
   });
 });

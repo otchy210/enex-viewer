@@ -77,7 +77,7 @@ npm run build:web
 
 1. ENEX ファイルを選択すると、Web が SHA-256 を計算して進捗を表示します。
 2. 計算完了後に `POST /api/imports/hash-lookup` を呼び出し、既存 import の有無を判定します。
-3. `shouldUpload=true` のときだけ Upload ボタンが有効になり、`POST /api/enex/parse` を実行できます。
+3. `shouldUpload=true` のときだけ Upload ボタンが有効になり、`POST /api/enex/parse` を実行できます。アップロード中は ENEX POST フェーズ専用インジケータ（`Phase 2/2`）と「キャンセル不可」メッセージが表示されます。
 4. `shouldUpload=false` のときは Upload をスキップし、表示された `importId` を再利用してノート参照に進みます。
 
 ## 7. 関連ドキュメント
