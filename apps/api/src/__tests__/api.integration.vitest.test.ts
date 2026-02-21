@@ -15,6 +15,10 @@ import {
   initializeApiTestState,
   uploadEnex
 } from './testHelpers.js';
+import {
+  countNullStoragePathsByImportId,
+  updateStoredResourceStoragePath
+} from '../repositories/importSessionRepository.js';
 
 interface ParseResponse {
   importId: string;
@@ -683,6 +687,98 @@ describe('API integration', () => {
     const responseBody = response.body as Buffer;
     const zipSignature = responseBody.subarray(0, 4).toString('hex');
     expect(zipSignature).toBe('504b0304');
+  });
+
+
+  it('GET /api/imports/:importId/notes/:noteId/resources/:resourceId returns 404 when storage_path is null', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <guid>note-123</guid>
+        <title>Sample Detail</title>
+        <content><![CDATA[<en-note>Detail Body</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>hello.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+    `);
+
+    const parseResponse = await uploadEnex(app, payload);
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+    updateStoredResourceStoragePath(parseBody.importId, 'note-123', 'resource-1-1', null);
+
+    const response = await request(app).get(
+      `/api/imports/${parseBody.importId}/notes/note-123/resources/resource-1-1`
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      code: 'RESOURCE_NOT_FOUND',
+      message: 'Resource not found.'
+    });
+  });
+
+  it('POST /api/imports/:importId/resources/bulk-download returns 404 when storage_path is null', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <guid>note-123</guid>
+        <title>Sample Detail</title>
+        <content><![CDATA[<en-note>Detail Body</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>hello.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+    `);
+
+    const parseResponse = await uploadEnex(app, payload);
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+    updateStoredResourceStoragePath(parseBody.importId, 'note-123', 'resource-1-1', null);
+
+    const response = await request(app)
+      .post(`/api/imports/${parseBody.importId}/resources/bulk-download`)
+      .send({ resources: [{ noteId: 'note-123', resourceId: 'resource-1-1' }] });
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      code: 'RESOURCE_NOT_FOUND',
+      message: 'One or more resources were not found.'
+    });
+  });
+
+  it('POST /api/enex/parse excludes resources without binary data from persistence', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <guid>note-123</guid>
+        <title>Invalid Resource</title>
+        <content><![CDATA[<en-note>Detail Body</en-note>]]></content>
+        <resource>
+          <data encoding="utf8"><![CDATA[plain-text]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>hello.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+    `);
+
+    const parseResponse = await uploadEnex(app, payload);
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+    const detailResponse = await request(app).get(
+      `/api/imports/${parseBody.importId}/notes/note-123`
+    );
+
+    expect(detailResponse.status).toBe(200);
+    const detailBody = parseResponseBody(detailResponse.body as unknown, isRecord);
+    expect(detailBody.resources).toEqual([]);
+
+    expect(countNullStoragePathsByImportId(parseBody.importId)).toBe(0);
   });
 
   it('POST /api/imports/:importId/resources/bulk-download sanitizes resource filename', async () => {

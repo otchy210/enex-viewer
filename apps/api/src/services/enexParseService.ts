@@ -38,6 +38,9 @@ const formatWarning = (warning: { noteTitle?: string; message: string }): string
   return warning.message;
 };
 
+const hasBinaryData = <T extends { data?: Buffer }>(resource: T): resource is T & { data: Buffer } =>
+  resource.data !== undefined && resource.data.length > 0;
+
 export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexParseResult => {
   const existingImportId = findImportIdByHash(payload.hash);
   if (existingImportId !== undefined) {
@@ -71,22 +74,24 @@ export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexPars
     updatedAt: note.updatedAt,
     tags: note.tags,
     contentHtml: note.content,
-    resources: note.resources.map((resource) => ({
-      ...(resource.data
-        ? (() => {
-            const hash = createHash('sha256').update(resource.data).digest('hex');
-            const storagePath = path.join(resourcesDirectory, hash);
-            if (!existsSync(storagePath)) {
-              writeFileSync(storagePath, resource.data);
-            }
-            return { hash, storagePath };
-          })()
-        : {}),
-      id: resource.id,
-      fileName: resource.fileName,
-      mime: resource.mime,
-      size: resource.size
-    }))
+    resources: note.resources
+      .filter(hasBinaryData)
+      .map((resource) => {
+        const hash = createHash('sha256').update(resource.data).digest('hex');
+        const storagePath = path.join(resourcesDirectory, hash);
+        if (!existsSync(storagePath)) {
+          writeFileSync(storagePath, resource.data);
+        }
+
+        return {
+          id: resource.id,
+          fileName: resource.fileName,
+          mime: resource.mime,
+          size: resource.size,
+          hash,
+          storagePath
+        };
+      })
   }));
 
   const session: ImportSession = {
