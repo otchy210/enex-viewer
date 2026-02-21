@@ -18,7 +18,7 @@ Web トップ画面は ENEX Viewer 本体の導線のみに整理されており
 
 1. Web で ENEX を選択すると、クライアントで SHA-256 を計算し進捗を表示します。
 2. 計算済みハッシュを `POST /api/imports/hash-lookup` へ送信します。
-3. `shouldUpload=true` の場合のみ Upload を実行し、`POST /api/enex/parse` で import を作成します。
+3. `shouldUpload=true` の場合のみ Upload を実行し、`POST /api/enex/parse` で import を作成します。アップロード中は ENEX POST フェーズ専用インジケータ（`Phase 2/2`）と「キャンセル不可」メッセージを表示します。
 4. `shouldUpload=false` の場合はアップロードをスキップし、既存 `importId` を再利用してノート一覧を表示できます。
 
 ## ドキュメント索引

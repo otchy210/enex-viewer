@@ -6,6 +6,7 @@ import type { UploadStatus } from '../../state/useEnexUpload';
 interface UploadSectionProps {
   status: UploadStatus;
   error: string | null;
+  errorPhase: 'lookup' | 'upload' | null;
   result: ParseEnexResponse | null;
   importId: string | null;
   hash: string | null;
@@ -22,6 +23,7 @@ interface UploadSectionProps {
 export function UploadSection({
   status,
   error,
+  errorPhase,
   result,
   importId,
   hash,
@@ -68,7 +70,7 @@ export function UploadSection({
         />
         {showUploadButton && (
           <button type="submit" disabled={uploadDisabled}>
-            {status === 'uploading' ? 'Uploading...' : 'Upload'}
+            {status === 'uploading' ? 'Uploading ENEX (cannot cancel)...' : 'Upload'}
           </button>
         )}
         <button
@@ -117,6 +119,13 @@ export function UploadSection({
       {status === 'ready' && <p>No existing import was found. You can upload this file.</p>}
 
       {status === 'uploading' && <p>Uploading ENEX file...</p>}
+      {status === 'uploading' && (
+        <div>
+          <p>Phase 2/2: Sending ENEX file to server and parsing...</p>
+          <progress aria-label="Upload phase progress" />
+          <p>Upload has started and cannot be canceled in this phase.</p>
+        </div>
+      )}
 
       {status === 'skipped' && importId != null && (
         <div>
@@ -138,17 +147,19 @@ export function UploadSection({
         </div>
       )}
 
-      {status === 'error' && error != null && (
+      {error != null && (
         <div className="error" role="alert">
           <p>Error: {error}</p>
-          <button
-            type="button"
-            onClick={() => {
-              void retry();
-            }}
-          >
-            Retry hash lookup
-          </button>
+          {errorPhase === 'lookup' && (
+            <button
+              type="button"
+              onClick={() => {
+                void retry();
+              }}
+            >
+              Retry hash lookup
+            </button>
+          )}
         </div>
       )}
     </section>

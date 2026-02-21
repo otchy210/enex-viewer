@@ -22,6 +22,7 @@ export type UploadStatus =
 interface EnexUploadState {
   status: UploadStatus;
   error: string | null;
+  errorPhase: 'lookup' | 'upload' | null;
   result: ParseEnexResponse | null;
   importId: string | null;
   hash: string | null;
@@ -43,6 +44,7 @@ type EnexUploadHook = EnexUploadState & EnexUploadActions;
 const createInitialState = (): EnexUploadState => ({
   status: 'idle',
   error: null,
+  errorPhase: null,
   result: null,
   importId: null,
   hash: null,
@@ -127,6 +129,7 @@ export function useEnexUpload(): EnexUploadHook {
         ...current,
         status: 'hashing',
         error: null,
+        errorPhase: null,
         result: null,
         importId: null,
         hash: null,
@@ -178,7 +181,8 @@ export function useEnexUpload(): EnexUploadHook {
         setState((current) => ({
           ...current,
           status: 'error',
-          error: toUserFriendlyError(error)
+          error: toUserFriendlyError(error),
+          errorPhase: 'lookup'
         }));
       } finally {
         if (preparationAbortRef.current === abortController) {
@@ -213,7 +217,8 @@ export function useEnexUpload(): EnexUploadHook {
     setState((current) => ({
       ...current,
       status: 'uploading',
-      error: null
+      error: null,
+      errorPhase: null
     }));
 
     try {
@@ -228,8 +233,9 @@ export function useEnexUpload(): EnexUploadHook {
     } catch (error) {
       setState((current) => ({
         ...current,
-        status: 'error',
-        error: toUserFriendlyError(error)
+        status: 'ready',
+        error: toUserFriendlyError(error),
+        errorPhase: 'upload'
       }));
     }
   }, [state.status]);
