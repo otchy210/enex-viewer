@@ -6,6 +6,7 @@ import { parseEnex } from './enexParserService.js';
 import { buildNoteListIndex } from './noteListIndex.js';
 import { resolveDataDirectory } from '../config/dataDirectory.js';
 import {
+  checkpointImportDatabaseWal,
   findImportIdByHash,
   getImportSession,
   saveImportSession
@@ -46,6 +47,7 @@ export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexPars
   if (existingImportId !== undefined) {
     const existingSession = getImportSession(existingImportId);
     if (existingSession !== undefined) {
+      checkpointImportDatabaseWal();
       return {
         importId: existingSession.id,
         hash: existingSession.hash,
@@ -114,6 +116,7 @@ export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexPars
   };
 
   const savedImportId = saveImportSession(session);
+  checkpointImportDatabaseWal();
 
   if (savedImportId !== importId) {
     const existingSession = getImportSession(savedImportId);

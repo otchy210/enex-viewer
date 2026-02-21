@@ -10,6 +10,7 @@
   2. API/Web サーバーを Ctrl+C などで停止し、再度 `npm run dev` などで起動し直す。
   3. 同じ ENEX ファイルを再度 `POST /api/enex/parse` へアップロードする。
   4. 2 回目レスポンスが 200 で、`importId` が 1 回目と一致することを確認する。
+  5. `~/enex-viewer-data/enex-viewer.sqlite`（または `ENEX_VIEWER_DATA` で指定した DB）の `imports` テーブルを確認し、1 回目 `importId` の行が残っていることを確認する。
 - 期待結果
   - SQLite の UNIQUE 制約違反は発生しない。
   - サーバー再起動後でも既存 import が再利用され、クライアントは同一 importId を受け取る。
