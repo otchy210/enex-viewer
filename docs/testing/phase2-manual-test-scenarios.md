@@ -28,7 +28,7 @@
   - 1 回目 lookup は `importId=null` かつ `shouldUpload=true` を返し、`POST /api/enex/parse` を案内する。
   - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが UI で明示される。
 
-## MT-203 (Pass): ノート詳細から添付ファイルを個別ダウンロードできる
+## MT-203 (Fail): ノート詳細から添付ファイルを個別ダウンロードできる
 
 - 前提
   - 添付ファイルを含む ENEX が import 済みで、対象 `importId/noteId/resourceId` が特定できる。
@@ -41,7 +41,7 @@
   - `Content-Disposition` に元ファイル名が設定される。
   - 存在しない添付 ID では `404 RESOURCE_NOT_FOUND` を返す。
 
-## MT-204 (Pass): 複数添付の一括 ZIP ダウンロード
+## MT-204 (Fail): 複数添付の一括 ZIP ダウンロード
 
 - 前提
   - 2 つ以上の添付が import 済みで、`noteId/resourceId` の組を取得できる。
@@ -54,7 +54,7 @@
   - 正常時 200 で ZIP がストリーム返却される。
   - 空配列は `400 INVALID_REQUEST`、未存在添付は `404 RESOURCE_NOT_FOUND` を返す。
 
-## MT-205 (Pass): ノート詳細 UI で添付ファイルを個別ダウンロードできる
+## MT-205 (Fail): ノート詳細 UI で添付ファイルを個別ダウンロードできる
 
 - 前提
   - API と Web が起動している。
@@ -69,7 +69,7 @@
   - 各添付に個別ダウンロード導線があり、成功時はファイル保存できる。
   - 失敗時はユーザーが再試行可能なエラー表示（アラート）が出る。
 
-## MT-206 (Pass): ノート複数選択 + 一括 ZIP ダウンロード UI
+## MT-206 (Fail): ノート複数選択 + 一括 ZIP ダウンロード UI
 
 - 前提
   - API と Web が起動している。
@@ -95,18 +95,10 @@
 2. API/Web を起動し、MT-203〜MT-206 の手順を順に再実行する。
 3. 異常系として storage_path が欠損した resource を作成した場合でも 404 (`RESOURCE_NOT_FOUND`) を返し、サーバーログに TypeError が出ないことを確認する。
 
-### 再実行結果（T-209）
-
-- 実施日: 2026-02-21
-- 判定: MT-203 / MT-204 / MT-205 / MT-206 を Pass に更新
-- 根拠:
-  - Null `storage_path` の個別ダウンロードは 404 を返し、TypeError は再現しない。
-  - Null `storage_path` の bulk ダウンロードは 404 を返し、TypeError は再現しない。
-  - `resource.data` が無い添付は保存対象から除外され、`resources.storage_path` null は新規作成されない。
-
 # マニュアルテストメモ
 
-- [RESOLVED] T-209 で Null `storagePath` 起因の TypeError は解消。
+- [CRITIAL] ファイルの Download リンクが働かない
+- [CRITIAL] "Download selected attachments" ボタンも働かない
 
 ```
 TypeError: Cannot read properties of null (reading 'length')
