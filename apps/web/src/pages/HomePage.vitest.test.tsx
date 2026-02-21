@@ -256,12 +256,26 @@ describe('HomePage', () => {
       ]
     });
 
-    const originalCreateObjectUrl = URL.createObjectURL.bind(URL);
-    const originalRevokeObjectUrl = URL.revokeObjectURL.bind(URL);
+    const originalCreateObjectUrlDescriptor = Object.getOwnPropertyDescriptor(
+      URL,
+      'createObjectURL'
+    );
+    const originalRevokeObjectUrlDescriptor = Object.getOwnPropertyDescriptor(
+      URL,
+      'revokeObjectURL'
+    );
     const createObjectURL = vi.fn(() => 'blob:test-url');
     const revokeObjectURL = vi.fn();
-    URL.createObjectURL = createObjectURL;
-    URL.revokeObjectURL = revokeObjectURL;
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      writable: true,
+      value: createObjectURL
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      writable: true,
+      value: revokeObjectURL
+    });
     const clickSpy = vi
       .spyOn(HTMLAnchorElement.prototype, 'click')
       .mockImplementation(() => undefined);
@@ -285,8 +299,12 @@ describe('HomePage', () => {
     expect(createObjectURL).toHaveBeenCalled();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:test-url');
 
-    URL.createObjectURL = originalCreateObjectUrl;
-    URL.revokeObjectURL = originalRevokeObjectUrl;
+    if (originalCreateObjectUrlDescriptor) {
+      Object.defineProperty(URL, 'createObjectURL', originalCreateObjectUrlDescriptor);
+    }
+    if (originalRevokeObjectUrlDescriptor) {
+      Object.defineProperty(URL, 'revokeObjectURL', originalRevokeObjectUrlDescriptor);
+    }
     clickSpy.mockRestore();
   });
 

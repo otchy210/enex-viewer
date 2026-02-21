@@ -39,17 +39,12 @@ export function NoteBrowser({
         <div className="note-browser">
           <div className="note-list" role="list">
             {data.notes.map((note) => (
-              <button
+              <div
                 key={note.id}
-                type="button"
                 className={`note-list-item${selectedNoteId === note.id ? ' is-selected' : ''}`}
-                onClick={() => {
-                  onSelectedNoteIdChange(note.id);
-                }}
+                role="listitem"
               >
-                <label className="note-list-select" onClick={(event) => {
-                    event.stopPropagation();
-                  }}>
+                <label className="note-list-select">
                   <input
                     type="checkbox"
                     checked={selectedNoteIds.has(note.id)}
@@ -59,23 +54,31 @@ export function NoteBrowser({
                     }}
                   />
                 </label>
-                <div className="note-list-header">
-                  <span className="note-list-title">{note.title}</span>
-                  <span className="note-list-date">
-                    {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
-                  </span>
-                </div>
-                {note.tags.length > 0 && (
-                  <div className="note-list-tags">
-                    {note.tags.map((tag) => (
-                      <span key={tag} className="note-tag">
-                        {tag}
-                      </span>
-                    ))}
+                <button
+                  type="button"
+                  className="note-list-item__button"
+                  onClick={() => {
+                    onSelectedNoteIdChange(note.id);
+                  }}
+                >
+                  <div className="note-list-header">
+                    <span className="note-list-title">{note.title}</span>
+                    <span className="note-list-date">
+                      {formatSummaryTimestamp(note.updatedAt ?? note.createdAt)}
+                    </span>
                   </div>
-                )}
-                <p className="note-list-excerpt">{note.excerpt}</p>
-              </button>
+                  {note.tags.length > 0 && (
+                    <div className="note-list-tags">
+                      {note.tags.map((tag) => (
+                        <span key={tag} className="note-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="note-list-excerpt">{note.excerpt}</p>
+                </button>
+              </div>
             ))}
           </div>
 

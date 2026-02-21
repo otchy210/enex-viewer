@@ -103,7 +103,9 @@ describe('NoteBrowser', () => {
     expect(screen.getByText('alpha')).toBeInTheDocument();
     expect(screen.getByText('invalid-date')).toBeInTheDocument();
     expect(screen.getAllByText('—')[0]).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /First note/ })).toHaveClass('is-selected');
+    expect(screen.getByRole('button', { name: /First note/ }).closest('.note-list-item')).toHaveClass(
+      'is-selected'
+    );
     expect(screen.getByRole('checkbox', { name: 'Select note First note' })).toBeChecked();
 
     fireEvent.click(screen.getByRole('button', { name: /Second note/ }));
@@ -125,7 +127,9 @@ describe('NoteBrowser', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /Second note/ })).toHaveClass('is-selected');
+    expect(
+      screen.getByRole('button', { name: /Second note/ }).closest('.note-list-item')
+    ).toHaveClass('is-selected');
     expect(screen.getByRole('checkbox', { name: 'Select note Second note' })).toBeChecked();
     expect(screen.getByTestId('detail-panel')).toHaveTextContent('note-2');
   });
