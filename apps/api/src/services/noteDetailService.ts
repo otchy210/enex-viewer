@@ -34,5 +34,21 @@ export const fetchNoteDetail = (importId: string, noteId: string): NoteDetailRes
     };
   }
 
-  return { ok: true, note };
+  return {
+    ok: true,
+    note: {
+      id: note.id,
+      title: note.title,
+      createdAt: note.createdAt,
+      updatedAt: note.updatedAt,
+      tags: note.tags,
+      contentHtml: note.contentHtml,
+      resources: note.resources.map((resource) => ({
+        id: resource.id,
+        fileName: resource.fileName,
+        mime: resource.mime,
+        size: resource.size
+      }))
+    }
+  };
 };

@@ -13,6 +13,7 @@ export interface ParsedResourceMeta {
   fileName?: string;
   mime?: string;
   size?: number;
+  data?: Buffer;
 }
 
 export interface ParsedNote {
@@ -93,6 +94,20 @@ const decodeBase64Size = (raw: string): number | undefined => {
   return (normalized.length / 4) * 3 - padding;
 };
 
+const decodeBase64Buffer = (raw: string): Buffer | undefined => {
+  const normalized = raw.replace(/\s+/g, '');
+  if (normalized.length === 0) {
+    return undefined;
+  }
+
+  const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+  if (!base64Pattern.test(normalized)) {
+    return undefined;
+  }
+
+  return Buffer.from(normalized, 'base64');
+};
+
 const extractResourceSize = (data: unknown): number | undefined => {
   if (typeof data === 'string') {
     return decodeBase64Size(data);
@@ -110,6 +125,25 @@ const extractResourceSize = (data: unknown): number | undefined => {
   }
 
   return decodeBase64Size(extractCdataString(data));
+};
+
+const extractResourceData = (data: unknown): Buffer | undefined => {
+  if (typeof data === 'string') {
+    return decodeBase64Buffer(data);
+  }
+
+  if (typeof data !== 'object' || data === null) {
+    return undefined;
+  }
+
+  const encodedData = data as { __cdata?: unknown; encoding?: unknown };
+  const encoding =
+    typeof encodedData.encoding === 'string' ? encodedData.encoding.toLowerCase() : undefined;
+  if (encoding !== undefined && encoding !== 'base64') {
+    return undefined;
+  }
+
+  return decodeBase64Buffer(extractCdataString(data));
 };
 
 export const parseEnex = (input: string | Buffer): EnexParseResult => {
@@ -184,12 +218,14 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
         typeof attributes?.['file-name'] === 'string' ? attributes['file-name'] : undefined;
       const mime = typeof resource.mime === 'string' ? resource.mime : undefined;
       const size = extractResourceSize(resource.data);
+      const data = extractResourceData(resource.data);
 
       return {
         id: `resource-${String(noteIndex + 1)}-${String(resourceIndex + 1)}`,
         fileName,
         mime,
-        size
+        size,
+        data
       } satisfies ParsedResourceMeta;
     });
 

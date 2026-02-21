@@ -1,7 +1,10 @@
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import path from 'path';
 
 import { parseEnex } from './enexParserService.js';
 import { buildNoteListIndex } from './noteListIndex.js';
+import { resolveDataDirectory } from '../config/dataDirectory.js';
 import {
   findImportIdByHash,
   getImportSession,
@@ -56,6 +59,11 @@ export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexPars
 
   const warnings = parsed.warnings.map(formatWarning);
   const importId = randomUUID();
+  const resourcesDirectory = path.join(resolveDataDirectory(), 'resources');
+  if (!existsSync(resourcesDirectory)) {
+    mkdirSync(resourcesDirectory, { recursive: true });
+  }
+
   const notes: NoteDetail[] = parsed.notes.map((note) => ({
     id: note.id,
     title: note.title,
@@ -64,6 +72,16 @@ export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexPars
     tags: note.tags,
     contentHtml: note.content,
     resources: note.resources.map((resource) => ({
+      ...(resource.data
+        ? (() => {
+            const hash = createHash('sha256').update(resource.data).digest('hex');
+            const storagePath = path.join(resourcesDirectory, hash);
+            if (!existsSync(storagePath)) {
+              writeFileSync(storagePath, resource.data);
+            }
+            return { hash, storagePath };
+          })()
+        : {}),
       id: resource.id,
       fileName: resource.fileName,
       mime: resource.mime,

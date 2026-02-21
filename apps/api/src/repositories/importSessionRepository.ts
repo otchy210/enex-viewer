@@ -148,8 +148,8 @@ export const saveImportSession = (session: ImportSession): string => {
           resource.fileName ?? null,
           resource.mime ?? null,
           resource.size ?? null,
-          null,
-          null
+          resource.hash ?? null,
+          resource.storagePath ?? null
         );
       }
     }
@@ -225,7 +225,9 @@ export const getImportSession = (importId: string): ImportSession | undefined =>
           id: resource.id,
           fileName: resource.file_name,
           mime: resource.mime,
-          size: resource.size
+          size: resource.size,
+          hash: resource.hash,
+          storagePath: resource.storage_path
         }))
     })),
     noteListIndex: notes.map((note) => ({
@@ -244,6 +246,95 @@ export const getImportSession = (importId: string): ImportSession | undefined =>
 export const clearImportSessions = (): void => {
   const database = getDb();
   database.exec('DELETE FROM resources; DELETE FROM notes; DELETE FROM imports;');
+};
+
+export interface StoredResourceRow {
+  id: string;
+  noteId: string;
+  fileName?: string;
+  mime?: string;
+  size?: number;
+  hash?: string;
+  storagePath?: string;
+}
+
+export const getStoredResource = (
+  importId: string,
+  noteId: string,
+  resourceId: string
+): StoredResourceRow | undefined => {
+  const database = getDb();
+  const row = database
+    .prepare(
+      'SELECT id, note_id, file_name, mime, size, hash, storage_path FROM resources WHERE import_id = ? AND note_id = ? AND id = ?'
+    )
+    .get(importId, noteId, resourceId) as
+    | {
+        id: string;
+        note_id: string;
+        file_name?: string;
+        mime?: string;
+        size?: number;
+        hash?: string;
+        storage_path?: string;
+      }
+    | undefined;
+
+  if (row === undefined) {
+    return undefined;
+  }
+
+  return {
+    id: row.id,
+    noteId: row.note_id,
+    fileName: row.file_name,
+    mime: row.mime,
+    size: row.size,
+    hash: row.hash,
+    storagePath: row.storage_path
+  };
+};
+
+export const listStoredResourcesByIds = (
+  importId: string,
+  requested: { noteId: string; resourceId: string }[]
+): StoredResourceRow[] => {
+  if (requested.length === 0) {
+    return [];
+  }
+
+  const database = getDb();
+  const selected = new Map(requested.map((item) => [`${item.noteId}:${item.resourceId}`, item]));
+
+  const placeholders = requested.map(() => '(?, ?)').join(', ');
+  const params = requested.flatMap((item) => [item.noteId, item.resourceId]);
+  const rows = database
+    .prepare(
+      `SELECT id, note_id, file_name, mime, size, hash, storage_path
+       FROM resources
+       WHERE import_id = ? AND (note_id, id) IN (${placeholders})`
+    )
+    .all(importId, ...params) as {
+    id: string;
+    note_id: string;
+    file_name?: string;
+    mime?: string;
+    size?: number;
+    hash?: string;
+    storage_path?: string;
+  }[];
+
+  return rows
+    .filter((row) => selected.has(`${row.note_id}:${row.id}`))
+    .map((row) => ({
+      id: row.id,
+      noteId: row.note_id,
+      fileName: row.file_name,
+      mime: row.mime,
+      size: row.size,
+      hash: row.hash,
+      storagePath: row.storage_path
+    }));
 };
 
 export const getDatabasePath = (): string => {

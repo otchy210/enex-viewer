@@ -144,13 +144,14 @@ AA]]></data>
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.notes[0]?.resources).toEqual([
-        {
+        expect.objectContaining({
           id: 'resource-1-1',
           fileName: 'image.png',
           mime: 'image/png',
           size: 3
-        }
+        })
       ]);
+      expect(result.notes[0]?.resources[0]?.data?.toString('hex')).toBe('000000');
     }
   });
 });

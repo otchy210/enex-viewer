@@ -3,6 +3,8 @@ export interface ResourceMeta {
   fileName?: string;
   mime?: string;
   size?: number;
+  hash?: string;
+  storagePath?: string;
 }
 
 export interface NoteDetail {
