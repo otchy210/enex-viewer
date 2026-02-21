@@ -92,22 +92,42 @@ export const resourceBulkDownloadController = (req: Request, res: Response): voi
     stdio: ['ignore', 'pipe', 'pipe']
   });
 
-  zipProcess.on('error', () => {
-    rmSync(staging.stagingDirectory, { recursive: true, force: true });
+  let zipStderr = '';
+  zipProcess.stderr.setEncoding('utf-8');
+  zipProcess.stderr.on('data', (chunk: string) => {
+    zipStderr += chunk;
+  });
+
+  const sendZipError = (details: { reason: string; exitCode?: number; signal?: string }): void => {
+    const stderr = zipStderr.trim();
+    if (stderr.length > 0) {
+      console.error('[resourceBulkDownloadController] zip stderr:', stderr);
+    }
+
     if (!res.headersSent) {
       res.status(500).json({
         code: 'ZIP_GENERATION_FAILED',
-        message: 'Failed to generate zip archive.'
+        message: 'Failed to generate zip archive.',
+        details: {
+          ...details,
+          stderr: stderr.length > 0 ? stderr : undefined
+        }
       });
     }
+  };
+
+  zipProcess.on('error', (error) => {
+    rmSync(staging.stagingDirectory, { recursive: true, force: true });
+    sendZipError({ reason: error.message });
   });
 
-  zipProcess.on('close', (code) => {
+  zipProcess.on('close', (code, signal) => {
     rmSync(staging.stagingDirectory, { recursive: true, force: true });
     if (code !== 0 && !res.writableEnded) {
-      res.status(500).json({
-        code: 'ZIP_GENERATION_FAILED',
-        message: 'Failed to generate zip archive.'
+      sendZipError({
+        reason: 'zip command exited with non-zero status',
+        exitCode: code ?? undefined,
+        signal: signal ?? undefined
       });
     }
   });
