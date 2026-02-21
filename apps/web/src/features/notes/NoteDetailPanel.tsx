@@ -51,9 +51,10 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps): Rea
   };
 
   useEffect(() => {
+    setDownloadError(null);
+
     if (noteId == null) {
       setState(createAsyncIdleState());
-      setDownloadError(null);
       return;
     }
 

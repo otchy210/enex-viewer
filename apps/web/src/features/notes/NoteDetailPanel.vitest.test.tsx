@@ -137,6 +137,66 @@ describe('NoteDetailPanel', () => {
     );
   });
 
+  it('clears previous download error when switching to another note', async () => {
+    mockedFetchNoteDetail
+      .mockResolvedValueOnce({
+        id: 'note-1',
+        title: 'First note',
+        tags: ['demo'],
+        contentHtml: '<p>First</p>',
+        createdAt: '20240101T010203Z',
+        updatedAt: '20240102T030405Z',
+        resources: [
+          {
+            id: 'resource-1',
+            fileName: 'image.png',
+            mime: 'image/png',
+            size: 2048
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        id: 'note-2',
+        title: 'Second note',
+        tags: ['demo'],
+        contentHtml: '<p>Second</p>',
+        createdAt: '20240103T010203Z',
+        updatedAt: '20240104T030405Z',
+        resources: [
+          {
+            id: 'resource-2',
+            fileName: 'document.pdf',
+            mime: 'application/pdf',
+            size: 1024
+          }
+        ]
+      });
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    );
+
+    const { rerender } = render(<NoteDetailPanel importId="import-1" noteId="note-1" />);
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Download' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Failed to download attachment. Not found'
+    );
+
+    rerender(<NoteDetailPanel importId="import-1" noteId="note-2" />);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Second note' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute(
+      'href',
+      '/api/imports/import-1/notes/note-2/resources/resource-2'
+    );
+  });
+
   it('fetches resource endpoint when download link is clicked', async () => {
     mockedFetchNoteDetail.mockResolvedValueOnce({
       id: 'note-1',
