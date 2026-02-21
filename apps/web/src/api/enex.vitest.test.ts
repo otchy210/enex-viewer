@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { parseEnexFile } from './enex';
+import { lookupImportByHash, parseEnexFile } from './enex';
 
-describe('parseEnexFile', () => {
+describe('enex api', () => {
   const originalFetch = globalThis.fetch;
 
   afterEach(() => {
@@ -37,6 +37,34 @@ describe('parseEnexFile', () => {
     const body = request?.body;
     expect(body).toBeInstanceOf(FormData);
     expect((body as FormData).get('file')).toBe(file);
+  });
+
+  it('calls hash-lookup and returns shouldUpload response', async () => {
+    const responseBody = {
+      hash: 'a'.repeat(64),
+      importId: null,
+      shouldUpload: true,
+      message: 'continue upload'
+    };
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(responseBody), { status: 200 }));
+    globalThis.fetch = fetchMock;
+
+    const abortController = new AbortController();
+    await expect(lookupImportByHash('a'.repeat(64), { signal: abortController.signal })).resolves.toEqual(
+      responseBody
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/imports/hash-lookup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ hash: 'a'.repeat(64) }),
+      signal: abortController.signal
+    });
   });
 
   it('prefers the API error message when available', async () => {

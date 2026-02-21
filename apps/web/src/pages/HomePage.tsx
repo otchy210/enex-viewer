@@ -8,7 +8,7 @@ import { useNotesList } from '../state/useNotesList';
 
 export function HomePage(): ReactElement {
   const upload = useEnexUpload();
-  const importId = upload.result?.importId ?? null;
+  const importId = upload.importId;
 
   const [searchInput, setSearchInput] = useState('');
   const [query, setQuery] = useState('');

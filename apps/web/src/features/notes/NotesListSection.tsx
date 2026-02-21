@@ -66,7 +66,7 @@ export function NotesListSection({
   };
 
   return (
-    <section>
+    <section id="notes-list">
       <h2>Notes</h2>
       <p>{summaryText}</p>
 
