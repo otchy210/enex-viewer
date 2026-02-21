@@ -1,5 +1,7 @@
+import { execFileSync } from 'child_process';
 import { createHash } from 'crypto';
-import { readdirSync } from 'fs';
+import { mkdtempSync, readdirSync, writeFileSync } from 'fs';
+import os from 'os';
 import path from 'path';
 
 import request from 'supertest';
@@ -681,5 +683,48 @@ describe('API integration', () => {
     const responseBody = response.body as Buffer;
     const zipSignature = responseBody.subarray(0, 4).toString('hex');
     expect(zipSignature).toBe('504b0304');
+  });
+
+  it('POST /api/imports/:importId/resources/bulk-download sanitizes resource filename', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <guid>note-123</guid>
+        <title>Path Traversal Name</title>
+        <content><![CDATA[<en-note>Detail Body</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>../../tmp/evil.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+    `);
+
+    const parseResponse = await uploadEnex(app, payload);
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+    const response = await request(app)
+      .post(`/api/imports/${parseBody.importId}/resources/bulk-download`)
+      .send({ resources: [{ noteId: 'note-123', resourceId: 'resource-1-1' }] })
+      .buffer(true)
+      .parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => {
+          chunks.push(chunk as Buffer);
+        });
+        res.on('end', () => {
+          callback(null, Buffer.concat(chunks));
+        });
+      });
+
+    expect(response.status).toBe(200);
+    const zipBuffer = response.body as Buffer;
+    const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'enex-viewer-zip-test-'));
+    const zipPath = path.join(tempDirectory, 'resources.zip');
+    writeFileSync(zipPath, zipBuffer);
+
+    const fileListText = execFileSync('unzip', ['-Z1', zipPath], { encoding: 'utf-8' });
+    expect(fileListText).toContain('note-123/evil.txt');
+    expect(fileListText).not.toContain('../');
   });
 });

@@ -73,7 +73,7 @@ export const prepareBulkDownload = (
   importId: string,
   selections: BulkDownloadSelection[]
 ): BulkDownloadPreparation | BulkDownloadError => {
-  const resources = listStoredResourcesByIds(importId, selections);
+const resources = listStoredResourcesByIds(importId, selections);
   if (resources.length !== selections.length) {
     return {
       ok: false,
@@ -101,9 +101,13 @@ export const prepareBulkDownload = (
     const noteDirectory = path.join(stagingDirectory, resource.noteId);
     mkdirSync(noteDirectory, { recursive: true });
     const trimmedFileName = resource.fileName?.trim();
-    const fileName =
+    const normalizedBaseName =
       trimmedFileName !== undefined && trimmedFileName.length > 0
-        ? trimmedFileName
+        ? path.basename(trimmedFileName)
+        : undefined;
+    const fileName =
+      normalizedBaseName !== undefined && normalizedBaseName.length > 0
+        ? normalizedBaseName
         : `${resource.noteId}-${resource.id}.bin`;
     const linkPath = path.join(noteDirectory, fileName);
     symlinkSync(resource.storagePath, linkPath);
