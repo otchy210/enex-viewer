@@ -263,6 +263,21 @@ h1 {
   font-size: 0.85rem;
 }
 
+.note-download-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.note-download-error .error {
+  margin: 0;
+}
+
+.note-download-error-dismiss {
+  font-size: 0.75rem;
+}
+
 .note-content {
   padding: 12px;
   border-radius: 10px;

@@ -137,6 +137,44 @@ describe('NoteDetailPanel', () => {
     );
   });
 
+  it('allows dismissing download errors without changing selection', async () => {
+    mockedFetchNoteDetail.mockResolvedValueOnce({
+      id: 'note-1',
+      title: 'Sample note',
+      tags: ['demo'],
+      contentHtml: '<p>Content</p>',
+      createdAt: '20240101T010203Z',
+      updatedAt: '20240102T030405Z',
+      resources: [
+        {
+          id: 'resource-1',
+          fileName: 'image.png',
+          mime: 'image/png',
+          size: 2048
+        }
+      ]
+    });
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    );
+
+    render(<NoteDetailPanel importId="import-1" noteId="note-1" />);
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Download' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Failed to download attachment. Not found'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('clears previous download error when switching to another note', async () => {
     mockedFetchNoteDetail
       .mockResolvedValueOnce({

@@ -150,9 +150,18 @@ export function NoteDetailPanel({ importId, noteId }: NoteDetailPanelProps): Rea
       <section>
         <h4>Resources</h4>
         {downloadError != null && (
-          <p className="error" role="alert">
-            {downloadError}
-          </p>
+          <div className="note-download-error" role="alert">
+            <p className="error">{downloadError}</p>
+            <button
+              type="button"
+              className="note-download-error-dismiss"
+              onClick={() => {
+                setDownloadError(null);
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
         )}
         {note.resources.length > 0 ? (
           <ul className="note-resources">
