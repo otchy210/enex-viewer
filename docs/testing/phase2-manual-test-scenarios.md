@@ -1,6 +1,7 @@
 # Phase 2 手動テストシナリオ
 
-## MT-201: 重複ハッシュ再アップロード時に既存 import を再利用する
+## MT-201 (Pass): 重複ハッシュ再アップロード時に既存 import を再利用する
+
 - 前提
   - API が起動している。
   - 同一内容の ENEX ファイルを 2 回アップロードできる状態。
@@ -12,7 +13,8 @@
   - SQLite の UNIQUE 制約違反は発生しない。
   - 既存 import が再利用され、クライアントは同一 importId を受け取る。
 
-## MT-202: hash lookup によりアップロードをスキップできる
+## MT-202 (Psss): hash lookup によりアップロードをスキップできる
+
 - 前提
   - API と Web が起動している。
   - 検証用 ENEX ファイルが 1 つ用意されている。
@@ -26,7 +28,8 @@
   - 1 回目 lookup は `importId=null` かつ `shouldUpload=true` を返し、`POST /api/enex/parse` を案内する。
   - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが UI で明示される。
 
-## MT-203: ノート詳細から添付ファイルを個別ダウンロードできる
+## MT-203 (Fail): ノート詳細から添付ファイルを個別ダウンロードできる
+
 - 前提
   - 添付ファイルを含む ENEX が import 済みで、対象 `importId/noteId/resourceId` が特定できる。
 - 手順
@@ -38,7 +41,8 @@
   - `Content-Disposition` に元ファイル名が設定される。
   - 存在しない添付 ID では `404 RESOURCE_NOT_FOUND` を返す。
 
-## MT-204: 複数添付の一括 ZIP ダウンロード
+## MT-204 (Fail): 複数添付の一括 ZIP ダウンロード
+
 - 前提
   - 2 つ以上の添付が import 済みで、`noteId/resourceId` の組を取得できる。
 - 手順
@@ -50,7 +54,8 @@
   - 正常時 200 で ZIP がストリーム返却される。
   - 空配列は `400 INVALID_REQUEST`、未存在添付は `404 RESOURCE_NOT_FOUND` を返す。
 
-## MT-205: ノート詳細 UI で添付ファイルを個別ダウンロードできる
+## MT-205 (Fail): ノート詳細 UI で添付ファイルを個別ダウンロードできる
+
 - 前提
   - API と Web が起動している。
   - 添付ファイルを含む ENEX が import 済みで、ノート詳細画面を開ける。
@@ -64,7 +69,8 @@
   - 各添付に個別ダウンロード導線があり、成功時はファイル保存できる。
   - 失敗時はユーザーが再試行可能なエラー表示（アラート）が出る。
 
-## MT-206: ノート複数選択 + 一括 ZIP ダウンロード UI
+## MT-206 (Fail): ノート複数選択 + 一括 ZIP ダウンロード UI
+
 - 前提
   - API と Web が起動している。
   - 添付ファイルを含むノートが 2 件以上ある import が作成済み。
@@ -78,3 +84,46 @@
   - 選択数と全選択/全解除トグルがページ単位で正しく動作する。
   - 一括ダウンロード成功時は ZIP が保存される。
   - 失敗時はアラート表示され、再試行可能。
+
+# マニュアルテストメモ
+
+- [CRITIAL] ファイルの Download リンクが働かない
+- [CRITIAL] "Download selected attachments" ボタンも働かない
+
+```
+TypeError: Cannot read properties of null (reading 'length')
+    at fetchResourceDownload (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/services/resourceDownloadService.ts:39:48)
+    at resourceDownloadController (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/controllers/resourceDownloadController.ts:24:18)
+    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:284:15
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:365:14)
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
+TypeError: Cannot read properties of null (reading 'length')
+    at fetchResourceDownload (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/services/resourceDownloadService.ts:39:48)
+    at resourceDownloadController (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/controllers/resourceDownloadController.ts:24:18)
+    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:284:15
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:365:14)
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
+TypeError: Cannot read properties of null (reading 'length')
+    at fetchResourceDownload (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/services/resourceDownloadService.ts:39:48)
+    at resourceDownloadController (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/controllers/resourceDownloadController.ts:24:18)
+    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:284:15
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:365:14)
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
+    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
+```
+
+- [WANT] ファイルのアップロード中もプログレスバーがあった方が良い
