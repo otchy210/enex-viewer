@@ -199,11 +199,11 @@ export const getImportSession = (importId: string): ImportSession | undefined =>
     .all(importId) as {
     id: string;
     note_id: string;
-    file_name?: string;
-    mime?: string;
-    size?: number;
-    hash?: string;
-    storage_path?: string;
+    file_name?: string | null;
+    mime?: string | null;
+    size?: number | null;
+    hash?: string | null;
+    storage_path?: string | null;
   }[];
 
   return {
@@ -223,11 +223,11 @@ export const getImportSession = (importId: string): ImportSession | undefined =>
         .filter((resource) => resource.note_id === note.id)
         .map((resource) => ({
           id: resource.id,
-          fileName: resource.file_name,
-          mime: resource.mime,
-          size: resource.size,
-          hash: resource.hash,
-          storagePath: resource.storage_path
+          fileName: resource.file_name ?? undefined,
+          mime: resource.mime ?? undefined,
+          size: resource.size ?? undefined,
+          hash: resource.hash ?? undefined,
+          storagePath: resource.storage_path ?? undefined
         }))
     })),
     noteListIndex: notes.map((note) => ({
@@ -255,7 +255,7 @@ export interface StoredResourceRow {
   mime?: string;
   size?: number;
   hash?: string;
-  storagePath?: string;
+  storagePath?: string | null;
 }
 
 export const getStoredResource = (
@@ -272,11 +272,11 @@ export const getStoredResource = (
     | {
         id: string;
         note_id: string;
-        file_name?: string;
-        mime?: string;
-        size?: number;
-        hash?: string;
-        storage_path?: string;
+        file_name?: string | null;
+        mime?: string | null;
+        size?: number | null;
+        hash?: string | null;
+        storage_path?: string | null;
       }
     | undefined;
 
@@ -287,11 +287,11 @@ export const getStoredResource = (
   return {
     id: row.id,
     noteId: row.note_id,
-    fileName: row.file_name,
-    mime: row.mime,
-    size: row.size,
-    hash: row.hash,
-    storagePath: row.storage_path
+    fileName: row.file_name ?? undefined,
+    mime: row.mime ?? undefined,
+    size: row.size ?? undefined,
+    hash: row.hash ?? undefined,
+    storagePath: row.storage_path ?? undefined
   };
 };
 
@@ -317,11 +317,11 @@ export const listStoredResourcesByIds = (
     .all(importId, ...params) as {
     id: string;
     note_id: string;
-    file_name?: string;
-    mime?: string;
-    size?: number;
-    hash?: string;
-    storage_path?: string;
+    file_name?: string | null;
+    mime?: string | null;
+    size?: number | null;
+    hash?: string | null;
+    storage_path?: string | null;
   }[];
 
   return rows
@@ -329,12 +329,34 @@ export const listStoredResourcesByIds = (
     .map((row) => ({
       id: row.id,
       noteId: row.note_id,
-      fileName: row.file_name,
-      mime: row.mime,
-      size: row.size,
-      hash: row.hash,
-      storagePath: row.storage_path
+      fileName: row.file_name ?? undefined,
+      mime: row.mime ?? undefined,
+      size: row.size ?? undefined,
+      hash: row.hash ?? undefined,
+      storagePath: row.storage_path ?? undefined
     }));
+};
+
+
+export const updateStoredResourceStoragePath = (
+  importId: string,
+  noteId: string,
+  resourceId: string,
+  storagePath: string | null
+): void => {
+  const database = getDb();
+  database
+    .prepare('UPDATE resources SET storage_path = ? WHERE import_id = ? AND note_id = ? AND id = ?')
+    .run(storagePath, importId, noteId, resourceId);
+};
+
+export const countNullStoragePathsByImportId = (importId: string): number => {
+  const database = getDb();
+  const row = database
+    .prepare('SELECT COUNT(*) AS count FROM resources WHERE import_id = ? AND storage_path IS NULL')
+    .get(importId) as { count: number };
+
+  return row.count;
 };
 
 export const getDatabasePath = (): string => {

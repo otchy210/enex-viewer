@@ -87,6 +87,16 @@
   - 一括ダウンロード成功時は ZIP が保存される。
   - 失敗時はアラート表示され、再試行可能。
 
+
+## MT-203〜MT-206 再実行手順（T-209）
+
+1. `npm run test:api` を実行し、以下の追加 integration test が成功することを確認する。
+   - `GET /api/imports/:importId/notes/:noteId/resources/:resourceId returns 404 when storage_path is null`
+   - `POST /api/imports/:importId/resources/bulk-download returns 404 when storage_path is null`
+   - `POST /api/enex/parse excludes resources without binary data from persistence`
+2. API/Web を起動し、MT-203〜MT-206 の手順を順に再実行する。
+3. 異常系として storage_path が欠損した resource を作成した場合でも 404 (`RESOURCE_NOT_FOUND`) を返し、サーバーログに TypeError が出ないことを確認する。
+
 # マニュアルテストメモ
 
 - [CRITIAL] ファイルの Download リンクが働かない

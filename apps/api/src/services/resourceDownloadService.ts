@@ -36,7 +36,7 @@ export const fetchResourceDownload = (
   }
 
   const storagePath = resource.storagePath;
-  if (storagePath === undefined || storagePath.length === 0 || !existsSync(storagePath)) {
+  if (storagePath == null || storagePath.length === 0 || !existsSync(storagePath)) {
     return {
       ok: false,
       code: 'RESOURCE_NOT_FOUND',
@@ -73,7 +73,7 @@ export const prepareBulkDownload = (
   importId: string,
   selections: BulkDownloadSelection[]
 ): BulkDownloadPreparation | BulkDownloadError => {
-const resources = listStoredResourcesByIds(importId, selections);
+  const resources = listStoredResourcesByIds(importId, selections);
   if (resources.length !== selections.length) {
     return {
       ok: false,
@@ -86,7 +86,7 @@ const resources = listStoredResourcesByIds(importId, selections);
 
   for (const resource of resources) {
     if (
-      resource.storagePath === undefined ||
+      resource.storagePath == null ||
       resource.storagePath.length === 0 ||
       !existsSync(resource.storagePath)
     ) {
