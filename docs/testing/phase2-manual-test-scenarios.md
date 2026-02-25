@@ -109,10 +109,19 @@
 2. API/Web を起動し、MT-203〜MT-206 の手順を順に再実行する。
 3. 異常系として storage_path が欠損した resource を作成した場合でも 404 (`RESOURCE_NOT_FOUND`) を返し、サーバーログに TypeError が出ないことを確認する。
 
+
+## MT-203〜MT-206 再実行手順（T-213）
+
+1. `npm run test:api` を実行し、`handles multi-megabyte base64 resource without stack overflow` を含む parser 回帰テストが成功することを確認する。
+2. （ローカル実機）大容量添付を含む ENEX（例: `~/Desktop/ENEX/1101.取扱説明書(旧)..enex`）を再アップロードし、API が完走して `resources` テーブルと `~/enex-viewer-data/resources` へ添付が保存されることを確認する。
+3. Web で MT-203〜MT-206 を再実行し、Resources 表示、個別 Download、`Download selected attachments` の ZIP 取得が継続して成功することを確認する。
+
 # マニュアルテストメモ
 
 - [RESOLVED][T-212] `#text` base64 形式 ENEX でも添付が保存され、個別 Download が成功することを再確認。
 - [RESOLVED][T-212] `Download selected attachments` で ZIP 取得できることを再確認。
+- [RESOLVED][T-213] `decodeBase64Size` / `decodeBase64Buffer` の正規表現判定を廃止後も、`npm run test:api` で数 MB base64 添付の parser 回帰テストが成功（スタックオーバーフロー再現なし）。
+- [TODO][T-213] 手元 ENEX (`~/Desktop/ENEX/1101.取扱説明書(旧)..enex`) を使った再アップロードと MT-203〜MT-206 の UI 再実行はローカル環境で継続確認する。
 
 ```
 TypeError: Cannot read properties of null (reading 'length')

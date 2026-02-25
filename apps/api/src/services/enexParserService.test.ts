@@ -126,6 +126,29 @@ AA</data>
     }
   });
 
+  it('handles multi-megabyte base64 resource without stack overflow', () => {
+    const original = Buffer.from('A'.repeat(3 * 1024 * 1024), 'utf-8');
+    const base64 = original.toString('base64');
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Large Resource</title>
+        <content><![CDATA[<en-note>asset</en-note>]]></content>
+        <resource>
+          <data encoding="base64">${base64}</data>
+        </resource>
+      </note>
+    </en-export>`;
+
+    const result = parseEnex(sample);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.notes[0]?.resources[0]?.size).toBe(original.length);
+      expect(result.notes[0]?.resources[0]?.data?.length).toBe(original.length);
+    }
+  });
+
   it('returns undefined size for non-base64 resource data', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
