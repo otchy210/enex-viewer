@@ -50,7 +50,7 @@
 | [x]  | T-209 | P2-C   | API     | 添付ダウンロード API の Null storagePath 実裝不備を修正                       | T-204           | - `fetchResourceDownload`/bulk zip が storagePath 未設定の添付でも 404 を返す or 正しく保存する<br>- ENEX 添付保存ロジックで storagePath/hash が常に設定されることを確認<br>- API integration test で `storage_path` null ケースを追加し、TypeError が発生しないことを検証<br>- MT-203/MT-204/MT-205/MT-206 が再実行できる状態にする |
 | [x]  | T-210 | P2-B   | Web     | アップロード中の進捗 UI 改善（アップロードフェーズのプログレスバー）          | T-203           | - `UploadSection` にアップロード本体（ENEX POST）の進行状況を視覚化するプログレス/インジケータを追加（ハッシュ進捗とは別）<br>- API 呼び出し中は進捗/残りを表示しつつキャンセル可能か文言で案内<br>- 新 UI のテストを追加し、フェールセーフにより既存テストをパス |
 | [x]  | T-211 | P2-A   | API     | SQLite WAL の耐久性強化（アップロード毎のチェックポイント）                   | T-201, T-202    | - `POST /api/enex/parse` の完了時に `wal_checkpoint(TRUNCATE)` などで WAL を即座にフラッシュする実装を追加<br>- サーバーを再起動しても直前の import が `imports` テーブルに残り、同じ ENEX を再アップロードすると既存 `importId` が返る（MT-201 で検証）<br>- 今回の運用上の制約（最初のアップロードのみ 1GB メモリ使用など）を `phase2-spec.md` / `phase2-system-design.md` に明記する |
-| [ ]  | T-212 | P2-A   | API     | ENEX リソース抽出の base64 パース互換性を修正                                | T-204           | - `apps/api/src/services/enexParserService.ts` の `extractCdataString` / `extractResourceData` / `extractResourceSize` が `#text` ノードのみを含む `<data encoding=\"base64\">` からもデータを取得できるよう修正する（`__cdata` と両対応）<br>- `parseEnexFile` で `resources.filter(hasBinaryData)` に拾われることを回復させ、`~/enex-viewer-data/resources` と `resources` テーブルへ添付が保存されることを確認する（`~/Desktop/ENEX/1101.取扱説明書(旧)..enex` など手元検証用ファイルでテスト可能）<br>- `npm run test:api` にリソース付き ENEX の回帰テストを追加（少なくとも parser unit test で `#text` 形式の `<data>` をモックし decoded buffer が戻ることを検証）<br>- 手動テスト: ENEX を再アップロードし、Web の Note Detail Panel の Resources セクションと `docs/testing/phase2-manual-test-scenarios.md` の MT-203〜MT-206 を更新/再実行して添付が UI 上に表示・ダウンロードできることを確認する |
+| [x]  | T-212 | P2-A   | API     | ENEX リソース抽出の base64 パース互換性を修正                                | T-204           | - `apps/api/src/services/enexParserService.ts` の `extractCdataString` / `extractResourceData` / `extractResourceSize` が `#text` ノードのみを含む `<data encoding=\"base64\">` からもデータを取得できるよう修正する（`__cdata` と両対応）<br>- `parseEnexFile` で `resources.filter(hasBinaryData)` に拾われることを回復させ、`~/enex-viewer-data/resources` と `resources` テーブルへ添付が保存されることを確認する（`~/Desktop/ENEX/1101.取扱説明書(旧)..enex` など手元検証用ファイルでテスト可能）<br>- `npm run test:api` にリソース付き ENEX の回帰テストを追加（少なくとも parser unit test で `#text` 形式の `<data>` をモックし decoded buffer が戻ることを検証）<br>- 手動テスト: ENEX を再アップロードし、Web の Note Detail Panel の Resources セクションと `docs/testing/phase2-manual-test-scenarios.md` の MT-203〜MT-206 を更新/再実行して添付が UI 上に表示・ダウンロードできることを確認する |
 
 
 ### T-202 完了メモ
@@ -85,3 +85,9 @@
 - `parseEnexFile` の成功時（新規 import 保存後 / 既存 import 再利用時）に `wal_checkpoint(TRUNCATE)` を呼び出し、再起動直後でも hash lookup と重複アップロードで同一 `importId` が再利用される耐久性を追加。
 - Vitest / `NODE_ENV=test` では WAL チェックポイントをスキップするガードを導入し、テスト用 tmp DB への副作用を抑止。
 - `phase2-spec` / `phase2-system-design` / `phase2-workstreams` / `MT-201` に運用条件と確認手順を追記。
+
+
+### T-212 完了メモ
+- `enexParserService` の `extractCdataString` を `__cdata` / `#text` 両対応に拡張し、`<data encoding="base64">` がテキストノードのみでも `extractResourceData` / `extractResourceSize` で復号できるよう修正。
+- parser unit test に `#text` 形式の base64 ケースを追加し、`Buffer` 生成（`000000`）と size 算出（3 bytes）の回帰を防止。
+- MT-203〜MT-206 の再確認観点を手動テストシナリオへ追記し、添付表示/個別DL/一括ZIP/保存先確認の記録欄を更新。

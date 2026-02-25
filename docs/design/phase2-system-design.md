@@ -9,6 +9,7 @@
 - `imports`: `id`, `hash`, `createdAt`, `noteCount`, `warnings`, `sourceFilePath?`
 - `notes`: `id`, `importId`, `title`, `createdAt`, `updatedAt`, `tags`, `excerpt`, `contentHtml`
 - `resources`: `id`, `noteId`, `fileName`, `mime`, `size`, `storagePath`, `hash`
+- ENEX parser は resource `<data encoding="base64">` の `__cdata` / `#text` を両対応で抽出する。
 - 添付本体は `<DATA_DIR>/resources/<hash>` に保存し、SQLite にはファイル名とハッシュを保持する。
 
 ## 3. ハッシュフロー

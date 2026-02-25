@@ -104,6 +104,28 @@ AA]]></data>
     }
   });
 
+  it('extracts resource data from #text-only base64 node', () => {
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>
+    <en-export>
+      <note>
+        <title>Text Node Resource</title>
+        <content><![CDATA[<en-note>asset</en-note>]]></content>
+        <resource>
+          <data encoding="base64">AA
+AA</data>
+        </resource>
+      </note>
+    </en-export>`;
+
+    const result = parseEnex(sample);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.notes[0]?.resources[0]?.size).toBe(3);
+      expect(result.notes[0]?.resources[0]?.data?.toString('hex')).toBe('000000');
+    }
+  });
+
   it('returns undefined size for non-base64 resource data', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>

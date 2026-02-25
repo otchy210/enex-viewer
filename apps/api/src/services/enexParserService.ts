@@ -75,6 +75,11 @@ const extractCdataString = (value: unknown): string => {
     if (typeof cdata === 'string') {
       return cdata;
     }
+
+    const text = (value as { '#text'?: unknown })['#text'];
+    if (typeof text === 'string') {
+      return text;
+    }
   }
   return '';
 };
