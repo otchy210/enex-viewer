@@ -781,6 +781,66 @@ describe('API integration', () => {
     expect(countNullStoragePathsByImportId(parseBody.importId)).toBe(0);
   });
 
+
+
+  it('POST /api/imports/:importId/resources/bulk-download uses sanitized unique note title directories', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <guid>note-123</guid>
+        <title>Project:/\:*?&quot;&lt;&gt;| Alpha</title>
+        <content><![CDATA[<en-note>First Body</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[SGVsbG8=]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>first.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+      <note>
+        <guid>note-456</guid>
+        <title>Project:/\:*?&quot;&lt;&gt;| Alpha</title>
+        <content><![CDATA[<en-note>Second Body</en-note>]]></content>
+        <resource>
+          <data encoding="base64"><![CDATA[V29ybGQ=]]></data>
+          <mime>text/plain</mime>
+          <resource-attributes><file-name>second.txt</file-name></resource-attributes>
+        </resource>
+      </note>
+    `);
+
+    const parseResponse = await uploadEnex(app, payload);
+    const parseBody = parseResponseBody(parseResponse.body as unknown, isParseResponse);
+
+    const response = await request(app)
+      .post(`/api/imports/${parseBody.importId}/resources/bulk-download`)
+      .send({
+        resources: [
+          { noteId: 'note-123', resourceId: 'resource-1-1' },
+          { noteId: 'note-456', resourceId: 'resource-2-1' }
+        ]
+      })
+      .buffer(true)
+      .parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => {
+          chunks.push(chunk as Buffer);
+        });
+        res.on('end', () => {
+          callback(null, Buffer.concat(chunks));
+        });
+      });
+
+    expect(response.status).toBe(200);
+    const zipBuffer = response.body as Buffer;
+    const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'enex-viewer-zip-test-'));
+    const zipPath = path.join(tempDirectory, 'resources.zip');
+    writeFileSync(zipPath, zipBuffer);
+
+    const fileListText = execFileSync('unzip', ['-Z1', zipPath], { encoding: 'utf-8' });
+    expect(fileListText).toContain('Project Alpha/first.txt');
+    expect(fileListText).toContain('Project Alpha-1/second.txt');
+    expect(fileListText).not.toContain('Project:/');
+  });
   it('POST /api/imports/:importId/resources/bulk-download sanitizes resource filename', async () => {
     const app = createApp();
     const payload = buildEnexPayload(`
@@ -820,7 +880,7 @@ describe('API integration', () => {
     writeFileSync(zipPath, zipBuffer);
 
     const fileListText = execFileSync('unzip', ['-Z1', zipPath], { encoding: 'utf-8' });
-    expect(fileListText).toContain('note-123/evil.txt');
+    expect(fileListText).toContain('Path Traversal Name/evil.txt');
     expect(fileListText).not.toContain('../');
   });
 });

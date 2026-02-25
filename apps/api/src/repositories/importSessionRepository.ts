@@ -251,6 +251,7 @@ export const clearImportSessions = (): void => {
 export interface StoredResourceRow {
   id: string;
   noteId: string;
+  noteTitle?: string;
   fileName?: string;
   mime?: string;
   size?: number;
@@ -310,13 +311,15 @@ export const listStoredResourcesByIds = (
   const params = requested.flatMap((item) => [item.noteId, item.resourceId]);
   const rows = database
     .prepare(
-      `SELECT id, note_id, file_name, mime, size, hash, storage_path
-       FROM resources
-       WHERE import_id = ? AND (note_id, id) IN (${placeholders})`
+      `SELECT r.id, r.note_id, n.title AS note_title, r.file_name, r.mime, r.size, r.hash, r.storage_path
+       FROM resources r
+       INNER JOIN notes n ON n.import_id = r.import_id AND n.id = r.note_id
+       WHERE r.import_id = ? AND (r.note_id, r.id) IN (${placeholders})`
     )
     .all(importId, ...params) as {
     id: string;
     note_id: string;
+    note_title?: string | null;
     file_name?: string | null;
     mime?: string | null;
     size?: number | null;
@@ -324,17 +327,29 @@ export const listStoredResourcesByIds = (
     storage_path?: string | null;
   }[];
 
-  return rows
+  const mappedRows = rows
     .filter((row) => selected.has(`${row.note_id}:${row.id}`))
     .map((row) => ({
       id: row.id,
       noteId: row.note_id,
+      noteTitle: row.note_title ?? undefined,
       fileName: row.file_name ?? undefined,
       mime: row.mime ?? undefined,
       size: row.size ?? undefined,
       hash: row.hash ?? undefined,
       storagePath: row.storage_path ?? undefined
     }));
+
+  const rowsById = new Map(mappedRows.map((row) => [`${row.noteId}:${row.id}`, row]));
+  const orderedRows: StoredResourceRow[] = [];
+  for (const item of requested) {
+    const row = rowsById.get(`${item.noteId}:${item.resourceId}`);
+    if (row !== undefined) {
+      orderedRows.push(row);
+    }
+  }
+
+  return orderedRows;
 };
 
 
