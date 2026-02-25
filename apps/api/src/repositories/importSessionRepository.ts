@@ -19,7 +19,7 @@ const ensureDirectories = (): void => {
 };
 
 interface SqliteDatabase {
-  pragma: (value: string) => void;
+  pragma: <T = unknown>(value: string) => T;
   exec: (sql: string) => void;
   prepare: (sql: string) => {
     run: (...params: unknown[]) => { changes: number };
@@ -362,6 +362,18 @@ export const countNullStoragePathsByImportId = (importId: string): number => {
 export const getDatabasePath = (): string => {
   getDb();
   return resolveSqlitePath();
+};
+
+const shouldSkipWalCheckpoint = (): boolean =>
+  process.env.VITEST === 'true' || process.env.NODE_ENV === 'test';
+
+export const checkpointImportDatabaseWal = (): void => {
+  if (shouldSkipWalCheckpoint()) {
+    return;
+  }
+
+  const database = getDb();
+  database.pragma('wal_checkpoint(TRUNCATE)');
 };
 
 export const resetImportSessionRepository = (): void => {

@@ -49,7 +49,7 @@
 | [ ]  | T-207 | P2-D   | Docs/QA | Phase 2 用手動テスト/README/spec 更新                                          | T-201〜T-206    | - 新シナリオ（1GB、重複スキップ、添付DL、一括zip）を `manual-test-scenarios` に追加<br>- README/INDEX/spec が Phase2 機能を案内<br>- 手動テスト結果テンプレートが更新される                    |
 | [x]  | T-209 | P2-C   | API     | 添付ダウンロード API の Null storagePath 実裝不備を修正                       | T-204           | - `fetchResourceDownload`/bulk zip が storagePath 未設定の添付でも 404 を返す or 正しく保存する<br>- ENEX 添付保存ロジックで storagePath/hash が常に設定されることを確認<br>- API integration test で `storage_path` null ケースを追加し、TypeError が発生しないことを検証<br>- MT-203/MT-204/MT-205/MT-206 が再実行できる状態にする |
 | [x]  | T-210 | P2-B   | Web     | アップロード中の進捗 UI 改善（アップロードフェーズのプログレスバー）          | T-203           | - `UploadSection` にアップロード本体（ENEX POST）の進行状況を視覚化するプログレス/インジケータを追加（ハッシュ進捗とは別）<br>- API 呼び出し中は進捗/残りを表示しつつキャンセル可能か文言で案内<br>- 新 UI のテストを追加し、フェールセーフにより既存テストをパス |
-| [ ]  | T-211 | P2-A   | API     | SQLite WAL の耐久性強化（アップロード毎のチェックポイント）                   | T-201, T-202    | - `POST /api/enex/parse` の完了時に `wal_checkpoint(TRUNCATE)` などで WAL を即座にフラッシュする実装を追加<br>- サーバーを再起動しても直前の import が `imports` テーブルに残り、同じ ENEX を再アップロードすると既存 `importId` が返る（MT-201 で検証）<br>- 今回の運用上の制約（最初のアップロードのみ 1GB メモリ使用など）を `phase2-spec.md` / `phase2-system-design.md` に明記する |
+| [x]  | T-211 | P2-A   | API     | SQLite WAL の耐久性強化（アップロード毎のチェックポイント）                   | T-201, T-202    | - `POST /api/enex/parse` の完了時に `wal_checkpoint(TRUNCATE)` などで WAL を即座にフラッシュする実装を追加<br>- サーバーを再起動しても直前の import が `imports` テーブルに残り、同じ ENEX を再アップロードすると既存 `importId` が返る（MT-201 で検証）<br>- 今回の運用上の制約（最初のアップロードのみ 1GB メモリ使用など）を `phase2-spec.md` / `phase2-system-design.md` に明記する |
 
 
 ### T-202 完了メモ
@@ -79,3 +79,8 @@
 - `UploadSection` / `useEnexUpload` に ENEX POST フェーズ専用の進捗インジケータを追加し、アップロード中ボタンラベルとキャンセル不可案内を表示。
 - アップロード失敗時は POST フェーズ表示をリセットして再アップロード可能な状態へ戻す実装と UI テストを追加。
 - `MT-202` と README / 開発ガイドのアップロード手順を更新し、新 UI の確認観点を反映。
+
+### T-211 完了メモ
+- `parseEnexFile` の成功時（新規 import 保存後 / 既存 import 再利用時）に `wal_checkpoint(TRUNCATE)` を呼び出し、再起動直後でも hash lookup と重複アップロードで同一 `importId` が再利用される耐久性を追加。
+- Vitest / `NODE_ENV=test` では WAL チェックポイントをスキップするガードを導入し、テスト用 tmp DB への副作用を抑止。
+- `phase2-spec` / `phase2-system-design` / `phase2-workstreams` / `MT-201` に運用条件と確認手順を追記。
