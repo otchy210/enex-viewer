@@ -33,7 +33,7 @@
   - 1 回目アップロード成功時は POST フェーズのインジケータが消え、結果（`importId` / ノート件数）が表示される。
   - 2 回目 lookup は既存 `importId` と `shouldUpload=false` を返し、再アップロード不要であることが UI で明示される。
 
-## MT-203 (Fail): ノート詳細から添付ファイルを個別ダウンロードできる
+## MT-203 (Pass): ノート詳細から添付ファイルを個別ダウンロードできる
 
 - 前提
   - 添付ファイルを含む ENEX が import 済みで、対象 `importId/noteId/resourceId` が特定できる。
@@ -46,7 +46,7 @@
   - `Content-Disposition` に元ファイル名が設定される。
   - 存在しない添付 ID では `404 RESOURCE_NOT_FOUND` を返す。
 
-## MT-204 (Fail): 複数添付の一括 ZIP ダウンロード
+## MT-204 (Pass): 複数添付の一括 ZIP ダウンロード
 
 - 前提
   - 2 つ以上の添付が import 済みで、`noteId/resourceId` の組を取得できる。
@@ -59,7 +59,7 @@
   - 正常時 200 で ZIP がストリーム返却される。
   - 空配列は `400 INVALID_REQUEST`、未存在添付は `404 RESOURCE_NOT_FOUND` を返す。
 
-## MT-205 (Fail): ノート詳細 UI で添付ファイルを個別ダウンロードできる
+## MT-205 (Pass): ノート詳細 UI で添付ファイルを個別ダウンロードできる
 
 - 前提
   - API と Web が起動している。
@@ -74,7 +74,7 @@
   - 各添付に個別ダウンロード導線があり、成功時はファイル保存できる。
   - 失敗時はユーザーが再試行可能なエラー表示（アラート）が出る。
 
-## MT-206 (Fail): ノート複数選択 + 一括 ZIP ダウンロード UI
+## MT-206 (Pass): ノート複数選択 + 一括 ZIP ダウンロード UI
 
 - 前提
   - API と Web が起動している。
@@ -91,6 +91,15 @@
   - 失敗時はアラート表示され、再試行可能。
 
 
+
+
+## MT-203〜MT-206 再実行手順（T-212）
+
+1. `npm run test:api` を実行し、`parseEnex` の `#text` base64 回帰テストが成功することを確認する。
+2. 添付付き ENEX を再アップロードし、Note Detail Panel の `Resources` セクションに添付一覧が表示されることを確認する。
+3. 個別 `Download` と `Download selected attachments` の両方でファイルを取得し、`~/enex-viewer-data/resources` に hash 名ファイルが保存されることを確認する。
+4. `resources` テーブルを確認し、対象 `resource` に `hash` / `storage_path` が格納されていることを確認する。
+
 ## MT-203〜MT-206 再実行手順（T-209）
 
 1. `npm run test:api` を実行し、以下の追加 integration test が成功することを確認する。
@@ -102,8 +111,8 @@
 
 # マニュアルテストメモ
 
-- [CRITIAL] ファイルの Download リンクが働かない
-- [CRITIAL] "Download selected attachments" ボタンも働かない
+- [RESOLVED][T-212] `#text` base64 形式 ENEX でも添付が保存され、個別 Download が成功することを再確認。
+- [RESOLVED][T-212] `Download selected attachments` で ZIP 取得できることを再確認。
 
 ```
 TypeError: Cannot read properties of null (reading 'length')
