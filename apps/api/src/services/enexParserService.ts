@@ -90,13 +90,16 @@ const decodeBase64Size = (raw: string): number | undefined => {
     return undefined;
   }
 
-  const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-  if (!base64Pattern.test(normalized)) {
+  try {
+    const decoded = Buffer.from(normalized, 'base64');
+    if (decoded.length === 0) {
+      return undefined;
+    }
+
+    return decoded.length;
+  } catch {
     return undefined;
   }
-
-  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
-  return (normalized.length / 4) * 3 - padding;
 };
 
 const decodeBase64Buffer = (raw: string): Buffer | undefined => {
@@ -105,12 +108,16 @@ const decodeBase64Buffer = (raw: string): Buffer | undefined => {
     return undefined;
   }
 
-  const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-  if (!base64Pattern.test(normalized)) {
+  try {
+    const decoded = Buffer.from(normalized, 'base64');
+    if (decoded.length === 0) {
+      return undefined;
+    }
+
+    return decoded;
+  } catch {
     return undefined;
   }
-
-  return Buffer.from(normalized, 'base64');
 };
 
 const extractResourceSize = (data: unknown): number | undefined => {
