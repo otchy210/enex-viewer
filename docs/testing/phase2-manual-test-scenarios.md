@@ -90,9 +90,6 @@
   - 一括ダウンロード成功時は ZIP が保存される。
   - 失敗時はアラート表示され、再試行可能。
 
-
-
-
 ## MT-203〜MT-206 再実行手順（T-212）
 
 1. `npm run test:api` を実行し、`parseEnex` の `#text` base64 回帰テストが成功することを確認する。
@@ -109,7 +106,6 @@
 2. API/Web を起動し、MT-203〜MT-206 の手順を順に再実行する。
 3. 異常系として storage_path が欠損した resource を作成した場合でも 404 (`RESOURCE_NOT_FOUND`) を返し、サーバーログに TypeError が出ないことを確認する。
 
-
 ## MT-203〜MT-206 再実行手順（T-213）
 
 1. `npm run test:api` を実行し、`handles multi-megabyte base64 resource without stack overflow` を含む parser 回帰テストが成功することを確認する。
@@ -121,42 +117,5 @@
 - [RESOLVED][T-212] `#text` base64 形式 ENEX でも添付が保存され、個別 Download が成功することを再確認。
 - [RESOLVED][T-212] `Download selected attachments` で ZIP 取得できることを再確認。
 - [RESOLVED][T-213] `decodeBase64Size` / `decodeBase64Buffer` の正規表現判定を廃止後も、`npm run test:api` で数 MB base64 添付の parser 回帰テストが成功（スタックオーバーフロー再現なし）。
-- [TODO][T-213] 手元 ENEX (`~/Desktop/ENEX/1101.取扱説明書(旧)..enex`) を使った再アップロードと MT-203〜MT-206 の UI 再実行はローカル環境で継続確認する。
-
-```
-TypeError: Cannot read properties of null (reading 'length')
-    at fetchResourceDownload (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/services/resourceDownloadService.ts:39:48)
-    at resourceDownloadController (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/controllers/resourceDownloadController.ts:24:18)
-    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
-    at next (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
-    at /Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:284:15
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:365:14)
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
-TypeError: Cannot read properties of null (reading 'length')
-    at fetchResourceDownload (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/services/resourceDownloadService.ts:39:48)
-    at resourceDownloadController (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/controllers/resourceDownloadController.ts:24:18)
-    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
-    at next (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
-    at /Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:284:15
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:365:14)
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
-TypeError: Cannot read properties of null (reading 'length')
-    at fetchResourceDownload (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/services/resourceDownloadService.ts:39:48)
-    at resourceDownloadController (/Users/otchy/Dropbox/workspace/enex-viewer/apps/api/src/controllers/resourceDownloadController.ts:24:18)
-    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
-    at next (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:149:13)
-    at Route.dispatch (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/route.js:119:3)
-    at Layer.handle [as handle_request] (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/layer.js:95:5)
-    at /Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:284:15
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:365:14)
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
-    at param (/Users/otchy/Dropbox/workspace/enex-viewer/node_modules/express/lib/router/index.js:376:14)
-```
-
+- [TRESOLVEDO][T-213] 手元 ENEX (`~/Desktop/ENEX/1101.取扱説明書(旧)..enex`) を使った再アップロードと MT-203〜MT-206 の UI 再実行はローカル環境で継続確認する。
 - [WANT] ファイルのアップロード中もプログレスバーがあった方が良い
