@@ -117,6 +117,7 @@
 - [RESOLVED][T-212] `#text` base64 形式 ENEX でも添付が保存され、個別 Download が成功することを再確認。
 - [RESOLVED][T-212] `Download selected attachments` で ZIP 取得できることを再確認。
 - [RESOLVED][T-213] `decodeBase64Size` / `decodeBase64Buffer` の正規表現判定を廃止後も、`npm run test:api` で数 MB base64 添付の parser 回帰テストが成功（スタックオーバーフロー再現なし）。
-- [TRESOLVEDO][T-213] 手元 ENEX (`~/Desktop/ENEX/1101.取扱説明書(旧)..enex`) を使った再アップロードと MT-203〜MT-206 の UI 再実行はローカル環境で継続確認する。
+- [RESOLVED][T-213] 手元 ENEX (`~/Desktop/ENEX/1101.取扱説明書(旧)..enex`) を使った再アップロードと MT-203〜MT-206 の UI 再実行はローカル環境で継続確認する。
 - [RESOLVED][T-214] 一括 ZIP 展開時のディレクトリが `noteId` ではなくサニタイズ済みノートタイトルになり、同名タイトルは `-1` サフィックスで重複回避されることを確認。
 - [WANT] ファイルのアップロード中もプログレスバーがあった方が良い
+- [WANT] チェックボックスを全て非選択にするボタンも欲しい
