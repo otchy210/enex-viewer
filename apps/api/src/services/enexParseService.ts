@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 
-import { parseEnex } from './enexParserService.js';
+import { parseEnex, parseEnexFileByNote } from './enexParserService.js';
 import { buildNoteListIndex } from './noteListIndex.js';
 import { resolveDataDirectory } from '../config/dataDirectory.js';
 import {
@@ -62,65 +62,131 @@ export const parseEnexFile = (payload: EnexParsePayload): EnexParseResult => {
     }
   }
 
-  const parsed = parseEnex(resolvePayloadData(payload));
-  if (!parsed.ok) {
-    throw new EnexParseError(parsed.error.code, parsed.error.message, parsed.error.details);
-  }
-
-  const warnings = parsed.warnings.map(formatWarning);
   const importId = randomUUID();
+  const warnings: string[] = [];
+  const createdAt = new Date().toISOString();
   const resourcesDirectory = path.join(resolveDataDirectory(), 'resources');
   if (!existsSync(resourcesDirectory)) {
     mkdirSync(resourcesDirectory, { recursive: true });
   }
 
-  const notes: NoteDetail[] = parsed.notes.map((note) => ({
-    id: note.id,
-    title: note.title,
-    createdAt: note.createdAt,
-    updatedAt: note.updatedAt,
-    tags: note.tags,
-    contentHtml: note.content,
-    resources: note.resources
-      .filter(hasBinaryData)
-      .map((resource) => {
-        const hash = createHash('sha256').update(resource.data).digest('hex');
-        const storagePath = path.join(resourcesDirectory, hash);
-        if (!existsSync(storagePath)) {
-          writeFileSync(storagePath, resource.data);
+  let noteCount = 0;
+
+  const persistNote = (note: NoteDetail): void => {
+    const [noteListEntry] = buildNoteListIndex([note]);
+    if (noteListEntry === undefined) {
+      return;
+    }
+
+    noteCount += 1;
+    saveImportSession({
+      id: importId,
+      hash: payload.hash,
+      createdAt,
+      noteCount,
+      warnings,
+      notes: [note],
+      noteListIndex: [
+        {
+          noteId: noteListEntry.note.id,
+          title: noteListEntry.note.title,
+          createdAt: noteListEntry.note.createdAt,
+          updatedAt: noteListEntry.note.updatedAt,
+          tags: noteListEntry.note.tags,
+          searchText: noteListEntry.searchText,
+          excerpt: noteListEntry.excerpt,
+          sortKey: noteListEntry.sortKey
         }
-
-        return {
-          id: resource.id,
-          fileName: resource.fileName,
-          mime: resource.mime,
-          size: resource.size,
-          hash,
-          storagePath
-        };
-      })
-  }));
-
-  const session: ImportSession = {
-    id: importId,
-    hash: payload.hash,
-    createdAt: new Date().toISOString(),
-    noteCount: notes.length,
-    warnings,
-    notes,
-    noteListIndex: buildNoteListIndex(notes).map((entry) => ({
-      noteId: entry.note.id,
-      title: entry.note.title,
-      createdAt: entry.note.createdAt,
-      updatedAt: entry.note.updatedAt,
-      tags: entry.note.tags,
-      searchText: entry.searchText,
-      excerpt: entry.excerpt,
-      sortKey: entry.sortKey
-    }))
+      ]
+    });
   };
 
-  const savedImportId = saveImportSession(session);
+  if ('filePath' in payload) {
+    const streamResult = parseEnexFileByNote(payload.filePath, (note) => {
+      const mappedNote: NoteDetail = {
+        id: note.id,
+        title: note.title,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        tags: note.tags,
+        contentHtml: note.content,
+        resources: note.resources
+          .filter(hasBinaryData)
+          .map((resource) => {
+            const hash = createHash('sha256').update(resource.data).digest('hex');
+            const storagePath = path.join(resourcesDirectory, hash);
+            if (!existsSync(storagePath)) {
+              writeFileSync(storagePath, resource.data);
+            }
+
+            return {
+              id: resource.id,
+              fileName: resource.fileName,
+              mime: resource.mime,
+              size: resource.size,
+              hash,
+              storagePath
+            };
+          })
+      };
+
+      persistNote(mappedNote);
+    });
+
+    if (!streamResult.ok) {
+      throw new EnexParseError(streamResult.error.code, streamResult.error.message, streamResult.error.details);
+    }
+
+    warnings.push(...streamResult.warnings.map(formatWarning));
+  } else {
+    const parsed = parseEnex(resolvePayloadData(payload));
+    if (!parsed.ok) {
+      throw new EnexParseError(parsed.error.code, parsed.error.message, parsed.error.details);
+    }
+
+    warnings.push(...parsed.warnings.map(formatWarning));
+
+    parsed.notes.forEach((note) => {
+      const mappedNote: NoteDetail = {
+        id: note.id,
+        title: note.title,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        tags: note.tags,
+        contentHtml: note.content,
+        resources: note.resources
+          .filter(hasBinaryData)
+          .map((resource) => {
+            const hash = createHash('sha256').update(resource.data).digest('hex');
+            const storagePath = path.join(resourcesDirectory, hash);
+            if (!existsSync(storagePath)) {
+              writeFileSync(storagePath, resource.data);
+            }
+
+            return {
+              id: resource.id,
+              fileName: resource.fileName,
+              mime: resource.mime,
+              size: resource.size,
+              hash,
+              storagePath
+            };
+          })
+      };
+
+      persistNote(mappedNote);
+    });
+  }
+
+  const savedImportId = saveImportSession({
+    id: importId,
+    hash: payload.hash,
+    createdAt,
+    noteCount,
+    warnings,
+    notes: [],
+    noteListIndex: []
+  } satisfies ImportSession);
   checkpointImportDatabaseWal();
 
   if (savedImportId !== importId) {
@@ -138,7 +204,7 @@ export const parseEnexFile = (payload: EnexParsePayload): EnexParseResult => {
   return {
     importId: savedImportId,
     hash: payload.hash,
-    noteCount: notes.length,
+    noteCount,
     warnings
   };
 };

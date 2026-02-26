@@ -35,7 +35,6 @@ describe('parseEnexFile WAL checkpoint', () => {
     expect(checkpointSpy).toHaveBeenCalledTimes(1);
   });
 
-
   it('accepts filePath payload for parseEnexFile', () => {
     const checkpointSpy = vi
       .spyOn(importSessionRepository, 'checkpointImportDatabaseWal')
@@ -63,6 +62,42 @@ describe('parseEnexFile WAL checkpoint', () => {
     } finally {
       rmSync(filePath, { force: true });
     }
+  });
+
+  it('saves streamed notes incrementally when parsing from filePath', () => {
+    vi.spyOn(importSessionRepository, 'findImportIdByHash').mockReturnValue(undefined);
+    vi.spyOn(importSessionRepository, 'getImportSession').mockReturnValue(undefined);
+    vi.spyOn(importSessionRepository, 'checkpointImportDatabaseWal').mockImplementation(() => {});
+
+    const saveSpy = vi
+      .spyOn(importSessionRepository, 'saveImportSession')
+      .mockImplementation((session) => session.id);
+
+    vi.spyOn(enexParserService, 'parseEnexFileByNote').mockImplementation((_filePath, onNote) => {
+      onNote({
+        id: 'note-1',
+        title: 'One',
+        tags: [],
+        content: '<en-note>one</en-note>',
+        resources: []
+      });
+      onNote({
+        id: 'note-2',
+        title: 'Two',
+        tags: [],
+        content: '<en-note>two</en-note>',
+        resources: []
+      });
+      return { ok: true, noteCount: 2, warnings: [] };
+    });
+
+    const result = parseEnexFile({ filePath: '/tmp/mock.enex', hash: 'd'.repeat(64) });
+
+    expect(result.noteCount).toBe(2);
+    expect(saveSpy).toHaveBeenCalledTimes(3);
+    expect(saveSpy.mock.calls[0]?.[0].notes).toHaveLength(1);
+    expect(saveSpy.mock.calls[1]?.[0].notes).toHaveLength(1);
+    expect(saveSpy.mock.calls[2]?.[0].noteCount).toBe(2);
   });
 
   it('does not flush WAL checkpoint when ENEX parse fails', () => {

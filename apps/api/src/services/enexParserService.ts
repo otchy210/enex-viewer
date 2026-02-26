@@ -1,4 +1,6 @@
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import { openSync, readSync, closeSync } from 'fs';
+import { StringDecoder } from 'string_decoder';
 
 // NOTE: NodeNext ESM requires .js extension for runtime module resolution.
 import { sanitizeEnml } from '../lib/sanitizeEnml.js';
@@ -38,6 +40,12 @@ export interface EnexParseSuccess {
   warnings: EnexParseWarning[];
 }
 
+export interface EnexStreamParseSuccess {
+  ok: true;
+  noteCount: number;
+  warnings: EnexParseWarning[];
+}
+
 export interface EnexParseFailure {
   ok: false;
   error: EnexParseError;
@@ -45,6 +53,7 @@ export interface EnexParseFailure {
 }
 
 export type EnexParseResult = EnexParseSuccess | EnexParseFailure;
+export type EnexStreamParseResult = EnexStreamParseSuccess | EnexParseFailure;
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -255,6 +264,157 @@ export const parseEnex = (input: string | Buffer): EnexParseResult => {
   return {
     ok: true,
     notes: parsedNotes,
+    warnings
+  };
+};
+
+const parseSingleNote = (
+  noteXml: string,
+  noteIndex: number,
+  warnings: EnexParseWarning[]
+): ParsedNote | undefined => {
+  let parsedNote: Record<string, unknown>;
+  try {
+    const parsed = parser.parse(noteXml) as Record<string, unknown>;
+    const noteValue = parsed.note;
+    parsedNote = typeof noteValue === 'object' && noteValue !== null ? (noteValue as Record<string, unknown>) : {};
+  } catch (error) {
+    throw error;
+  }
+
+  const title = typeof parsedNote.title === 'string' ? parsedNote.title.trim() : '';
+  const content = extractCdataString(parsedNote.content);
+
+  if (title.length === 0 || content.length === 0) {
+    warnings.push({
+      noteTitle: title.length > 0 ? title : undefined,
+      message: 'Skipped note due to missing title or content.'
+    });
+    return undefined;
+  }
+
+  const tags = toArray(parsedNote.tag as string | string[]).filter(
+    (tag): tag is string => typeof tag === 'string'
+  );
+
+  const resources = toArray(
+    parsedNote.resource as Record<string, unknown> | Record<string, unknown>[]
+  ).map((resource, resourceIndex) => {
+    const attributes = resource['resource-attributes'] as Record<string, unknown> | undefined;
+    const fileName =
+      typeof attributes?.['file-name'] === 'string' ? attributes['file-name'] : undefined;
+    const mime = typeof resource.mime === 'string' ? resource.mime : undefined;
+    const size = extractResourceSize(resource.data);
+    const data = extractResourceData(resource.data);
+
+    return {
+      id: `resource-${String(noteIndex)}-${String(resourceIndex + 1)}`,
+      fileName,
+      mime,
+      size,
+      data
+    } satisfies ParsedResourceMeta;
+  });
+
+  return {
+    id: typeof parsedNote.guid === 'string' ? parsedNote.guid : `note-${String(noteIndex)}`,
+    title,
+    createdAt: typeof parsedNote.created === 'string' ? parsedNote.created : undefined,
+    updatedAt: typeof parsedNote.updated === 'string' ? parsedNote.updated : undefined,
+    tags,
+    content: sanitizeEnml(content),
+    resources
+  };
+};
+
+export const parseEnexFileByNote = (
+  filePath: string,
+  onNote: (note: ParsedNote) => void
+): EnexStreamParseResult => {
+  const warnings: EnexParseWarning[] = [];
+  const fd = openSync(filePath, 'r');
+  const decoder = new StringDecoder('utf8');
+  const chunk = Buffer.alloc(1024 * 1024);
+  const noteOpenTag = '<note>';
+  const noteCloseTag = '</note>';
+  let noteCounter = 0;
+  let sawRoot = false;
+  let buffer = '';
+
+  try {
+    while (true) {
+      const bytesRead = readSync(fd, chunk, 0, chunk.length, null);
+      if (bytesRead === 0) {
+        break;
+      }
+      buffer += decoder.write(chunk.subarray(0, bytesRead));
+      if (!sawRoot && buffer.includes('<en-export')) {
+        sawRoot = true;
+      }
+
+      let openIndex = buffer.indexOf(noteOpenTag);
+      while (openIndex !== -1) {
+        const closeIndex = buffer.indexOf(noteCloseTag, openIndex);
+        if (closeIndex === -1) {
+          buffer = buffer.slice(openIndex);
+          break;
+        }
+
+        const noteXml = buffer.slice(openIndex, closeIndex + noteCloseTag.length);
+        noteCounter += 1;
+        try {
+          const note = parseSingleNote(noteXml, noteCounter, warnings);
+          if (note !== undefined) {
+            onNote(note);
+          }
+        } catch (error) {
+          return {
+            ok: false,
+            error: {
+              code: 'INVALID_XML',
+              message: INVALID_XML_MESSAGE,
+              details: error
+            },
+            warnings
+          };
+        }
+
+        buffer = buffer.slice(closeIndex + noteCloseTag.length);
+        openIndex = buffer.indexOf(noteOpenTag);
+      }
+    }
+
+    buffer += decoder.end();
+  } finally {
+    closeSync(fd);
+  }
+
+  if (buffer.includes(noteOpenTag)) {
+    return {
+      ok: false,
+      error: {
+        code: 'INVALID_XML',
+        message: INVALID_XML_MESSAGE,
+        details: 'Unclosed <note> element.'
+      },
+      warnings
+    };
+  }
+
+  if (!sawRoot) {
+    return {
+      ok: false,
+      error: {
+        code: 'INVALID_ENEX',
+        message: 'Missing <en-export> root element.'
+      },
+      warnings
+    };
+  }
+
+  return {
+    ok: true,
+    noteCount: noteCounter,
     warnings
   };
 };

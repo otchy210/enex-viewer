@@ -96,11 +96,12 @@ export const saveImportSession = (session: ImportSession): string => {
   const insertImport = database.prepare(
     'INSERT OR IGNORE INTO imports (id, hash, created_at, note_count, warnings_json) VALUES (?, ?, ?, ?, ?)'
   );
+  const updateImport = database.prepare('UPDATE imports SET note_count = ?, warnings_json = ? WHERE id = ?');
   const insertNote = database.prepare(
-    'INSERT INTO notes (id, import_id, title, created_at, updated_at, tags_json, excerpt, content_html, search_text, sort_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT OR REPLACE INTO notes (id, import_id, title, created_at, updated_at, tags_json, excerpt, content_html, search_text, sort_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   );
   const insertResource = database.prepare(
-    'INSERT INTO resources (id, note_id, import_id, file_name, mime, size, hash, storage_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT OR REPLACE INTO resources (id, note_id, import_id, file_name, mime, size, hash, storage_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   );
 
   const run = database.transaction((): string => {
@@ -117,8 +118,12 @@ export const saveImportSession = (session: ImportSession): string => {
       if (existingImportId === undefined) {
         throw new Error(`Import session already exists for hash ${session.hash}, but id could not be resolved.`);
       }
-      return existingImportId;
+      if (existingImportId !== session.id) {
+        return existingImportId;
+      }
     }
+
+    updateImport.run(session.noteCount, JSON.stringify(session.warnings), session.id);
 
     const notesById = new Map(session.notes.map((note) => [note.id, note]));
     for (const noteIndex of session.noteListIndex) {

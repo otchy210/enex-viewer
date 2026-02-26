@@ -47,6 +47,7 @@
 - ENEX の `<data encoding="base64">` は `<![CDATA[...]]>` と `#text`（通常テキストノード）両形式を受け入れ、いずれも同等にデコードして添付保存する。
 - 既存 hash の物理ファイルがある場合は再利用し、重複書き込みを行わない。
 - `POST /api/enex/parse` の完了時に `wal_checkpoint(TRUNCATE)` で WAL を即座にチェックポイントし、サーバーを強制終了しても最新 Import が DB に残るようにする（再起動後の hash lookup・重複アップロードでも importId が引ける状態を保証）。
+- `POST /api/enex/parse` はアップロード済み tmp ENEX を `<note>` 単位で分割処理し、ノート保存後にメモリを解放しながら取り込む（大容量 ENEX で全体文字列化しない）。
 - ただしテスト環境（Vitest / `NODE_ENV=test`）では副作用回避のため WAL チェックポイントをスキップし、実運用（dev/prod）の DB でのみ同期処理を有効化する。
 
 ## 6. 並列実装とモック

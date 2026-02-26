@@ -22,7 +22,7 @@
 2. 未登録なら `POST /api/enex/parse` にストリーム送信（1GB 対応のため `busboy` 等を利用）。
 3. API は ENEX を逐次パースし、結果を SQLite とファイルシステムへ保存。
 4. 成功後に importId と hash を返す。既存 import の場合は DB 参照のみ。
-- 現状の Phase 2 実装では、アップロード時点でのハッシュ計算と一時ファイルへの書き込みはストリーム処理だが、最終的な `parseEnexFile` で一度だけ全バッファを読み込む制約がある。1 GB までのファイルはメモリに展開する必要がある点を周知し、将来完全ストリーミング対応を行う際はこの箇所を置き換える。
+- `parseEnexFile` は tmp ファイルを `<note>` 単位で逐次パースし、ノート単位で SQLite へ保存する。ENEX 全体を `Buffer.toString()` しないため、1GB クラスでも文字列上限（`ERR_STRING_TOO_LONG`）を回避できる。
 - import 保存後に `wal_checkpoint(TRUNCATE)` を実行して WAL をフラッシュし、Ctrl+C などで dev server を終了しても DB 本体に import が残るようにする。WAL の内容がファイルに反映されていない状態では、再起動時に hash lookup がヒットせず再アップロードになるため、アップロード完了時の同期が必須。
 - 例外系として ENEX parse が失敗した場合は import が保存されないため WAL チェックポイントを実行しない。テスト実行（Vitest / `NODE_ENV=test`）では tmp DB への副作用を避けるためチェックポイント呼び出しを無効化する。
 

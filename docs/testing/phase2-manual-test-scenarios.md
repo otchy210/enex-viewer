@@ -130,3 +130,13 @@
 - [RESOLVED][T-215] ENEX upload を tmp ファイルへストリーミング保存し、完了/失敗時に `/tmp/enex-viewer-*` の一時ファイルが削除されることをテストと手動手順に追加。
 - [WANT] ファイルのアップロード中もプログレスバーがあった方が良い
 - [WANT] チェックボックスを全て非選択にするボタンも欲しい
+
+
+## MT-201/MT-202 再実行手順（T-216）
+
+1. `npm run test:api` を実行し、`parseEnexFileByNote parses note elements incrementally from file` と `saves streamed notes incrementally when parsing from filePath` が成功することを確認する。
+2. API を起動し、500MB〜1GB クラスの ENEX（例: `~/Desktop/ENEX/1100.取扱説明書.enex`）をアップロードして `ERR_STRING_TOO_LONG` や OOM が発生しないことを確認する。
+3. 取り込み中に `top` / `ps -o pid,rss,command -p <api-pid>` で RSS がファイルサイズと同等まで急増しないことを観測する（ノート単位で増減すること）。
+4. 取り込み完了後、`GET /api/imports/:importId/notes` が成功し、件数が ENEX のノート数と一致することを確認する。
+5. 添付付きノートを 1 件以上開き、`Resources` 表示・個別 Download・一括 ZIP Download（MT-203〜MT-206）が継続して成功することを確認する。
+6. （失敗系）途中で不正 XML を含む ENEX を投入し、422 (`INVALID_XML`) が返ること、tmp ファイルが後始末されることを確認する。
