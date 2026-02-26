@@ -362,11 +362,9 @@ export const parseEnexFileByNote = (
 
         const noteXml = buffer.slice(openIndex, closeIndex + noteCloseTag.length);
         noteCounter += 1;
+        let note: ParsedNote | undefined;
         try {
-          const note = parseSingleNote(noteXml, noteCounter, warnings);
-          if (note !== undefined) {
-            onNote(note);
-          }
+          note = parseSingleNote(noteXml, noteCounter, warnings);
         } catch (error) {
           return {
             ok: false,
@@ -377,6 +375,10 @@ export const parseEnexFileByNote = (
             },
             warnings
           };
+        }
+
+        if (note !== undefined) {
+          onNote(note);
         }
 
         buffer = buffer.slice(closeIndex + noteCloseTag.length);

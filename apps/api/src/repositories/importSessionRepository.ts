@@ -253,6 +253,11 @@ export const clearImportSessions = (): void => {
   database.exec('DELETE FROM resources; DELETE FROM notes; DELETE FROM imports;');
 };
 
+export const deleteImportSessionById = (importId: string): void => {
+  const database = getDb();
+  database.prepare('DELETE FROM imports WHERE id = ?').run(importId);
+};
+
 export interface StoredResourceRow {
   id: string;
   noteId: string;

@@ -100,6 +100,67 @@ describe('parseEnexFile WAL checkpoint', () => {
     expect(saveSpy.mock.calls[2]?.[0].noteCount).toBe(2);
   });
 
+
+  it('cleans up partial import and files when streamed parsing fails after partial progress', () => {
+    vi.spyOn(importSessionRepository, 'findImportIdByHash').mockReturnValue(undefined);
+    vi.spyOn(importSessionRepository, 'getImportSession').mockReturnValue(undefined);
+    vi.spyOn(importSessionRepository, 'checkpointImportDatabaseWal').mockImplementation(() => {});
+
+    const saveSpy = vi
+      .spyOn(importSessionRepository, 'saveImportSession')
+      .mockImplementation((session) => session.id);
+    const deleteSpy = vi
+      .spyOn(importSessionRepository, 'deleteImportSessionById')
+      .mockImplementation(() => {});
+
+    vi.spyOn(enexParserService, 'parseEnexFileByNote').mockImplementation((_filePath, onNote) => {
+      onNote({
+        id: 'note-1',
+        title: 'One',
+        tags: [],
+        content: '<en-note>one</en-note>',
+        resources: [
+          {
+            id: 'resource-1-1',
+            size: 1,
+            data: Buffer.from('a')
+          }
+        ]
+      });
+
+      return {
+        ok: false,
+        error: {
+          code: 'INVALID_XML',
+          message: 'broken xml'
+        },
+        warnings: []
+      };
+    });
+
+    expect(() => parseEnexFile({ filePath: '/tmp/mock.enex', hash: 'e'.repeat(64) })).toThrow(EnexParseError);
+    expect(saveSpy).toHaveBeenCalledTimes(1);
+    expect(deleteSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('propagates onNote callback errors from parseEnexFileByNote', () => {
+    const filePath = path.join(os.tmpdir(), `enex-stream-error-${Date.now()}.enex`);
+    writeFileSync(
+      filePath,
+      `<?xml version="1.0" encoding="UTF-8"?><en-export><note><title>A</title><content><![CDATA[<en-note>one</en-note>]]></content></note></en-export>`
+    );
+
+    try {
+      expect(() =>
+        enexParserService.parseEnexFileByNote(filePath, () => {
+          throw new Error('disk full');
+        })
+      ).toThrow('disk full');
+    } finally {
+      rmSync(filePath, { force: true });
+    }
+  });
+
   it('does not flush WAL checkpoint when ENEX parse fails', () => {
     const checkpointSpy = vi
       .spyOn(importSessionRepository, 'checkpointImportDatabaseWal')
