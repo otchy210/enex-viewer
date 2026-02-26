@@ -1,6 +1,10 @@
+import { rmSync, writeFileSync } from 'fs';
+import os from 'os';
+import path from 'path';
+
 import { describe, expect, it } from 'vitest';
 
-import { parseEnex } from './enexParserService.js';
+import { parseEnex, parseEnexFileByNote } from './enexParserService.js';
 
 describe('parseEnex', () => {
   it('returns notes from valid ENEX', () => {
@@ -168,6 +172,7 @@ AA</data>
       expect(result.notes[0]?.resources[0]?.size).toBeUndefined();
     }
   });
+
   it('extracts resource metadata and size', () => {
     const sample = `<?xml version="1.0" encoding="UTF-8"?>
     <en-export>
@@ -197,6 +202,27 @@ AA</data>
         })
       ]);
       expect(result.notes[0]?.resources[0]?.data?.toString('hex')).toBe('000000');
+    }
+  });
+});
+
+describe('parseEnexFileByNote', () => {
+  it('parses note elements incrementally from file', () => {
+    const sample = `<?xml version="1.0" encoding="UTF-8"?>\n<en-export>\n<note><title>A</title><content><![CDATA[<en-note>one</en-note>]]></content></note>\n<note><title>B</title><content><![CDATA[<en-note>two</en-note>]]></content></note>\n</en-export>`;
+
+    const filePath = path.join(os.tmpdir(), `enex-stream-test-${Date.now()}.enex`);
+    writeFileSync(filePath, sample.repeat(1024));
+
+    try {
+      let noteCounter = 0;
+      const result = parseEnexFileByNote(filePath, () => {
+        noteCounter += 1;
+      });
+
+      expect(result.ok).toBe(true);
+      expect(noteCounter).toBe(2048);
+    } finally {
+      rmSync(filePath, { force: true });
     }
   });
 });
