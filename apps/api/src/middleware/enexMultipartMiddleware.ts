@@ -41,7 +41,27 @@ const hasMultipartContentType = (headers: Request['headers']): boolean => {
 interface EnexParseLocals {
   enexFilePath?: string;
   enexFileHash?: string;
+  cleanupEnexTempFile?: () => Promise<void>;
 }
+
+const createTempFilePath = (): string => {
+  const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'enex-viewer-'));
+  return path.join(tempDirectory, `${randomUUID()}.enex`);
+};
+
+const cleanupTempFile = async (filePath: string): Promise<void> => {
+  try {
+    await fs.promises.unlink(filePath);
+  } catch {
+    // ignore cleanup errors
+  }
+
+  try {
+    await fs.promises.rm(path.dirname(filePath), { recursive: false, force: true });
+  } catch {
+    // ignore cleanup errors
+  }
+};
 
 export const parseEnexMultipart = (
   req: Request,
@@ -67,9 +87,7 @@ export const parseEnexMultipart = (
   }
 
   const hash = createHash('sha256');
-  const uploadTempDir = path.join(os.tmpdir(), 'enex-viewer-upload-cache');
-  fs.mkdirSync(uploadTempDir, { recursive: true });
-  const tempFilePath = path.join(uploadTempDir, randomUUID());
+  const tempFilePath = createTempFilePath();
   const writeStream = fs.createWriteStream(tempFilePath);
 
   const form = formidable({
@@ -95,6 +113,7 @@ export const parseEnexMultipart = (
   form.parse(req, (error: unknown, _fields: unknown, files: Record<string, unknown>) => {
     if (error) {
       if ((error as { httpCode?: number }).httpCode === 413) {
+        void cleanupTempFile(tempFilePath);
         res.status(413).json({
           code: 'FILE_TOO_LARGE',
           message: 'File size exceeds the allowed limit.'
@@ -103,7 +122,7 @@ export const parseEnexMultipart = (
       }
 
       writeStream.destroy();
-      fs.promises.unlink(tempFilePath).catch(() => undefined);
+      void cleanupTempFile(tempFilePath);
       next(error);
       return;
     }
@@ -111,6 +130,7 @@ export const parseEnexMultipart = (
     const file = files.file;
     const uploaded = Array.isArray(file) ? file[0] : file;
     if (uploaded === undefined || uploaded === null || typeof uploaded !== 'object') {
+      void cleanupTempFile(tempFilePath);
       res.status(400).json({
         code: 'MISSING_FILE',
         message: 'file is required.'
@@ -126,12 +146,13 @@ export const parseEnexMultipart = (
         code: 'INVALID_FILE_TYPE',
         message: 'Invalid ENEX file type.'
       });
-      fs.promises.unlink(tempFilePath).catch(() => undefined);
+      void cleanupTempFile(tempFilePath);
       return;
     }
 
     res.locals.enexFilePath = tempFilePath;
     res.locals.enexFileHash = hash.digest('hex');
+    res.locals.cleanupEnexTempFile = async () => cleanupTempFile(tempFilePath);
     next();
   });
 };
