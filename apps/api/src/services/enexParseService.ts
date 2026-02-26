@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'crypto';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 
 import { parseEnex } from './enexParserService.js';
@@ -42,7 +42,12 @@ const formatWarning = (warning: { noteTitle?: string; message: string }): string
 const hasBinaryData = <T extends { data?: Buffer }>(resource: T): resource is T & { data: Buffer } =>
   resource.data !== undefined && resource.data.length > 0;
 
-export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexParseResult => {
+export type EnexParsePayload = { hash: string } & ({ data: Buffer } | { filePath: string });
+
+const resolvePayloadData = (payload: EnexParsePayload): Buffer =>
+  'data' in payload ? payload.data : readFileSync(payload.filePath);
+
+export const parseEnexFile = (payload: EnexParsePayload): EnexParseResult => {
   const existingImportId = findImportIdByHash(payload.hash);
   if (existingImportId !== undefined) {
     const existingSession = getImportSession(existingImportId);
@@ -57,7 +62,7 @@ export const parseEnexFile = (payload: { data: Buffer; hash: string }): EnexPars
     }
   }
 
-  const parsed = parseEnex(payload.data);
+  const parsed = parseEnex(resolvePayloadData(payload));
   if (!parsed.ok) {
     throw new EnexParseError(parsed.error.code, parsed.error.message, parsed.error.details);
   }

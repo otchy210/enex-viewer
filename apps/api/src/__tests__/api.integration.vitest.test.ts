@@ -79,6 +79,27 @@ const isImportHashLookupResponse = (value: unknown): value is ImportHashLookupRe
   typeof value.shouldUpload === 'boolean' &&
   typeof value.message === 'string';
 
+const listEnexUploadTempFiles = (): string[] =>
+  readdirSync(os.tmpdir())
+    .filter((entry) => entry.startsWith('enex-viewer-'))
+    .flatMap((entry) =>
+      readdirSync(path.join(os.tmpdir(), entry))
+        .filter((name) => name.endsWith('.enex'))
+        .map((name) => path.join(os.tmpdir(), entry, name))
+    );
+
+const waitFor = async (predicate: () => boolean, timeoutMs = 2000): Promise<void> => {
+  const startedAt = Date.now();
+  while (!predicate()) {
+    if (Date.now() - startedAt > timeoutMs) {
+      throw new Error('Timed out waiting for condition.');
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 25);
+    });
+  }
+};
+
 describe('API integration', () => {
   beforeEach(() => {
     initializeApiTestState();
@@ -113,6 +134,26 @@ describe('API integration', () => {
     expect(body.hash).toHaveLength(64);
     expect(body.noteCount).toBe(1);
     expect(body.warnings).toEqual([]);
+  });
+
+  it('POST /api/enex/parse writes upload to tmp and cleans it up after parsing', async () => {
+    const app = createApp();
+    const payload = buildEnexPayload(`
+      <note>
+        <title>Temp File Check</title>
+        <content><![CDATA[<en-note>tmp path flow</en-note>]]></content>
+      </note>
+    `);
+    const before = new Set(listEnexUploadTempFiles());
+
+    const response = await uploadEnex(app, payload);
+
+    expect(response.status).toBe(200);
+
+    await waitFor(() => {
+      const after = listEnexUploadTempFiles();
+      return after.every((entry) => before.has(entry));
+    });
   });
 
   it('POST /api/enex/parse returns existing importId when uploading identical file', async () => {

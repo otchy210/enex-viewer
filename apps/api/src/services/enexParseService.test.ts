@@ -1,3 +1,7 @@
+import { rmSync, writeFileSync } from 'fs';
+import os from 'os';
+import path from 'path';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseEnexFile, EnexParseError } from './enexParseService.js';
@@ -29,6 +33,36 @@ describe('parseEnexFile WAL checkpoint', () => {
 
     expect(result.importId).toBe('import-1');
     expect(checkpointSpy).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('accepts filePath payload for parseEnexFile', () => {
+    const checkpointSpy = vi
+      .spyOn(importSessionRepository, 'checkpointImportDatabaseWal')
+      .mockImplementation(() => {});
+
+    vi.spyOn(importSessionRepository, 'findImportIdByHash').mockReturnValue('import-2');
+    vi.spyOn(importSessionRepository, 'getImportSession').mockReturnValue({
+      id: 'import-2',
+      hash: 'c'.repeat(64),
+      createdAt: '2026-01-01T00:00:00.000Z',
+      noteCount: 2,
+      warnings: [],
+      notes: [],
+      noteListIndex: []
+    });
+
+    const filePath = path.join(os.tmpdir(), `enex-viewer-service-test-${Date.now()}.enex`);
+    writeFileSync(filePath, Buffer.from('dummy-file'));
+
+    try {
+      const result = parseEnexFile({ filePath, hash: 'c'.repeat(64) });
+
+      expect(result.importId).toBe('import-2');
+      expect(checkpointSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      rmSync(filePath, { force: true });
+    }
   });
 
   it('does not flush WAL checkpoint when ENEX parse fails', () => {

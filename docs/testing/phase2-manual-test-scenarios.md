@@ -90,6 +90,14 @@
   - 一括ダウンロード成功時は ZIP が保存される。
   - 失敗時はアラート表示され、再試行可能。
 
+
+## MT-201/MT-202 再実行手順（T-215）
+
+1. `npm run test:api` を実行し、`POST /api/enex/parse writes upload to tmp and cleans it up after parsing` が成功することを確認する。
+2. API を起動して通常サイズ ENEX をアップロードし、アップロード中に `/tmp/enex-viewer-*` ディレクトリ配下へ tmp ファイルが生成されることを確認する。
+3. アップロード完了後に同 tmp ファイルが削除されることを確認する（失敗時も残骸が残らないことを合わせて確認）。
+4. 旧実装と比較して API プロセスのメモリ使用量が急増しないことを、`top` / `ps` などで概観確認する。
+
 ## MT-203〜MT-206 再実行手順（T-212）
 
 1. `npm run test:api` を実行し、`parseEnex` の `#text` base64 回帰テストが成功することを確認する。
@@ -119,5 +127,6 @@
 - [RESOLVED][T-213] `decodeBase64Size` / `decodeBase64Buffer` の正規表現判定を廃止後も、`npm run test:api` で数 MB base64 添付の parser 回帰テストが成功（スタックオーバーフロー再現なし）。
 - [RESOLVED][T-213] 手元 ENEX (`~/Desktop/ENEX/1101.取扱説明書(旧)..enex`) を使った再アップロードと MT-203〜MT-206 の UI 再実行はローカル環境で継続確認する。
 - [RESOLVED][T-214] 一括 ZIP 展開時のディレクトリが `noteId` ではなくサニタイズ済みノートタイトルになり、同名タイトルは `-1` サフィックスで重複回避されることを確認。
+- [RESOLVED][T-215] ENEX upload を tmp ファイルへストリーミング保存し、完了/失敗時に `/tmp/enex-viewer-*` の一時ファイルが削除されることをテストと手動手順に追加。
 - [WANT] ファイルのアップロード中もプログレスバーがあった方が良い
 - [WANT] チェックボックスを全て非選択にするボタンも欲しい
