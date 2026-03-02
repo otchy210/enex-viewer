@@ -37,7 +37,7 @@ Web トップ画面は ENEX Viewer 本体の導線のみに整理されており
 
 ### 開発者向けガイド
 
-- 開発ガイド（環境構築、コマンド、ワークスペース構成）: `docs/development/developer-guide.md`
+- 開発ガイド（環境構築、コマンド、ワークスペース構成、大容量 ENEX 運用）: `docs/development/developer-guide.md`
 - テスト運用ガイドライン: `docs/testing/test-guidelines.md`
 - 手動テストシナリオ: `docs/testing/manual-test-scenarios.md`
 
