@@ -88,7 +88,36 @@
 - 期待結果
   - 選択数と全選択/全解除トグルがページ単位で正しく動作する。
   - 一括ダウンロード成功時は ZIP が保存される。
-  - 失敗時はアラート表示され、再試行可能。
+- 失敗時はアラート表示され、再試行可能。
+
+## MT-217 (Pass): 1GB クラス ENEX のエンドツーエンド検証（アップロード→閲覧→個別/一括ダウンロード）
+
+- 前提
+  - API と Web が起動している（`npm run dev` または `npm run dev:api` + `npm run dev:web`）。
+  - `ENEX_VIEWER_DATA` を設定する場合は、DB・添付保存用に 5GB 以上の空き容量があるディレクトリを指定している。
+  - OS の tmp ディレクトリ（通常 `/tmp`）に、アップロード中の一時 ENEX と ZIP 生成の作業領域として 3GB 以上の空き容量がある。
+  - 1GB クラス（目安 700MB〜1GB）の ENEX 検証データを用意済み。
+- データ準備
+  1. 既存の業務 ENEX を使う場合は、個人情報を除去した検証用コピーを作成する。
+  2. ダミーデータを作る場合は `docs/tasks/agent-execution.md` の「大容量 ENEX 回帰チェック」手順で生成する。
+  3. 検証データに以下が含まれることを確認する。
+     - 添付付きノートが 2 件以上（個別/一括ダウンロード確認用）
+     - 同名タイトルノートが少なくとも 2 件（ZIP 展開時の `-1`, `-2` 採番確認用）
+     - 添付 MIME が複数種類（例: PDF/PNG）
+- 手順
+  1. `npm run test:api` を先に実行し、streaming upload・note 単位 parser・WAL checkpoint の既存回帰が通ることを確認する。
+  2. Web で 1GB クラス ENEX を選択し、SHA-256 計算完了後に Upload を実行する。
+  3. アップロード中、`Phase 2/2: Sending ENEX file to server and parsing...` が表示され、API 側で `/tmp/enex-viewer-*` 配下に tmp ファイルが作成されることを確認する。
+  4. 取り込み完了後に `Upload complete.` と `importId` が表示されること、tmp ファイルが削除されることを確認する。
+  5. ノート一覧を表示し、件数・検索・ページングが応答することを確認する。
+  6. 添付付きノートを開き、`Resources` から 1 件を個別ダウンロードして元データと内容が一致することを確認する。
+  7. ノート一覧で複数ノートを選択し `Download selected attachments` を実行、ZIP 展開後にサニタイズ済みタイトル配下へ添付が格納されることを確認する（同名タイトルは `-1`, `-2` 採番）。
+  8. API 再起動後に同一 ENEX を再選択し、`POST /api/imports/hash-lookup` が `shouldUpload=false` と既存 `importId` を返すことを確認する。
+- 期待結果
+  - 1GB クラス ENEX でも `ERR_STRING_TOO_LONG` / OOM を出さず import が完了する。
+  - upload tmp ファイルは成功/失敗を問わず後始末され、恒久領域には `ENEX_VIEWER_DATA` 配下の DB・resources のみが残る。
+  - ノート閲覧、個別添付ダウンロード、一括 ZIP ダウンロードが継続して成功する。
+  - 再起動後も hash lookup が既存 import を返し、WAL flush 前提の耐久性が維持される。
 
 
 ## MT-201/MT-202 再実行手順（T-215）

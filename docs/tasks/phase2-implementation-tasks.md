@@ -55,7 +55,7 @@
 | [x]  | T-214 | P2-C   | API/Web | 一括ZIPのディレクトリ名をノートタイトルに変更                                 | T-206           | - `apps/api/src/controllers/resourceBulkDownloadController.ts`（ZIP 生成部分）で、現在の `note-{index}` ディレクトリ名をノートタイトルベースに変更し、ファイル名禁止文字や長さ制限を考慮してサニタイズする（重複時は `-1`, `-2` などでユニーク化）<br>- API 側でタイトルが取得できるよう必要なデータを `listStoredResourcesByIds` などから得られるよう調整し、Web 側のリクエスト/レスポンスフォーマットが変わる場合は `apps/web/src/api/notes.ts` 等を同期させる<br>- `npm run test:api` の一括 ZIP integration テストと `npm run test:web` の一括ダウンロード UI テストを更新し、新しいフォルダ名を期待するアサーションを追加<br>- 手動で一括ダウンロードを実行して展開し、フォルダ名がノートタイトルになっていることを確認。`docs/testing/phase2-manual-test-scenarios.md` の MT-204/MT-206 に期待結果を追記し、完了メモを残す |
 | [x]  | T-215 | P2-A   | API     | ENEXアップロードを一時ファイル経由でストリーミング保存                        | T-201, T-202    | - `apps/api/src/middleware/enexMultipartMiddleware.ts` でチャンクをメモリに貯めず、受信データを直接 `fs.createWriteStream` などで一時ファイルに保存（1GB ファイルでもヒープを逼迫しない）<br>- ミドルウェアの戻り値を `parseEnexFile` に渡す際、Buffer ではなく tmp ファイルパス/ストリームを利用できるよう `enexParseController` 側を調整<br>- 一時ファイルはアップロード完了/失敗時やコントローラー完了時に必ずクリーンアップする<br>- `npm run test:api` へ tmp ファイル経路の回帰テスト（小規模ファイルで OK）を追加し、メモリ使用量が旧実装と比較して低いことを確認 |
 | [x]  | T-216 | P2-A   | API     | ENEXパーサーを大容量対応のストリーム/分割処理へ刷新                          | T-215           | - `apps/api/src/services/enexParseService.ts` / `enexParserService.ts` を改修し、ENEX 全体を `Buffer.toString()` せずに処理する（SAX モードや note 単位の分割処理でメモリ上限 `ERR_STRING_TOO_LONG` を回避）<br>- パーサーは ENEX 内の `note` を順次読み込み、各ノートを SQLite に保存したらメモリから解放する構造にする<br>- 大容量 ENEX（ローカル `~/Desktop/ENEX/1100.取扱説明書.enex` 等）を想定した負荷テスト手順を `npm run test:api` または専用スクリプトで準備し、1GB 級でエラーが出ないことを確認<br>- 既存の `parseEnex`/`parseEnexFile` 呼び出し側の API 契約を保ちながら内部実装を置き換え、必要なユニット/統合テストを更新 |
-| [ ]  | T-217 | P2-D   | Docs/QA | 大容量ENEX検証用テストシナリオ・ドキュメント整備                              | T-216           | - 1GB クラスの ENEX を用いた手動テスト手順を `docs/testing/phase2-manual-test-scenarios.md` に追記（アップロード→ノート閲覧→ダウンロード一連）<br>- `README.md` / 開発ガイドに「大容量 ENEX を扱う手順」「一時ファイルの扱い」「ファイルサイズ上限（現状 1GB）」などを明記<br>- `npm run test:api` またはスクリプトで大容量 ENEX を検証する方法（ダミーファイル生成スクリプト、必要なら Skip 条件）を `docs/tasks/agent-execution.md` か QA ドキュメントに追記<br>- T-215/216 の実装内容をまとめた完了メモを追加し、再発防止手順を整理 |
+| [x]  | T-217 | P2-D   | Docs/QA | 大容量ENEX検証用テストシナリオ・ドキュメント整備                              | T-216           | - 1GB クラスの ENEX を用いた手動テスト手順を `docs/testing/phase2-manual-test-scenarios.md` に追記（アップロード→ノート閲覧→ダウンロード一連）<br>- `README.md` / 開発ガイドに「大容量 ENEX を扱う手順」「一時ファイルの扱い」「ファイルサイズ上限（現状 1GB）」などを明記<br>- `npm run test:api` またはスクリプトで大容量 ENEX を検証する方法（ダミーファイル生成スクリプト、必要なら Skip 条件）を `docs/tasks/agent-execution.md` か QA ドキュメントに追記<br>- T-215/216 の実装内容をまとめた完了メモを追加し、再発防止手順を整理 |
 
 ### T-202 完了メモ
 
@@ -115,6 +115,15 @@
 - API integration test を更新し、ZIP 内ディレクトリ構成を検証。
 - MT-204 / MT-206 の期待結果を更新。
 
+
+
+
+### T-215/T-216 完了メモ（回帰防止要約）
+
+- T-215 で upload 受信を tmp ファイル直書きへ移行し、`Buffer.concat` 由来のメモリ急増を抑止。さらに完了/失敗時の tmp クリーンアップを回帰テスト化した。
+- T-216 で `parseEnexFileByNote` による `<note>` 単位の逐次解析・逐次保存へ移行し、1GB クラスでの全体文字列化（`ERR_STRING_TOO_LONG`）リスクを解消した。
+- 再発防止として `npm run test:api` を最低実行ラインに固定し、可能な環境では `MT-217`（1GB upload → 閲覧 → 個別/一括 DL）を追従実施する。
+- 運用面では tmp 領域と `ENEX_VIEWER_DATA` の空き容量監視、API 再起動後の hash lookup 再利用確認（WAL flush 保証）を定常チェックに含める。
 
 ### T-215 完了メモ
 
