@@ -70,6 +70,7 @@ export interface BulkDownloadError {
 }
 
 const INVALID_DIRECTORY_CHARACTERS = /[\\/:*?"<>|\u0000-\u001F\u007F]/g;
+const INVALID_FILE_NAME_CHARACTERS = /[\\/:*?"<>|\u0000-\u001F\u007F]/g;
 const MULTI_SPACE = /\s+/g;
 const MAX_NOTE_DIRECTORY_NAME_LENGTH = 80;
 
@@ -112,6 +113,38 @@ const resolveUniqueNoteDirectoryName = (
   }
 };
 
+const sanitizeResourceFileName = (
+  fileName: string | null | undefined,
+  fallbackFileName: string
+): string => {
+  const trimmed = fileName?.trim();
+  const baseName =
+    trimmed !== undefined && trimmed.length > 0 ? path.basename(trimmed) : fallbackFileName;
+  const normalized = baseName.replace(INVALID_FILE_NAME_CHARACTERS, '').trim();
+
+  return normalized.length > 0 ? normalized : fallbackFileName;
+};
+
+const resolveUniqueFileName = (fileName: string, usedNames: Set<string>): string => {
+  if (!usedNames.has(fileName)) {
+    usedNames.add(fileName);
+    return fileName;
+  }
+
+  const extension = path.extname(fileName);
+  const baseName = extension.length > 0 ? fileName.slice(0, -extension.length) : fileName;
+  let suffixNumber = 1;
+
+  while (true) {
+    const candidate = `${baseName}-${suffixNumber}${extension}`;
+    if (!usedNames.has(candidate)) {
+      usedNames.add(candidate);
+      return candidate;
+    }
+    suffixNumber += 1;
+  }
+};
+
 export const prepareBulkDownload = (
   importId: string,
   selections: BulkDownloadSelection[]
@@ -128,6 +161,7 @@ export const prepareBulkDownload = (
   const stagingDirectory = mkdtempSync(path.join(os.tmpdir(), `enex-viewer-${importId}-`));
   const noteDirectories = new Map<string, string>();
   const usedDirectoryNames = new Set<string>();
+  const usedFileNamesByDirectory = new Map<string, Set<string>>();
 
   for (const resource of resources) {
     if (
@@ -156,15 +190,13 @@ export const prepareBulkDownload = (
 
     const noteDirectory = path.join(stagingDirectory, noteDirectoryName);
     mkdirSync(noteDirectory, { recursive: true });
-    const trimmedFileName = resource.fileName?.trim();
-    const normalizedBaseName =
-      trimmedFileName !== undefined && trimmedFileName.length > 0
-        ? path.basename(trimmedFileName)
-        : undefined;
-    const fileName =
-      normalizedBaseName !== undefined && normalizedBaseName.length > 0
-        ? normalizedBaseName
-        : `${resource.noteId}-${resource.id}.bin`;
+    const baseFileName = sanitizeResourceFileName(
+      resource.fileName,
+      `${resource.noteId}-${resource.id}.bin`
+    );
+    const usedFileNames = usedFileNamesByDirectory.get(noteDirectoryName) ?? new Set<string>();
+    usedFileNamesByDirectory.set(noteDirectoryName, usedFileNames);
+    const fileName = resolveUniqueFileName(baseFileName, usedFileNames);
     const linkPath = path.join(noteDirectory, fileName);
     symlinkSync(resource.storagePath, linkPath);
   }
