@@ -96,9 +96,9 @@ npm run build:web
 4. 処理中は `Preparing ZIP...` が表示され、完了後に ZIP がダウンロードされます。
 5. 失敗時はアラートが表示され、選択状態を保持したまま再試行できます。
 
-## 9. 大容量 ENEX（〜1GB）運用ガイド
+## 9. 大容量 ENEX（〜2.5 GiB）運用ガイド
 
-- `POST /api/enex/parse` のアップロード上限は現状 1GB。
+- `POST /api/enex/parse` のアップロード上限は現状 2.5 GiB。
 - multipart 受信データはメモリへ全量展開せず、`os.tmpdir()` 配下（通常 `/tmp/enex-viewer-*`）へ一時ファイルとしてストリーミング保存される。
 - parser は tmp ENEX を `<note>` 単位で逐次処理するため、全体を `Buffer.toString()` しない（`ERR_STRING_TOO_LONG` 回避）。
 - import 完了時は `wal_checkpoint(TRUNCATE)` を実行し、再起動後も hash lookup が既存 `importId` を再利用できるようにする。
@@ -106,8 +106,8 @@ npm run build:web
 ### 9.1 ディスク容量の目安
 
 - `ENEX_VIEWER_DATA` 配下: SQLite DB + `resources` 保存領域として、少なくとも ENEX 実サイズと同等以上（推奨 2 倍）を確保。
-- tmp 領域（例: `/tmp`）: アップロード中 ENEX 一時ファイル + 一括 ZIP 作成時の作業領域として、少なくとも 3GB を推奨。
-- 目安として「1GB ENEX を安全に扱うには合計 5GB 以上の空き容量」を確保する。
+- tmp 領域（例: `/tmp`）: アップロード中 ENEX 一時ファイル + 一括 ZIP 作成時の作業領域として、少なくとも 8GB を推奨。
+- 目安として「2.5 GiB ENEX を安全に扱うには合計 12GB 以上の空き容量」を確保する。
 
 ### 9.2 tmp ファイル運用上の注意（T-215/T-216）
 

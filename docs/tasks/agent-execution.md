@@ -66,17 +66,17 @@
 - Web は契約準拠モックで先行実装し、後段で実 API へ差し替える。
 
 
-## 11. 大容量 ENEX（1GB クラス）回帰チェック
+## 11. 大容量 ENEX（2.5 GiB クラス）回帰チェック
 
 ### 11.1 基本コマンド
 
 - API 回帰の基準コマンドは `npm run test:api`。
-- ローカルで 1GB クラス実ファイル検証まで行う場合は、`npm run dev:api`（必要なら `npm run dev:web`）を併用して手動シナリオ `MT-217` を再実行する。
+- ローカルで 2.5 GiB クラス実ファイル検証まで行う場合は、`npm run dev:api`（必要なら `npm run dev:web`）を併用して手動シナリオ `MT-217` を再実行する。
 
 ### 11.2 ダミー大容量 ENEX の生成例
 
 - 既存スクリプトが無い場合は、Node.js で繰り返しノートを出力して ENEX を生成してよい（新規依存は追加しない）。
-- 例（約 1GB を目標に `NOTE_COUNT` / 添付サイズを調整）:
+- 例（約 2.5 GiB を目標に `NOTE_COUNT` / 添付サイズを調整）:
 
 ```bash
 node -e '
@@ -84,7 +84,7 @@ const fs = require("node:fs");
 const out = fs.createWriteStream("./tmp-large.enex");
 out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?><en-export>");
 const payload = Buffer.alloc(512 * 1024, 0x41).toString("base64");
-for (let i = 0; i < 1700; i += 1) {
+for (let i = 0; i < 4250; i += 1) {
   out.write(`<note><title>large-${i}</title><content><![CDATA[<?xml version=\"1.0\"?><!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\"><en-note>large-${i}</en-note>]]></content><resource><data encoding=\"base64\">${payload}</data><mime>application/octet-stream</mime><resource-attributes><file-name>blob-${i}.bin</file-name></resource-attributes></resource></note>`);
 }
 out.end("</en-export>");
@@ -99,8 +99,8 @@ out.end("</en-export>");
 
 ### 11.4 ローカルスキップ可能条件
 
-- 次のいずれかに該当する場合、1GB 実ファイル手動検証はスキップ可（ただし理由を PR に明記する）。
-  - 実行環境の空き容量が不足（目安: 5GB 未満）。
-  - CI/開発環境の実行時間制約で 1GB upload が現実的でない。
+- 次のいずれかに該当する場合、2.5 GiB 実ファイル手動検証はスキップ可（ただし理由を PR に明記する）。
+  - 実行環境の空き容量が不足（目安: 12GB 未満）。
+  - CI/開発環境の実行時間制約で 2.5 GiB upload が現実的でない。
   - 本タスクがドキュメント更新のみで、既存テスト `npm run test:api` が成功している。
 - スキップ時も `npm run test:api` は必須。

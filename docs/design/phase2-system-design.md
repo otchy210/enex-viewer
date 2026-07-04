@@ -19,10 +19,10 @@
 
 ## 4. アップロード処理
 1. Web がハッシュを送信して存在確認。
-2. 未登録なら `POST /api/enex/parse` にストリーム送信（1GB 対応のため `busboy` 等を利用）。
+2. 未登録なら `POST /api/enex/parse` にストリーム送信（2.5 GiB 対応）。
 3. API は ENEX を逐次パースし、結果を SQLite とファイルシステムへ保存。
 4. 成功後に importId と hash を返す。既存 import の場合は DB 参照のみ。
-- `parseEnexFile` は tmp ファイルを `<note>` 単位で逐次パースし、ノート単位で SQLite へ保存する。ENEX 全体を `Buffer.toString()` しないため、1GB クラスでも文字列上限（`ERR_STRING_TOO_LONG`）を回避できる。
+- `parseEnexFile` は tmp ファイルを `<note>` 単位で逐次パースし、ノート単位で SQLite へ保存する。ENEX 全体を `Buffer.toString()` しないため、2.5 GiB クラスでも文字列上限（`ERR_STRING_TOO_LONG`）を回避できる。
 - import 保存後に `wal_checkpoint(TRUNCATE)` を実行して WAL をフラッシュし、Ctrl+C などで dev server を終了しても DB 本体に import が残るようにする。WAL の内容がファイルに反映されていない状態では、再起動時に hash lookup がヒットせず再アップロードになるため、アップロード完了時の同期が必須。
 - 例外系として ENEX parse が失敗した場合は import が保存されないため WAL チェックポイントを実行しない。テスト実行（Vitest / `NODE_ENV=test`）では tmp DB への副作用を避けるためチェックポイント呼び出しを無効化する。
 
@@ -39,13 +39,13 @@
 ## 7. テスト戦略
 - API: sqlite を temp DB に向ける integration test 追加。大容量はモックファイルで分割テスト。
 - Web: ハッシュ計算ロジックのユニットテスト、チェックボックス動作、ダウンロードボタン有効化などの UI テスト追加。
-- 手動テスト: 1GB アップロード、重複スキップ、添付ダウンロード、一括 zip を新シナリオに追加。
+- 手動テスト: 2.5 GiB アップロード、重複スキップ、添付ダウンロード、一括 zip を新シナリオに追加。
 
 ## 8. 移行/互換
 - Phase 1 との互換性として、既存 API エンドポイントのレスポンス互換を保ちつつ、新フィールド（hash 等）を追加する。
 - インメモリ import を SQLite へ移す専用スクリプトは提供しない。必要に応じて再アップロードを推奨する。
 
 ## 9. オープン課題
-- 1GB ファイルのアップロード時間が長い場合のキューイング戦略。
+- 2.5 GiB ファイルのアップロード時間が長い場合のキューイング戦略。
 - zip 生成の圧縮率/速度バランス。
 - CLI 等からの一括処理ニーズがあれば Phase 3 で検討。

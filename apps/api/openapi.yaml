@@ -68,7 +68,7 @@ paths:
                     code: INVALID_FILE_TYPE
                     message: Invalid ENEX file type.
         '413':
-          description: ファイルサイズ超過（1GB）
+          description: ファイルサイズ超過（2.5 GiB）
           content:
             application/json:
               schema:

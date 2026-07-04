@@ -1,7 +1,7 @@
 # ENEX Viewer Phase 2 仕様
 
 ## 1. ユースケース
-- UC-201: 1GB までの ENEX をアップロードし、永続化されたインポートを再利用する。
+- UC-201: 2.5 GiB までの ENEX をアップロードし、永続化されたインポートを再利用する。
 - UC-202: ENEX を解析済みの場合は、クライアントがアップロード前に通知しスキップする。
 - UC-203: ノート詳細で添付ファイルを確認し、個別にダウンロードする。
 - UC-204: ノート一覧から複数ノートの添付を選択し、一括ダウンロードする。
@@ -22,7 +22,7 @@
 
 ## 3. API 仕様（Phase 2）
 - 既存エンドポイントに加え、以下を拡張:
-  - `POST /api/enex/parse`: 1GB まで許可。レスポンスに `hash` フィールドを追加。既存 `imports.hash` が見つかった場合は新規 INSERT を行わず既存 importId を返す。
+  - `POST /api/enex/parse`: 2.5 GiB まで許可。レスポンスに `hash` フィールドを追加。既存 `imports.hash` が見つかった場合は新規 INSERT を行わず既存 importId を返す。
   - `GET /api/imports/:importId`: Import メタデータ（hash、noteCount、createdAt）を返す。
   - `GET /api/imports/:importId/notes/:noteId/resources/:resourceId`: 添付ファイルをストリーミングで返す。
   - `POST /api/imports/:importId/resources/bulk-download`: `resources[{noteId,resourceId}]` を受け取り ZIP をストリーミングで返す。

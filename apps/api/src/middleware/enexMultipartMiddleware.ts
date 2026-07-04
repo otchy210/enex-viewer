@@ -9,16 +9,16 @@ import formidable from 'formidable';
 
 import type { NextFunction, Request, Response } from 'express';
 
-const ONE_GIBIBYTE = 1024 * 1024 * 1024;
+const MAX_ENEX_UPLOAD_BYTES = 2.5 * 1024 * 1024 * 1024;
 
 const parseMaxUploadBytes = (): number => {
   const raw = process.env.ENEX_PARSE_MAX_UPLOAD_BYTES;
   if (raw === undefined) {
-    return ONE_GIBIBYTE;
+    return MAX_ENEX_UPLOAD_BYTES;
   }
 
   const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : ONE_GIBIBYTE;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : MAX_ENEX_UPLOAD_BYTES;
 };
 
 const isLikelyEnex = (fileName?: string, contentType?: string): boolean => {
